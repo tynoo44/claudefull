@@ -28,7 +28,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat }
             <span className="text-lg">{selectedChat.avatar}</span>
           </div>
           <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 ${
-            selectedChat.status === 'online' ? 'bg-green-500' : 'bg-gray-400'
+            selectedChat.isOnline ? 'bg-green-500' : 'bg-gray-400'
           } ${darkMode ? 'border-gray-800' : 'border-white'}`} />
         </div>
         <div>
@@ -37,9 +37,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat }
           </h3>
           <div className="flex items-center gap-2 mt-1">
             <p className={`text-sm ${
-              selectedChat.status === 'online' ? 'text-green-500' : 'text-gray-400'
+              selectedChat.isOnline ? 'text-green-500' : 'text-gray-400'
             }`}>
-              {selectedChat.status === 'online' ? 'En línea' : 'Desconectado'}
+              {selectedChat.isOnline ? 'En línea' : 'Desconectado'}
             </p>
             {selectedChat.tags && selectedChat.tags.length > 0 && (
               <div className="flex items-center gap-1">

@@ -28,7 +28,7 @@ export const TemplatesSidebar: React.FC<TemplatesSidebarProps> = ({
   });
 
   return (
-    <div className={`w-80 border-l flex flex-col ${
+    <div className={`h-full border-l flex flex-col ${
       darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       {/* Header */}

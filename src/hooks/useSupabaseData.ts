@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { SupabaseService, Lead, MessageTemplate, Conversation } from '../lib/supabase';
+import { SupabaseService, Lead, MessageTemplate } from '../lib/supabase';
+import { getConversationsWithDetails } from '../lib/supabase-functions';
 
 export const useSupabaseData = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState({
     totalLeads: 0,
     activeConversations: 0,
@@ -28,7 +29,7 @@ export const useSupabaseData = () => {
       ] = await Promise.all([
         SupabaseService.getLeads(),
         SupabaseService.getMessageTemplates(),
-        SupabaseService.getConversationsWithLastMessage(),
+        getConversationsWithDetails(),
         SupabaseService.getDashboardStats()
       ]);
 
@@ -67,7 +68,7 @@ export const useSupabaseData = () => {
 
   const fetchConversations = async () => {
     try {
-      const data = await SupabaseService.getConversationsWithLastMessage();
+      const data = await getConversationsWithDetails();
       setConversations(data);
     } catch (err) {
       console.error('Error fetching conversations:', err);
@@ -93,8 +94,8 @@ export const useSupabaseData = () => {
   // Utility functions for transforming data to match existing interfaces
   const getChatsFromConversations = () => {
     return conversations.map(conv => {
-      const leadData = (conv as any).leads;
-      const lastMessage = (conv as any).lastMessage;
+      const leadData = conv.leads;
+      const lastMessage = conv.lastMessage;
       
       const time = lastMessage ? new Date(lastMessage.created_at).toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
@@ -106,16 +107,19 @@ export const useSupabaseData = () => {
       
       return {
         id: conv.id,
-        leadId: parseInt(conv.lead_id) || 1,
+        leadId: conv.lead_id,
         leadName: leadData?.full_name || leadData?.username || 'Usuario desconocido',
         lastMessage: lastMessage?.text || 'Sin mensajes',
         timestamp: lastMessage ? lastMessage.created_at : conv.updated_at,
         time: time,
-        unread: conv.status === 'open',
+        unread: conv.unreadCount > 0,
         avatar: leadData?.profile_pic || '👤',
-        status: conv.status === 'open' ? 'online' as const : 'offline' as const,
+        status: leadData?.status || 'open',
+        isOnline: conv.status === 'open',
         platform: 'instagram' as const,
-        tags: leadData?.tags || []
+        tags: leadData?.tags || [],
+        leadData: leadData,
+        unreadCount: conv.unreadCount || 0
       };
     });
   };

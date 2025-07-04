@@ -21,21 +21,30 @@ SetterAI is a comprehensive React-based SaaS application for appointment setting
 ```
 src/
 ├── components/
-│   └── Layout/
-│       ├── GlobalNavbar.tsx     # Main navigation component with React Router
-│       └── Modal.tsx            # Reusable modal component
+│   ├── Layout/
+│   │   ├── GlobalNavbar.tsx     # Main navigation with user profile
+│   │   └── Modal.tsx            # Reusable modal component
+│   └── Chat/                    # Modularized chat components
+│       ├── ChatList.tsx         # Chat list sidebar
+│       ├── ChatWindow.tsx       # Main conversation view
+│       ├── MessageInput.tsx     # Message input with template insertion
+│       ├── TemplatesSidebar.tsx # Templates column
+│       └── AISidebar.tsx        # AI assistant column
 ├── pages/
-│   ├── AuthPage.tsx             # Login/authentication
+│   ├── AuthPage.tsx             # Supabase Auth with Google OAuth
+│   ├── AuthCallbackPage.tsx     # OAuth callback handler
 │   ├── DashboardPage.tsx        # KPI overview with real Supabase data
-│   ├── ChatsPage.tsx            # Real-time messaging with Supabase
+│   ├── ChatsPage.tsx            # Modularized chat interface
 │   ├── LeadsPage.tsx            # Complete CRUD lead management
 │   ├── TemplatesPage.tsx        # Template system with usage tracking
 │   └── CalendarPage.tsx         # Calendar (omitted per user request)
 ├── hooks/
-│   ├── useAppState.ts           # Global state management hook
+│   ├── useAppState.ts           # Global state with auth management
 │   └── useSupabaseData.ts       # Supabase data integration hook
 ├── lib/
-│   └── supabase.ts              # Supabase client and service functions
+│   ├── supabase.ts              # Supabase client configuration
+│   ├── supabase-functions.ts    # Enhanced Supabase service functions
+│   └── auth.ts                  # Authentication service layer
 ├── types/
 │   └── index.ts                 # TypeScript type definitions
 ├── data/
@@ -46,18 +55,23 @@ src/
 ```
 
 ### State Management Pattern
-Combines local state management with Supabase real-time data:
+Combines local state management with Supabase real-time data and authentication:
 
 ```typescript
-// Global application state
+// Global application state with auth
 const {
-  darkMode, isAuthenticated, selectedChat, selectedLead, selectedTemplate,
+  darkMode, isAuthenticated, currentUser, selectedChat, selectedLead, selectedTemplate,
   // Actions
-  toggleDarkMode, login, logout, selectChat, selectLead
+  toggleDarkMode, logout, selectChat, selectLead
 } = useAppState();
 
 // Real-time Supabase data
 const { dashboardStats, chats, leads, templatesFormatted } = useSupabaseData();
+
+// Authentication flows
+await AuthService.signInWithGoogle();
+await AuthService.signInWithEmail(email, password);
+const user = await AuthService.getCurrentUser();
 ```
 
 ### Component Organization
@@ -72,6 +86,24 @@ Supabase tables with optimized structure:
 - **conversations**: Chat threads linked to leads
 - **messages**: Individual messages with sender type and timestamps
 - **message_templates**: Reusable message templates with usage tracking
+
+## Authentication Setup
+
+### Supabase Configuration Required
+1. **Environment Variables** - Create `.env.local` file:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+2. **Google OAuth Setup** (in Supabase Dashboard):
+   - Navigate to Authentication → Providers
+   - Enable Google provider
+   - Add authorized redirect URLs:
+     - `http://localhost:5173/auth/callback` (development)
+     - `https://yourdomain.com/auth/callback` (production)
+
+3. **Database Policies** - Ensure RLS is enabled on all tables with appropriate policies
 
 ## Development Commands
 
@@ -179,13 +211,14 @@ className={`${
 ## Application Features
 
 ### ✅ Fully Implemented (Production Ready)
-- **Authentication**: Login page with Google OAuth and guest access
+- **Authentication**: Complete Supabase Auth with Google OAuth, email/password, and session management
 - **Dashboard**: Real KPI metrics from Supabase (92 leads, 406 messages, etc.)
 - **Lead Management**: Complete CRUD with status tracking, notes, tags, and search
 - **Template System**: Full CRUD with categories, usage tracking, favorites, and variables
-- **Chat Interface**: Real-time messaging with Supabase integration and template insertion
-- **Global Navigation**: React Router with responsive navbar and dark mode
-- **Database Integration**: Optimized Supabase schema with status migration
+- **Chat Interface**: Modularized real-time messaging with resizable columns
+- **Global Navigation**: React Router with user profile display and dark mode
+- **Database Integration**: Optimized Supabase schema with RLS policies
+- **Protected Routes**: All routes require authentication with automatic redirect
 
 ### 🚧 Calendar Features (Omitted)
 - Calendar and appointment scheduling intentionally omitted per user requirements
@@ -255,8 +288,10 @@ try {
 
 ### ✅ Recently Completed (Production Implementation)
 - **Complete Supabase Integration**: All mock data eliminated, real database throughout
+- **Authentication System**: Full Supabase Auth with Google OAuth and email/password
+- **Component Modularization**: Chat interface split into reusable components
 - **CRUD Operations**: Full Create, Read, Update, Delete for leads and templates
-- **Database Optimization**: Migrated status column from conversations to leads
+- **Database Optimization**: Fixed UUID type conversions and RLS policies
 - **Real-time Messaging**: Functional chat system with message persistence
 - **Template Management**: Advanced template system with usage tracking and variables
 - **Search & Filtering**: Comprehensive search and filter capabilities
@@ -270,11 +305,13 @@ try {
 - **Optimized Schema** with proper indexing and relationships
 
 ### 🔧 Technical Implementation
-- **React Router**: Full URL-based navigation
+- **React Router**: Full URL-based navigation with protected routes
+- **Authentication**: AuthService class with OAuth and session management
 - **Supabase Service**: Comprehensive API layer with error handling
 - **Modal System**: Reusable CRUD modals with form validation
 - **State Management**: Efficient combination of local and global state
 - **Performance**: Optimized queries and real-time data synchronization
+- **Security**: Row Level Security (RLS) policies for all tables
 
 ### 🎯 Business Value Delivered
 - **Functional CRM**: Complete lead management workflow

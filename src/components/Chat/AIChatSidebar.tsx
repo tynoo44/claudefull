@@ -71,7 +71,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({ darkMode, conversa
   };
 
   return (
-    <div className={`w-96 border-l flex flex-col ${
+    <div className={`h-full border-l flex flex-col ${
       darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
     }`}>
       {/* Header */}

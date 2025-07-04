@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { GlobalNavbar } from '@/components/Layout/GlobalNavbar';
 import { AuthPage } from '@/pages/AuthPage';
+import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ChatsPage } from '@/pages/ChatsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
@@ -15,6 +16,7 @@ const AppContent: React.FC = () => {
     // State
     darkMode,
     isAuthenticated,
+    currentUser,
     showProfileMenu,
     selectedChat,
     selectedTemplate,
@@ -61,6 +63,7 @@ const AppContent: React.FC = () => {
         <GlobalNavbar
           darkMode={darkMode}
           showProfileMenu={showProfileMenu}
+          currentUser={currentUser}
           toggleDarkMode={toggleDarkMode}
           setShowProfileMenu={setShowProfileMenu}
           logout={logout}
@@ -69,7 +72,10 @@ const AppContent: React.FC = () => {
       
       <div className={isAuthenticated ? "pt-16" : ""}>
         <Routes>
-          <Route path="/auth" element={<AuthPage darkMode={darkMode} login={login} />} />
+          <Route path="/auth" element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />
+          } />
+          <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
           <Route path="/dashboard" element={
             isAuthenticated ? (
               <DashboardPage

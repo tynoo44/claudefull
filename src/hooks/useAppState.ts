@@ -1,11 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ModalType, ViewMode, Page, Lead, Chat, Template } from '@/types';
+import { AuthService, AuthUser } from '../lib/auth';
 
 export const useAppState = () => {
   // Core app state
   const [currentPage, setCurrentPage] = useState<Page>('auth');
   const [darkMode, setDarkMode] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showModal, setShowModal] = useState<ModalType>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   
@@ -27,20 +29,63 @@ export const useAppState = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [templates] = useState<Template[]>([]);
 
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await AuthService.getCurrentUser();
+        if (user) {
+          setIsAuthenticated(true);
+          setCurrentUser(user);
+          setCurrentPage('dashboard');
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+      }
+    };
+
+    checkAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = AuthService.onAuthStateChange((user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setCurrentUser(user);
+        setCurrentPage('dashboard');
+      } else {
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setCurrentPage('auth');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Actions
   const toggleDarkMode = useCallback(() => {
     setDarkMode(prev => !prev);
   }, []);
 
   const login = useCallback(() => {
-    setIsAuthenticated(true);
+    // This is now handled by AuthService
+    console.log('Login handled by AuthService');
   }, []);
 
-  const logout = useCallback(() => {
-    setIsAuthenticated(false);
-    setSelectedChat(null);
-    setSelectedLead(null);
-    setSelectedTemplate(null);
+  const logout = useCallback(async () => {
+    try {
+      await AuthService.signOut();
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setSelectedChat(null);
+      setSelectedLead(null);
+      setSelectedTemplate(null);
+      setCurrentPage('auth');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   }, []);
 
   const openModal = useCallback((modal: ModalType) => {
@@ -86,6 +131,7 @@ export const useAppState = () => {
     currentPage,
     darkMode,
     isAuthenticated,
+    currentUser,
     showModal,
     showProfileMenu,
     viewMode,

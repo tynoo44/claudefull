@@ -25,16 +25,18 @@ export interface Lead {
 
 export interface Chat {
   id: string;
-  leadId: number;
+  leadId: string;
   leadName: string;
   lastMessage: string;
   timestamp: string;
   time: string;
   unread: boolean;
   avatar: string;
-  status: 'online' | 'offline';
+  status: string;
+  isOnline: boolean;
   platform: 'instagram' | 'whatsapp' | 'facebook';
   tags?: string[];
+  leadData?: any;
 }
 
 export interface Message {

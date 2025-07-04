@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 interface GlobalNavbarProps {
   darkMode: boolean;
   showProfileMenu: boolean;
+  currentUser?: { email: string; full_name?: string; avatar_url?: string } | null;
   toggleDarkMode: () => void;
   setShowProfileMenu: (show: boolean) => void;
   logout: () => void;
@@ -28,6 +29,7 @@ interface GlobalNavbarProps {
 export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
   darkMode,
   showProfileMenu,
+  currentUser,
   toggleDarkMode,
   setShowProfileMenu,
   logout
@@ -123,9 +125,20 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
                 darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <User size={16} className="text-white" />
-              </div>
+              {currentUser?.avatar_url ? (
+                <img 
+                  src={currentUser.avatar_url} 
+                  alt={currentUser.full_name || 'Usuario'}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <User size={16} className="text-white" />
+                </div>
+              )}
+              <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                {currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Usuario'}
+              </span>
               <ChevronDown size={16} />
             </button>
 
