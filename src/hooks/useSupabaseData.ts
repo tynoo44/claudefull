@@ -1,94 +1,89 @@
 import { useState, useEffect } from 'react';
 import { SupabaseService, Lead, MessageTemplate } from '../lib/supabase';
 import { getConversationsWithDetails } from '../lib/supabase-functions';
+import { useGlobalCache } from './useGlobalCache';
 
 export const useSupabaseData = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
-  const [dashboardStats, setDashboardStats] = useState({
-    totalLeads: 0,
-    activeConversations: 0,
-    totalMessages: 0,
-    conversationsByStatus: {} as Record<string, number>
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Usar el caché global para datos principales
+  const {
+    leads,
+    templates,
+    dashboardStats,
+    loading: cacheLoading,
+    error: cacheError,
+    refresh: refreshCache,
+    loadLeads,
+    loadTemplates,
+    loadDashboardStats,
+    clearError: clearCacheError
+  } = useGlobalCache();
+  
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [conversationsError, setConversationsError] = useState<string | null>(null);
+  
+  // Estado combinado
+  const loading = cacheLoading || conversationsLoading;
+  const error = cacheError || conversationsError;
 
-  // Fetch all data
+  // Fetch all data (optimizado con caché)
   const fetchAllData = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setConversationsLoading(true);
+      setConversationsError(null);
+      clearCacheError();
       
-      const [
-        leadsData,
-        templatesData,
-        conversationsData,
-        statsData
-      ] = await Promise.all([
-        SupabaseService.getLeads(),
-        SupabaseService.getMessageTemplates(),
+      // Usar caché para datos principales y cargar conversaciones por separado
+      const [conversationsData] = await Promise.all([
         getConversationsWithDetails(),
-        SupabaseService.getDashboardStats()
+        refreshCache() // Esto actualiza leads, templates y stats usando caché
       ]);
 
-      setLeads(leadsData);
-      setTemplates(templatesData);
       setConversations(conversationsData);
-      setDashboardStats(statsData);
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setConversationsError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
-      setLoading(false);
+      setConversationsLoading(false);
     }
   };
 
-  // Fetch specific data types
+  // Fetch specific data types (usando caché)
   const fetchLeads = async () => {
-    try {
-      const data = await SupabaseService.getLeads();
-      setLeads(data);
-    } catch (err) {
-      console.error('Error fetching leads:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar leads');
-    }
+    await loadLeads(true); // Forzar recarga
   };
 
   const fetchTemplates = async () => {
-    try {
-      const data = await SupabaseService.getMessageTemplates();
-      setTemplates(data);
-    } catch (err) {
-      console.error('Error fetching templates:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar plantillas');
-    }
+    await loadTemplates(true); // Forzar recarga
   };
 
   const fetchConversations = async () => {
     try {
+      setConversationsLoading(true);
       const data = await getConversationsWithDetails();
       setConversations(data);
     } catch (err) {
       console.error('Error fetching conversations:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar conversaciones');
+      setConversationsError(err instanceof Error ? err.message : 'Error al cargar conversaciones');
+    } finally {
+      setConversationsLoading(false);
     }
   };
 
   const fetchDashboardStats = async () => {
-    try {
-      const data = await SupabaseService.getDashboardStats();
-      setDashboardStats(data);
-    } catch (err) {
-      console.error('Error fetching dashboard stats:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar estadísticas');
-    }
+    await loadDashboardStats(true); // Forzar recarga
   };
 
-  // Initial data load
+  // Initial data load (solo conversaciones, el caché se maneja automáticamente)
   useEffect(() => {
-    fetchAllData();
+    if (leads.length === 0 || templates.length === 0) {
+      // Si no hay datos en caché, usar fetchAllData
+      fetchAllData();
+    } else {
+      // Si hay datos en caché, solo cargar conversaciones
+      fetchConversations();
+    }
   }, []);
 
   // Utility functions for transforming data to match existing interfaces
@@ -180,6 +175,9 @@ export const useSupabaseData = () => {
     fetchDashboardStats,
     
     // Clear error
-    clearError: () => setError(null)
+    clearError: () => {
+      clearCacheError();
+      setConversationsError(null);
+    }
   };
 };

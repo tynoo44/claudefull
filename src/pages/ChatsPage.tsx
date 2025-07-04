@@ -36,13 +36,12 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   setMessage,
   setShowAISuggestion
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(384);
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
 
-  // Usar datos reales de Supabase
-  const { chats, templatesFormatted, error: dataError, fetchAllData, fetchConversations } = useSupabaseData();
+  // Usar datos reales de Supabase solo para templates (chats ahora se cargan progresivamente)
+  const { templatesFormatted, error: dataError, fetchAllData } = useSupabaseData();
 
   const insertTemplate = async (template: Template) => {
     setMessage(template.content);
@@ -62,12 +61,11 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   
   const handleChatUpdate = async (updatedChat: Chat) => {
     setLocalSelectedChat(updatedChat);
-    // Refetch conversations to update the sidebar
-    await fetchConversations();
+    // El ChatSidebar ahora maneja sus propias actualizaciones
   };
 
-  // Mostrar error si hay problemas con la carga de datos
-  if (dataError && !chats.length) {
+  // Mostrar error solo si hay problemas críticos con plantillas
+  if (dataError && !templatesFormatted.length) {
     return (
       <div className={`h-screen pt-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <ErrorState
@@ -90,10 +88,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
           {/* Chat List */}
           <ChatSidebar
             darkMode={darkMode}
-            chats={chats}
             selectedChat={selectedChat}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
             onChatSelect={handleChatSelect}
             onCollapseChange={setSidebarCollapsed}
             width={sidebarWidth}

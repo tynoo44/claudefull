@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { NotificationCenter } from '../Notifications/NotificationCenter';
 
 interface GlobalNavbarProps {
   darkMode: boolean;
@@ -100,12 +101,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
           </div>
 
           {/* Notifications */}
-          <button className={`p-2 rounded-lg transition-colors relative ${
-            darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-          }`}>
-            <Bell size={18} />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationCenter darkMode={darkMode} />
 
           {/* Dark Mode Toggle */}
           <button
