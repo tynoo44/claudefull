@@ -312,7 +312,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={() => setShowProcedenceDropdown(!showProcedenceDropdown)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
                 procedenceFilter
-                  ? 'bg-green-600 text-white border-green-600'
+                  ? 'bg-blue-600 text-white border-blue-600'
                   : darkMode
                     ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
                     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -332,7 +332,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   }}
                   className={`w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg ${
                     !procedenceFilter
-                      ? darkMode ? 'bg-green-600/20 text-green-400' : 'bg-green-50 text-green-600'
+                      ? darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-blue-600'
                       : darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
                   }`}
                 >
@@ -347,7 +347,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     }}
                     className={`w-full px-4 py-2 text-left text-sm transition-colors last:rounded-b-lg ${
                       procedenceFilter === procedence
-                        ? darkMode ? 'bg-green-600/20 text-green-400' : 'bg-green-50 text-green-600'
+                        ? darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-blue-600'
                         : darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
                     }`}
                   >

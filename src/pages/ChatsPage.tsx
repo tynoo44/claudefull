@@ -37,7 +37,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   setShowAISuggestion
 }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(384);
+  const [sidebarWidth, setSidebarWidth] = useState(480);
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
 
   // Usar datos reales de Supabase solo para templates (chats ahora se cargan progresivamente)
