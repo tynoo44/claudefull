@@ -20,10 +20,8 @@ const AppContent: React.FC = () => {
     selectedTemplate,
     message,
     showAISuggestion,
-    leads,
     chats,
     templates,
-    appointments,
     
     // Actions
     setShowProfileMenu,
@@ -76,9 +74,6 @@ const AppContent: React.FC = () => {
             isAuthenticated ? (
               <DashboardPage
                 darkMode={darkMode}
-                leads={leads}
-                chats={chats}
-                appointments={appointments}
               />
             ) : (
               <Navigate to="/auth" />

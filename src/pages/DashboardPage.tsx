@@ -10,43 +10,79 @@ import {
   Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Lead, Chat, Appointment } from '@/types';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 interface DashboardPageProps {
   darkMode: boolean;
-  leads: Lead[];
-  chats: Chat[];
-  appointments: Appointment[];
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
-  darkMode,
-  leads,
-  chats,
-  appointments
+  darkMode
 }) => {
   const navigate = useNavigate();
-  const { dashboardStats } = useSupabaseData();
+  const { dashboardStats, chats, leads } = useSupabaseData();
 
-  const totalLeads = dashboardStats.totalLeads || leads.length;
-  const activeConversations = dashboardStats.activeConversations || chats.filter(chat => chat.unread).length;
-  const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled').length;
-  const conversionRate = totalLeads > 0 ? Math.round((scheduledAppointments / totalLeads) * 100) : 0;
+  const totalLeads = dashboardStats.totalLeads;
+  const activeConversations = dashboardStats.activeConversations;
+  const totalMessages = dashboardStats.totalMessages;
+  const conversionRate = totalLeads > 0 ? Math.round((activeConversations / totalLeads) * 100) : 0;
 
-  const recentActivity = [
-    { id: 1, action: 'Nuevo lead agregado', detail: 'Gerard Santacreu', time: '2 min ago', type: 'lead' },
-    { id: 2, action: 'Mensaje recibido', detail: 'StekoVisuals respondió', time: '5 min ago', type: 'message' },
-    { id: 3, action: 'Cita agendada', detail: 'Carlos Ruiz - Mañana 10:00', time: '15 min ago', type: 'appointment' },
-    { id: 4, action: 'Lead cualificado', detail: 'María López marcada como interesada', time: '1 hora ago', type: 'qualified' }
-  ];
+  // Actividad reciente basada en datos reales
+  const recentActivity = React.useMemo(() => {
+    const activity: Array<{
+      id: string;
+      action: string;
+      detail: string;
+      time: string;
+      type: string;
+    }> = [];
+    
+    // Agregar actividad de leads recientes
+    const recentLeads = leads.slice(0, 2);
+    recentLeads.forEach(lead => {
+      activity.push({
+        id: `lead_${lead.id}`,
+        action: 'Nuevo lead agregado',
+        detail: lead.full_name || lead.username,
+        time: new Date(lead.created_at).toLocaleDateString('es-ES', { 
+          day: 'numeric', 
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        type: 'lead'
+      });
+    });
 
-  const funnelData = [
-    { stage: 'Leads Totales', count: totalLeads, percentage: 100, color: 'bg-blue-500' },
-    { stage: 'Cualificados', count: leads.filter(l => l.stage !== 'open').length, percentage: 75, color: 'bg-green-500' },
-    { stage: 'Interesados', count: leads.filter(l => l.stage === 'interested').length, percentage: 50, color: 'bg-yellow-500' },
-    { stage: 'Citas Agendadas', count: scheduledAppointments, percentage: 25, color: 'bg-purple-500' }
-  ];
+    // Agregar actividad de chats recientes
+    const recentChats = chats.slice(0, 2);
+    recentChats.forEach(chat => {
+      activity.push({
+        id: `chat_${chat.id}`,
+        action: 'Conversación actualizada',
+        detail: `${chat.leadName} - ${chat.status}`,
+        time: chat.time,
+        type: 'message'
+      });
+    });
+
+    return activity.slice(0, 4);
+  }, [leads, chats]);
+
+  const funnelData = React.useMemo(() => {
+    const statusCounts = dashboardStats.conversationsByStatus || {};
+    // const openConversations = statusCounts['open'] || statusCounts['Open'] || 0;
+    const qualifiedConversations = Object.entries(statusCounts)
+      .filter(([status]) => status !== 'open' && status !== 'Open')
+      .reduce((sum, [, count]) => sum + count, 0);
+
+    return [
+      { stage: 'Leads Totales', count: totalLeads, percentage: 100, color: 'bg-blue-500' },
+      { stage: 'Conversaciones Activas', count: activeConversations, percentage: totalLeads > 0 ? Math.round((activeConversations / totalLeads) * 100) : 0, color: 'bg-green-500' },
+      { stage: 'En Proceso', count: qualifiedConversations, percentage: totalLeads > 0 ? Math.round((qualifiedConversations / totalLeads) * 100) : 0, color: 'bg-yellow-500' },
+      { stage: 'Mensajes Enviados', count: totalMessages, percentage: totalLeads > 0 ? Math.round((totalMessages / totalLeads) * 10) : 0, color: 'bg-purple-500' }
+    ];
+  }, [totalLeads, activeConversations, totalMessages, dashboardStats.conversationsByStatus]);
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-6`}>
@@ -113,19 +149,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Citas Agendadas
+                  Total Mensajes
                 </p>
                 <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {scheduledAppointments}
+                  {totalMessages}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-purple-600" />
+                <MessageSquare className="w-6 h-6 text-purple-600" />
               </div>
             </div>
             <div className="mt-4 flex items-center">
               <ArrowUp className="w-4 h-4 text-green-500" />
-              <span className="text-sm text-green-500 ml-1">+15%</span>
+              <span className="text-sm text-green-500 ml-1">+25%</span>
               <span className={`text-sm ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 vs. último mes
               </span>

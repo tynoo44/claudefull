@@ -18,6 +18,7 @@ export interface Lead {
   notes: string | null;
   tags: string[];
   user_id: string | null;
+  status?: string;
 }
 
 export interface MessageTemplate {
@@ -82,6 +83,39 @@ export class SupabaseService {
     return data as Lead;
   }
 
+  static async createLead(leadData: Omit<Lead, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([leadData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Lead;
+  }
+
+  static async updateLead(id: string, leadData: Partial<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>) {
+    const { data, error } = await supabase
+      .from('leads')
+      .update(leadData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Lead;
+  }
+
+  static async deleteLead(id: string) {
+    const { error } = await supabase
+      .from('leads')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  }
+
   // Message Templates
   static async getMessageTemplates() {
     const { data, error } = await supabase
@@ -104,6 +138,61 @@ export class SupabaseService {
     return data as MessageTemplate[];
   }
 
+  static async createMessageTemplate(templateData: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>) {
+    const { data, error } = await supabase
+      .from('message_templates')
+      .insert([templateData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as MessageTemplate;
+  }
+
+  static async updateMessageTemplate(id: string, templateData: Partial<Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>>) {
+    const { data, error } = await supabase
+      .from('message_templates')
+      .update(templateData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as MessageTemplate;
+  }
+
+  static async deleteMessageTemplate(id: string) {
+    const { error } = await supabase
+      .from('message_templates')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  }
+
+  static async incrementTemplateUsage(id: string) {
+    // First get current usage count
+    const { data: current, error: fetchError } = await supabase
+      .from('message_templates')
+      .select('usage_count')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    
+    // Update with incremented value
+    const { data, error } = await supabase
+      .from('message_templates')
+      .update({ usage_count: (current.usage_count || 0) + 1 })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as MessageTemplate;
+  }
+
   // Conversations
   static async getConversations() {
     const { data, error } = await supabase
@@ -113,13 +202,51 @@ export class SupabaseService {
         leads (
           username,
           full_name,
-          profile_pic
+          profile_pic,
+          status
         )
       `)
       .order('updated_at', { ascending: false });
     
     if (error) throw error;
     return data;
+  }
+
+  // Get conversations with last message
+  static async getConversationsWithLastMessage() {
+    const { data: conversations, error: convError } = await supabase
+      .from('conversations')
+      .select(`
+        *,
+        leads (
+          username,
+          full_name,
+          profile_pic,
+          status
+        )
+      `)
+      .order('updated_at', { ascending: false });
+    
+    if (convError) throw convError;
+
+    // Get last message for each conversation
+    const conversationsWithMessages = await Promise.all(
+      conversations?.map(async (conv) => {
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('text, created_at, sender_type')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        return {
+          ...conv,
+          lastMessage: messages && messages.length > 0 ? messages[0] : null
+        };
+      }) || []
+    );
+
+    return conversationsWithMessages;
   }
 
   static async getConversationById(id: string) {
@@ -150,6 +277,17 @@ export class SupabaseService {
     
     if (error) throw error;
     return data as Message[];
+  }
+
+  static async sendMessage(messageData: Omit<Message, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert([messageData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Message;
   }
 
   // Dashboard stats

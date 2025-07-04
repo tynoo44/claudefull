@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Search, Plus, Star, Copy, Edit, Trash2, TrendingUp } from 'lucide-react';
+import { MessageSquare, Search, Plus, Star, Copy, Edit, Trash2, TrendingUp, X } from 'lucide-react';
 import { SupabaseService, MessageTemplate } from '../lib/supabase';
 
 interface TemplatesPageProps {
@@ -11,6 +11,18 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showModal, setShowModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
+  const [newTemplate, setNewTemplate] = useState({
+    name: '',
+    content: '',
+    category: '',
+    tone: '',
+    purpose: '',
+    variables: [] as string[],
+    is_favorite: false
+  });
+  const [variableInput, setVariableInput] = useState('');
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -36,9 +48,147 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
     return matchesSearch && matchesCategory;
   });
 
-  const copyToClipboard = (content: string) => {
-    navigator.clipboard.writeText(content);
-    // TODO: Añadir notificación
+  const copyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      alert('¡Plantilla copiada al portapapeles!');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+    }
+  };
+
+  const handleAddTemplate = async () => {
+    try {
+      const templateData = {
+        name: newTemplate.name,
+        content: newTemplate.content,
+        category: newTemplate.category || null,
+        tone: newTemplate.tone || null,
+        purpose: newTemplate.purpose || null,
+        variables: newTemplate.variables.length > 0 ? newTemplate.variables : null,
+        is_favorite: newTemplate.is_favorite,
+        usage_count: 0,
+        conversion_rate: null,
+        is_favorited: newTemplate.is_favorite,
+        usage_stats: null
+      };
+      
+      const createdTemplate = await SupabaseService.createMessageTemplate(templateData);
+      setTemplates(prev => [createdTemplate, ...prev]);
+      setShowModal(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error creating template:', error);
+      alert('Error al crear la plantilla');
+    }
+  };
+
+  const handleEditTemplate = async () => {
+    if (!editingTemplate) return;
+    
+    try {
+      const templateData = {
+        name: newTemplate.name,
+        content: newTemplate.content,
+        category: newTemplate.category || null,
+        tone: newTemplate.tone || null,
+        purpose: newTemplate.purpose || null,
+        variables: newTemplate.variables.length > 0 ? newTemplate.variables : null,
+        is_favorite: newTemplate.is_favorite,
+        is_favorited: newTemplate.is_favorite
+      };
+      
+      const updatedTemplate = await SupabaseService.updateMessageTemplate(editingTemplate.id, templateData);
+      setTemplates(prev => prev.map(template => template.id === editingTemplate.id ? updatedTemplate : template));
+      setShowModal(false);
+      setEditingTemplate(null);
+      resetForm();
+    } catch (error) {
+      console.error('Error updating template:', error);
+      alert('Error al actualizar la plantilla');
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return;
+    
+    try {
+      await SupabaseService.deleteMessageTemplate(templateId);
+      setTemplates(prev => prev.filter(template => template.id !== templateId));
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert('Error al eliminar la plantilla');
+    }
+  };
+
+  const toggleFavorite = async (template: MessageTemplate) => {
+    try {
+      const updatedTemplate = await SupabaseService.updateMessageTemplate(template.id, {
+        is_favorite: !template.is_favorite,
+        is_favorited: !template.is_favorite
+      });
+      setTemplates(prev => prev.map(t => t.id === template.id ? updatedTemplate : t));
+    } catch (error) {
+      console.error('Error updating favorite status:', error);
+    }
+  };
+
+  const openEditModal = (template: MessageTemplate) => {
+    setEditingTemplate(template);
+    setNewTemplate({
+      name: template.name,
+      content: template.content,
+      category: template.category || '',
+      tone: template.tone || '',
+      purpose: template.purpose || '',
+      variables: template.variables || [],
+      is_favorite: template.is_favorite || false
+    });
+    setShowModal(true);
+  };
+
+  const openAddModal = () => {
+    setEditingTemplate(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const resetForm = () => {
+    setNewTemplate({
+      name: '',
+      content: '',
+      category: '',
+      tone: '',
+      purpose: '',
+      variables: [],
+      is_favorite: false
+    });
+    setVariableInput('');
+  };
+
+  const addVariable = () => {
+    if (variableInput.trim() && !newTemplate.variables.includes(variableInput.trim())) {
+      setNewTemplate(prev => ({ ...prev, variables: [...prev.variables, variableInput.trim()] }));
+      setVariableInput('');
+    }
+  };
+
+  const removeVariable = (variableToRemove: string) => {
+    setNewTemplate(prev => ({ ...prev, variables: prev.variables.filter(variable => variable !== variableToRemove) }));
+  };
+
+  const useTemplateInChat = async (template: MessageTemplate) => {
+    try {
+      await SupabaseService.incrementTemplateUsage(template.id);
+      setTemplates(prev => prev.map(t => 
+        t.id === template.id 
+          ? { ...t, usage_count: (t.usage_count || 0) + 1 }
+          : t
+      ));
+      await copyToClipboard(template.content);
+    } catch (error) {
+      console.error('Error incrementing usage:', error);
+    }
   };
 
   if (loading) {
@@ -69,7 +219,10 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
                 Total de plantillas: {templates.length}
               </p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <button 
+              onClick={openAddModal}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            >
               <Plus className="h-4 w-4" />
               Nueva Plantilla
             </button>
@@ -134,9 +287,16 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
                     <h3 className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                       {template.name}
                     </h3>
-                    {template.is_favorite && (
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    )}
+                    <button
+                      onClick={() => toggleFavorite(template)}
+                      className={`p-1 rounded ${
+                        template.is_favorite 
+                          ? 'text-yellow-500' 
+                          : darkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-500'
+                      }`}
+                    >
+                      <Star className={`h-4 w-4 ${template.is_favorite ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
                   
                   {template.category && (
@@ -163,6 +323,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
                     <Copy className="h-4 w-4" />
                   </button>
                   <button
+                    onClick={() => openEditModal(template)}
                     className={`p-2 rounded-lg ${
                       darkMode 
                         ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300' 
@@ -173,6 +334,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
+                    onClick={() => handleDeleteTemplate(template.id)}
                     className={`p-2 rounded-lg ${
                       darkMode 
                         ? 'hover:bg-gray-700 text-red-400 hover:text-red-300' 
@@ -263,7 +425,10 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
 
               {/* Acciones */}
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => useTemplateInChat(template)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2"
+                >
                   <MessageSquare className="h-4 w-4" />
                   Usar en Chat
                 </button>
@@ -277,6 +442,193 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium mb-2">No se encontraron plantillas</p>
             <p>Intenta ajustar los filtros de búsqueda o crea una nueva plantilla</p>
+          </div>
+        )}
+
+        {/* Modal para Agregar/Editar Plantilla */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {editingTemplate ? 'Editar Plantilla' : 'Nueva Plantilla'}
+                </h3>
+                <button 
+                  onClick={() => setShowModal(false)}
+                  className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Nombre de la Plantilla *
+                  </label>
+                  <input
+                    type="text"
+                    value={newTemplate.name}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-blue-500`}
+                    placeholder="Nombre descriptivo para la plantilla"
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Contenido *
+                  </label>
+                  <textarea
+                    value={newTemplate.content}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, content: e.target.value }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-blue-500`}
+                    rows={6}
+                    placeholder="Escribe el contenido del mensaje aquí..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Categoría
+                    </label>
+                    <input
+                      type="text"
+                      value={newTemplate.category}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, category: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } focus:ring-2 focus:ring-blue-500`}
+                      placeholder="Ej: Apertura, Seguimiento, Cierre"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Tono
+                    </label>
+                    <input
+                      type="text"
+                      value={newTemplate.tone}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, tone: e.target.value }))}
+                      className={`w-full px-3 py-2 rounded-lg border ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } focus:ring-2 focus:ring-blue-500`}
+                      placeholder="Ej: Amigable, Directo, Profesional"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Propósito
+                  </label>
+                  <input
+                    type="text"
+                    value={newTemplate.purpose}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, purpose: e.target.value }))}
+                    className={`w-full px-3 py-2 rounded-lg border ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-blue-500`}
+                    placeholder="Describe el propósito de esta plantilla"
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Variables
+                  </label>
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={variableInput}
+                      onChange={(e) => setVariableInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addVariable()}
+                      className={`flex-1 px-3 py-2 rounded-lg border ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } focus:ring-2 focus:ring-blue-500`}
+                      placeholder="Agregar variable (ej: {nombre}, {empresa})"
+                    />
+                    <button
+                      type="button"
+                      onClick={addVariable}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {newTemplate.variables.map((variable, index) => (
+                      <span
+                        key={index}
+                        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                          darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {variable}
+                        <button
+                          type="button"
+                          onClick={() => removeVariable(variable)}
+                          className="ml-1 hover:bg-blue-200 rounded-full"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_favorite"
+                    checked={newTemplate.is_favorite}
+                    onChange={(e) => setNewTemplate(prev => ({ ...prev, is_favorite: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="is_favorite" className={`ml-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Marcar como favorita
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className={`flex-1 px-4 py-2 rounded-lg border ${
+                    darkMode 
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={editingTemplate ? handleEditTemplate : handleAddTemplate}
+                  disabled={!newTemplate.name.trim() || !newTemplate.content.trim()}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editingTemplate ? 'Actualizar' : 'Crear Plantilla'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

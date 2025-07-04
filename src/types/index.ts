@@ -24,14 +24,17 @@ export interface Lead {
 }
 
 export interface Chat {
-  id: number;
+  id: string;
   leadId: number;
   leadName: string;
   lastMessage: string;
   timestamp: string;
+  time: string;
   unread: boolean;
   avatar: string;
   status: 'online' | 'offline';
+  platform: 'instagram' | 'whatsapp' | 'facebook';
+  tags?: string[];
 }
 
 export interface Message {

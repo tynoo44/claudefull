@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ModalType, ViewMode, Page, Lead, Chat, Template, Appointment } from '@/types';
-import { sampleLeads, sampleChats, sampleTemplates, sampleAppointments } from '@/data/sampleData';
+import { ModalType, ViewMode, Page, Lead, Chat, Template } from '@/types';
 
 export const useAppState = () => {
   // Core app state
@@ -23,11 +22,10 @@ export const useAppState = () => {
   const [message, setMessage] = useState('');
   const [showAISuggestion, setShowAISuggestion] = useState(false);
   
-  // Data state
-  const [leads, setLeads] = useState<Lead[]>(sampleLeads);
-  const [chats, setChats] = useState<Chat[]>(sampleChats);
-  const [templates] = useState<Template[]>(sampleTemplates);
-  const [appointments] = useState<Appointment[]>(sampleAppointments);
+  // Data state - Se eliminan los datos mock, ahora se usan los hooks de Supabase
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [templates] = useState<Template[]>([]);
 
   // Actions
   const toggleDarkMode = useCallback(() => {
@@ -100,7 +98,6 @@ export const useAppState = () => {
     leads,
     chats,
     templates,
-    appointments,
     
     // Actions
     setCurrentPage,

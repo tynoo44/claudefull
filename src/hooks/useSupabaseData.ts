@@ -28,7 +28,7 @@ export const useSupabaseData = () => {
       ] = await Promise.all([
         SupabaseService.getLeads(),
         SupabaseService.getMessageTemplates(),
-        SupabaseService.getConversations(),
+        SupabaseService.getConversationsWithLastMessage(),
         SupabaseService.getDashboardStats()
       ]);
 
@@ -67,7 +67,7 @@ export const useSupabaseData = () => {
 
   const fetchConversations = async () => {
     try {
-      const data = await SupabaseService.getConversations();
+      const data = await SupabaseService.getConversationsWithLastMessage();
       setConversations(data);
     } catch (err) {
       console.error('Error fetching conversations:', err);
@@ -92,19 +92,32 @@ export const useSupabaseData = () => {
 
   // Utility functions for transforming data to match existing interfaces
   const getChatsFromConversations = () => {
-    return conversations.map(conv => ({
-      id: conv.id,
-      leadName: conv.full_name || conv.username || 'Usuario desconocido',
-      lastMessage: 'Cargando...', // TODO: Get actual last message
-      time: new Date(conv.updated_at).toLocaleTimeString('es-ES', { 
+    return conversations.map(conv => {
+      const leadData = (conv as any).leads;
+      const lastMessage = (conv as any).lastMessage;
+      
+      const time = lastMessage ? new Date(lastMessage.created_at).toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
         minute: '2-digit' 
-      }),
-      unread: conv.status === 'open',
-      avatar: conv.profile_pic || undefined,
-      status: conv.status,
-      platform: 'instagram' as const
-    }));
+      }) : new Date(conv.updated_at).toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      return {
+        id: conv.id,
+        leadId: parseInt(conv.lead_id) || 1,
+        leadName: leadData?.full_name || leadData?.username || 'Usuario desconocido',
+        lastMessage: lastMessage?.text || 'Sin mensajes',
+        timestamp: lastMessage ? lastMessage.created_at : conv.updated_at,
+        time: time,
+        unread: conv.status === 'open',
+        avatar: leadData?.profile_pic || '👤',
+        status: conv.status === 'open' ? 'online' as const : 'offline' as const,
+        platform: 'instagram' as const,
+        tags: leadData?.tags || []
+      };
+    });
   };
 
   const getTemplatesFormatted = () => {
