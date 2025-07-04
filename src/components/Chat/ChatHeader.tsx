@@ -24,9 +24,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat }
     }`} onClick={handleProfileClick}>
       <div className="flex items-center space-x-3">
         <div className="relative">
-          <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-            <span className="text-lg">{selectedChat.avatar}</span>
-          </div>
+          <img src={selectedChat.avatar} alt={selectedChat.leadName} className="w-12 h-12 rounded-full object-cover" />
           <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 ${
             selectedChat.isOnline ? 'bg-green-500' : 'bg-gray-400'
           } ${darkMode ? 'border-gray-800' : 'border-white'}`} />

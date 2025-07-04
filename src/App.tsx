@@ -58,7 +58,7 @@ const AppContent: React.FC = () => {
   }, [showProfileMenu, setShowProfileMenu]);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`h-screen flex flex-col ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {isAuthenticated && (
         <GlobalNavbar
           darkMode={darkMode}
@@ -70,7 +70,7 @@ const AppContent: React.FC = () => {
         />
       )}
       
-      <div className={isAuthenticated ? "pt-16" : ""}>
+      <div className="flex-1 overflow-y-auto">
         <Routes>
           <Route path="/auth" element={
             isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />

@@ -72,7 +72,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="flex-1 mt-16 overflow-hidden">
+      <div className="flex-1 pt-16 overflow-hidden">
         <ResizableLayout darkMode={darkMode} sidebarCollapsed={sidebarCollapsed}>
           {/* Chat List */}
           <ChatSidebar
