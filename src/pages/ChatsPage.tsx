@@ -38,9 +38,11 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(384);
+  const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
 
   // Usar datos reales de Supabase
-  const { chats, templatesFormatted, error: dataError, fetchAllData } = useSupabaseData();
+  const { chats, templatesFormatted, error: dataError, fetchAllData, fetchConversations } = useSupabaseData();
 
   const insertTemplate = async (template: Template) => {
     setMessage(template.content);
@@ -55,6 +57,13 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
 
   const handleChatSelect = (chat: Chat) => {
     selectChat(chat);
+    setLocalSelectedChat(chat);
+  };
+  
+  const handleChatUpdate = async (updatedChat: Chat) => {
+    setLocalSelectedChat(updatedChat);
+    // Refetch conversations to update the sidebar
+    await fetchConversations();
   };
 
   // Mostrar error si hay problemas con la carga de datos
@@ -73,7 +82,11 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="flex-1 pt-16 overflow-hidden">
-        <ResizableLayout darkMode={darkMode} sidebarCollapsed={sidebarCollapsed}>
+        <ResizableLayout 
+          darkMode={darkMode} 
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarWidthChange={setSidebarWidth}
+        >
           {/* Chat List */}
           <ChatSidebar
             darkMode={darkMode}
@@ -83,17 +96,19 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             onSearchChange={setSearchTerm}
             onChatSelect={handleChatSelect}
             onCollapseChange={setSidebarCollapsed}
+            width={sidebarWidth}
           />
 
           {/* Chat Window */}
           <ChatInterface
             darkMode={darkMode}
-            selectedChat={selectedChat}
+            selectedChat={localSelectedChat || selectedChat}
             message={message}
             showAISuggestion={showAISuggestion}
             onMessageChange={setMessage}
             onToggleAISuggestion={() => setShowAISuggestion(!showAISuggestion)}
             onTemplateInsert={(template) => setSelectedTemplate(template)}
+            onChatUpdate={handleChatUpdate}
           />
 
           {/* Templates */}

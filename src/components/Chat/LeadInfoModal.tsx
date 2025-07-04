@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Tag, Save, Plus, User, Instagram, Hash, Calendar, FileText, ChevronDown } from 'lucide-react';
 import { Lead } from '../../lib/supabase';
 import { SupabaseService } from '../../lib/supabase';
+import { getStatusClasses } from '../../utils/statusUtils';
 
 interface LeadInfoModalProps {
   darkMode: boolean;
@@ -12,11 +13,17 @@ interface LeadInfoModalProps {
 }
 
 const STATUS_OPTIONS = [
-  'open',
-  'Follow UP',
+  'Open',
   'Conectar y Cualificar',
   'Situación Actual',
-  'Situación Deseada'
+  'Situación Deseada',
+  'Obstáculo',
+  'Compromiso',
+  'Oferta',
+  'Agenda',
+  'Follow Up',
+  'Freeze',
+  'Lose'
 ];
 
 export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
@@ -35,7 +42,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
     if (lead) {
       setEditedLead({
         ...lead,
-        status: lead.status || 'open',
+        status: lead.status || 'Open',
         tags: lead.tags || [],
         notes: lead.notes || ''
       });
@@ -77,7 +84,8 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
       const updatedLead = await SupabaseService.updateLead(editedLead.id, {
         status: editedLead.status,
         tags: editedLead.tags,
-        notes: editedLead.notes
+        notes: editedLead.notes,
+        procedence: editedLead.procedence
       });
       
       if (onUpdate) {
@@ -175,53 +183,75 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
             </div>
           </div>
 
-          {/* Status Section */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Estado
-            </label>
-            <div className="relative">
-              <button
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                className={`w-full px-4 py-2 rounded-lg border text-left flex items-center justify-between transition-colors ${
+          {/* Status and Procedence Section */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Estado
+              </label>
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className={`w-full px-4 py-2 rounded-lg border text-left flex items-center justify-between transition-colors ${
+                    getStatusClasses(editedLead?.status || 'Open', darkMode)
+                  }`}
+                >
+                  <span>{editedLead.status}</span>
+                  <ChevronDown className={`w-4 h-4 ${
+                    showStatusDropdown ? 'rotate-180' : ''
+                  } transition-transform`} />
+                </button>
+                
+                {showStatusDropdown && (
+                  <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg border shadow-lg z-10 ${
+                    darkMode
+                      ? 'bg-gray-700 border-gray-600'
+                      : 'bg-white border-gray-200'
+                  }`}>
+                    {STATUS_OPTIONS.map(status => (
+                      <button
+                        key={status}
+                        onClick={() => handleStatusChange(status)}
+                        className={`w-full px-4 py-2 text-left transition-colors ${
+                          editedLead.status === status
+                            ? darkMode
+                              ? 'bg-blue-600/20 text-blue-400'
+                              : 'bg-blue-50 text-blue-600'
+                            : darkMode
+                              ? 'hover:bg-gray-600 text-gray-300'
+                              : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Procedencia
+              </label>
+              <select
+                value={editedLead.procedence || ''}
+                onChange={(e) => setEditedLead({ ...editedLead, procedence: e.target.value as 'Outbound' | 'Inbound' | 'CTA' | '' })}
+                className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                   darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
-                    : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-                }`}
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
               >
-                <span>{editedLead.status}</span>
-                <ChevronDown className={`w-4 h-4 ${
-                  showStatusDropdown ? 'rotate-180' : ''
-                } transition-transform`} />
-              </button>
-              
-              {showStatusDropdown && (
-                <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg border shadow-lg z-10 ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600'
-                    : 'bg-white border-gray-200'
-                }`}>
-                  {STATUS_OPTIONS.map(status => (
-                    <button
-                      key={status}
-                      onClick={() => handleStatusChange(status)}
-                      className={`w-full px-4 py-2 text-left transition-colors ${
-                        editedLead.status === status
-                          ? darkMode
-                            ? 'bg-blue-600/20 text-blue-400'
-                            : 'bg-blue-50 text-blue-600'
-                          : darkMode
-                            ? 'hover:bg-gray-600 text-gray-300'
-                            : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              )}
+                <option value="">Sin asignar</option>
+                <option value="Outbound">Outbound</option>
+                <option value="Inbound">Inbound</option>
+                <option value="CTA">CTA</option>
+              </select>
             </div>
           </div>
 

@@ -22,7 +22,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     full_name: '',
     notes: '',
     tags: [] as string[],
-    status: 'open'
+    status: 'Open',
+    procedence: ''
   });
   const [tagInput, setTagInput] = useState('');
 
@@ -33,7 +34,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         full_name: editingLead.full_name || '',
         notes: editingLead.notes || '',
         tags: editingLead.tags || [],
-        status: editingLead.status || 'open'
+        status: editingLead.status || 'Open',
+        procedence: editingLead.procedence || ''
       });
     } else {
       setFormData({
@@ -41,7 +43,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
         full_name: '',
         notes: '',
         tags: [],
-        status: 'open'
+        status: 'Open',
+        procedence: ''
       });
     }
   }, [editingLead]);
@@ -140,28 +143,58 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             />
           </div>
 
-          {/* Status */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Estado
-            </label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-              className={`w-full px-4 py-2 rounded-lg border transition-all ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
-                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-              } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-            >
-              <option value="open">Nuevo</option>
-              <option value="Follow UP">Seguimiento</option>
-              <option value="Conectar y Cualificar">Cualificar</option>
-              <option value="Situación Actual">Situación Actual</option>
-              <option value="Situación Deseada">Situación Deseada</option>
-            </select>
+          {/* Status and Procedence */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Estado
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                className={`w-full px-4 py-2 rounded-lg border transition-all ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                <option value="Open">Open</option>
+                <option value="Conectar y Cualificar">Conectar y Cualificar</option>
+                <option value="Situación Actual">Situación Actual</option>
+                <option value="Situación Deseada">Situación Deseada</option>
+                <option value="Obstáculo">Obstáculo</option>
+                <option value="Compromiso">Compromiso</option>
+                <option value="Oferta">Oferta</option>
+                <option value="Agenda">Agenda</option>
+                <option value="Follow Up">Follow Up</option>
+                <option value="Freeze">Freeze</option>
+                <option value="Lose">Lose</option>
+              </select>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Procedencia
+              </label>
+              <select
+                value={formData.procedence}
+                onChange={(e) => setFormData(prev => ({ ...prev, procedence: e.target.value }))}
+                className={`w-full px-4 py-2 rounded-lg border transition-all ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+              >
+                <option value="">Sin asignar</option>
+                <option value="Outbound">Outbound</option>
+                <option value="Inbound">Inbound</option>
+                <option value="CTA">CTA</option>
+              </select>
+            </div>
           </div>
 
           {/* Notes */}

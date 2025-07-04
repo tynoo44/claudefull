@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Target, Calendar, CheckCircle } from 'lucide-react';
+import { Users, Target, Calendar, CheckCircle, AlertTriangle, Handshake, DollarSign, Clock, ArrowUp, Snowflake, X } from 'lucide-react';
 import { Lead } from '../../lib/supabase';
 import { LeadCard } from './LeadCard';
 
@@ -18,11 +18,17 @@ interface KanbanColumn {
 }
 
 const kanbanColumns: KanbanColumn[] = [
-  { id: 'open', title: 'Nuevos', icon: Users, color: 'blue' },
-  { id: 'Follow UP', title: 'Seguimiento', icon: UserCheck, color: 'yellow' },
-  { id: 'Conectar y Cualificar', title: 'Cualificar', icon: Target, color: 'purple' },
-  { id: 'Situación Actual', title: 'Situación Actual', icon: Calendar, color: 'orange' },
-  { id: 'Situación Deseada', title: 'Situación Deseada', icon: CheckCircle, color: 'green' }
+  { id: 'Open', title: 'Open', icon: Users, color: 'green' },
+  { id: 'Conectar y Cualificar', title: 'Conectar y Cualificar', icon: Target, color: 'blue' },
+  { id: 'Situación Actual', title: 'Situación Actual', icon: Calendar, color: 'purple' },
+  { id: 'Situación Deseada', title: 'Situación Deseada', icon: CheckCircle, color: 'orange' },
+  { id: 'Obstáculo', title: 'Obstáculo', icon: AlertTriangle, color: 'red' },
+  { id: 'Compromiso', title: 'Compromiso', icon: Handshake, color: 'yellow' },
+  { id: 'Oferta', title: 'Oferta', icon: DollarSign, color: 'indigo' },
+  { id: 'Agenda', title: 'Agenda', icon: Clock, color: 'teal' },
+  { id: 'Follow Up', title: 'Follow Up', icon: ArrowUp, color: 'yellow' },
+  { id: 'Freeze', title: 'Freeze', icon: Snowflake, color: 'gray' },
+  { id: 'Lose', title: 'Lose', icon: X, color: 'red' }
 ];
 
 export const LeadsKanban: React.FC<LeadsKanbanProps> = ({
@@ -32,7 +38,7 @@ export const LeadsKanban: React.FC<LeadsKanbanProps> = ({
   onDeleteLead
 }) => {
   const getLeadsByStatus = (status: string) => {
-    return leads.filter(lead => (lead.status || 'open') === status);
+    return leads.filter(lead => (lead.status || 'Open') === status);
   };
 
   const getColumnColor = (color: string, darkMode: boolean) => {
@@ -41,7 +47,11 @@ export const LeadsKanban: React.FC<LeadsKanbanProps> = ({
       yellow: darkMode ? 'from-yellow-900/20 to-yellow-800/20' : 'from-yellow-50 to-yellow-100',
       purple: darkMode ? 'from-purple-900/20 to-purple-800/20' : 'from-purple-50 to-purple-100',
       orange: darkMode ? 'from-orange-900/20 to-orange-800/20' : 'from-orange-50 to-orange-100',
-      green: darkMode ? 'from-green-900/20 to-green-800/20' : 'from-green-50 to-green-100'
+      green: darkMode ? 'from-green-900/20 to-green-800/20' : 'from-green-50 to-green-100',
+      red: darkMode ? 'from-red-900/20 to-red-800/20' : 'from-red-50 to-red-100',
+      indigo: darkMode ? 'from-indigo-900/20 to-indigo-800/20' : 'from-indigo-50 to-indigo-100',
+      teal: darkMode ? 'from-teal-900/20 to-teal-800/20' : 'from-teal-50 to-teal-100',
+      gray: darkMode ? 'from-gray-900/20 to-gray-800/20' : 'from-gray-50 to-gray-100'
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
@@ -52,13 +62,17 @@ export const LeadsKanban: React.FC<LeadsKanbanProps> = ({
       yellow: darkMode ? 'text-yellow-400' : 'text-yellow-600',
       purple: darkMode ? 'text-purple-400' : 'text-purple-600',
       orange: darkMode ? 'text-orange-400' : 'text-orange-600',
-      green: darkMode ? 'text-green-400' : 'text-green-600'
+      green: darkMode ? 'text-green-400' : 'text-green-600',
+      red: darkMode ? 'text-red-400' : 'text-red-600',
+      indigo: darkMode ? 'text-indigo-400' : 'text-indigo-600',
+      teal: darkMode ? 'text-teal-400' : 'text-teal-600',
+      gray: darkMode ? 'text-gray-400' : 'text-gray-600'
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
   return (
-    <div className="grid grid-cols-5 gap-4 h-full">
+    <div className="grid grid-cols-11 gap-2 h-full overflow-x-auto">
       {kanbanColumns.map((column) => {
         const columnLeads = getLeadsByStatus(column.id);
         const Icon = column.icon;

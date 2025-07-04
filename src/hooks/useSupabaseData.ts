@@ -113,9 +113,9 @@ export const useSupabaseData = () => {
         timestamp: lastMessage ? lastMessage.created_at : conv.updated_at,
         time: time,
         unread: conv.unreadCount > 0,
-        avatar: leadData?.profile_pic || '👤',
-        status: leadData?.status || 'open',
-        isOnline: conv.status === 'open',
+        avatar: leadData?.profile_pic || `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23374151" width="100" height="100"/><text fill="%239CA3AF" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${(leadData?.full_name || leadData?.username || 'U').charAt(0).toUpperCase()}</text></svg>`,
+        status: leadData?.status || 'Open',
+        isOnline: true,
         platform: 'instagram' as const,
         tags: leadData?.tags || [],
         leadData: leadData,
@@ -143,8 +143,8 @@ export const useSupabaseData = () => {
       id: parseInt(lead.id), // Convert UUID to number for compatibility
       name: lead.full_name || lead.username,
       username: lead.username,
-      status: 'open' as const, // Default status
-      stage: 'open' as const, // Default stage
+      status: (lead.status || 'Open') as any,
+      stage: (lead.status || 'Open') as any,
       phone: '', // Not available in current schema
       email: '', // Not available in current schema
       lastContact: new Date(lead.updated_at),

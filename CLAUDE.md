@@ -82,10 +82,11 @@ const user = await AuthService.getCurrentUser();
 
 ### Database Schema
 Supabase tables with optimized structure:
-- **leads**: Lead information with status, notes, tags (migrated status from conversations)
+- **leads**: Lead information with status, notes, tags, and procedence (migrated status from conversations)
 - **conversations**: Chat threads linked to leads
 - **messages**: Individual messages with sender type and timestamps
 - **message_templates**: Reusable message templates with usage tracking
+- **procedence**: New field in leads table with values: 'Outbound', 'Inbound', 'CTA' (nullable)
 
 ## Authentication Setup
 
@@ -213,9 +214,10 @@ className={`${
 ### ✅ Fully Implemented (Production Ready)
 - **Authentication**: Complete Supabase Auth with Google OAuth, email/password, and session management
 - **Dashboard**: Real KPI metrics from Supabase (92 leads, 406 messages, etc.)
-- **Lead Management**: Complete CRUD with status tracking, notes, tags, and search
+- **Lead Management**: Complete CRUD with status tracking, notes, tags, procedence filtering, and search
+- **Procedence System**: Lead source tracking (Outbound, Inbound, CTA) with filtering and display
 - **Template System**: Full CRUD with categories, usage tracking, favorites, and variables
-- **Chat Interface**: Modularized real-time messaging with resizable columns
+- **Chat Interface**: Modularized real-time messaging with resizable columns and procedence display
 - **Global Navigation**: React Router with user profile display and dark mode
 - **Database Integration**: Optimized Supabase schema with RLS policies
 - **Protected Routes**: All routes require authentication with automatic redirect
@@ -231,7 +233,8 @@ className={`${
 - Performance insights from real usage data
 
 ### Business Logic
-- **Lead Status**: 'open', 'Follow UP', 'Conectar y Cualificar', 'Situación Actual', 'Situación Deseada'
+- **Lead Status**: 'Open', 'Conectar y Cualificar', 'Situación Actual', 'Situación Deseada', 'Obstáculo', 'Compromiso', 'Oferta', 'Agenda', 'Follow Up', 'Freeze', 'Lose'
+- **Lead Procedence**: 'Outbound', 'Inbound', 'CTA' (nullable, manually assigned)
 - **Template Categories**: Dynamic categories from database ('Apertura', 'Seguimiento', 'Objeciones', 'Cierre')
 - **Message Flow**: Real conversation threads with sender type tracking
 - **Usage Analytics**: Template usage counts and performance metrics
@@ -291,10 +294,11 @@ try {
 - **Authentication System**: Full Supabase Auth with Google OAuth and email/password
 - **Component Modularization**: Chat interface split into reusable components
 - **CRUD Operations**: Full Create, Read, Update, Delete for leads and templates
+- **Procedence Implementation**: Added procedence field to leads with filtering and display
 - **Database Optimization**: Fixed UUID type conversions and RLS policies
 - **Real-time Messaging**: Functional chat system with message persistence
 - **Template Management**: Advanced template system with usage tracking and variables
-- **Search & Filtering**: Comprehensive search and filter capabilities
+- **Search & Filtering**: Comprehensive search and filter capabilities including procedence
 - **Type Safety**: Complete TypeScript coverage with proper error handling
 - **UI/UX Polish**: Professional interface with dark mode and responsive design
 

@@ -7,7 +7,7 @@ SetterAI es una plataforma SaaS completa diseñada específicamente para appoint
 - **🔐 Autenticación Completa** - Login con Google OAuth y email/contraseña via Supabase
 - **📊 Dashboard en Tiempo Real** - KPIs y métricas actualizadas desde Supabase
 - **💬 Chat Unificado** - Interfaz de mensajería con integración de plantillas
-- **👥 Gestión de Leads** - CRM completo con estados, etiquetas y notas
+- **👥 Gestión de Leads** - CRM completo con estados, etiquetas, notas y procedencia
 - **📝 Sistema de Plantillas** - Mensajes reutilizables con variables y tracking
 - **🌓 Modo Oscuro/Claro** - Interfaz adaptable a preferencias del usuario
 
@@ -62,6 +62,9 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.message_templates ENABLE ROW LEVEL SECURITY;
 
+-- Agregar columna procedence a leads (si no existe)
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS procedence TEXT CHECK (procedence IN ('Outbound', 'Inbound', 'CTA'));
+
 -- Políticas básicas de lectura para usuarios autenticados
 CREATE POLICY "Users can read own data" ON public.users
   FOR SELECT USING (auth.uid() = id);
@@ -96,18 +99,25 @@ La aplicación estará disponible en `http://localhost:5173`
 src/
 ├── components/           # Componentes reutilizables
 │   ├── Layout/          # GlobalNavbar, Modal
-│   └── Chat/            # Componentes modulares de chat
+│   ├── Chat/            # Componentes modulares de chat
+│   │   ├── ChatHeader.tsx    # Header con procedencia y status
+│   │   ├── LeadInfoModal.tsx # Modal de información del lead
+│   │   └── ...          # Otros componentes de chat
+│   └── Leads/           # Componentes de gestión de leads
+│       ├── LeadsFilters.tsx  # Filtros con procedencia
+│       ├── LeadModal.tsx     # Modal de leads
+│       └── ...          # Otros componentes de leads
 ├── pages/               # Páginas de la aplicación
 │   ├── AuthPage.tsx     # Login/registro
 │   ├── DashboardPage.tsx # Panel principal
 │   ├── ChatsPage.tsx    # Interfaz de mensajería
-│   ├── LeadsPage.tsx    # Gestión de leads
+│   ├── LeadsPage.tsx    # Gestión de leads con procedencia
 │   └── TemplatesPage.tsx # Plantillas de mensajes
 ├── hooks/               # Custom hooks
 │   ├── useAppState.ts   # Estado global con autenticación
 │   └── useSupabaseData.ts # Integración datos Supabase
 ├── lib/                 # Servicios y configuración
-│   ├── supabase.ts      # Cliente Supabase
+│   ├── supabase.ts      # Cliente Supabase con tipos Lead
 │   ├── auth.ts          # Servicio de autenticación
 │   └── supabase-functions.ts # Funciones de datos
 ├── types/               # Definiciones TypeScript
@@ -132,10 +142,11 @@ src/
 
 ### Gestión de Leads
 - CRUD completo (Crear, Leer, Actualizar, Eliminar)
-- Estados personalizables
+- Estados personalizables (Open, Conectar y Cualificar, etc.)
+- Sistema de procedencia (Outbound, Inbound, CTA)
 - Sistema de etiquetas
 - Notas y seguimiento
-- Búsqueda y filtros avanzados
+- Búsqueda y filtros avanzados con procedencia
 
 ### Sistema de Plantillas
 - Categorías dinámicas

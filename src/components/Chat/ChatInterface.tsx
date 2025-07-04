@@ -17,6 +17,7 @@ interface ChatInterfaceProps {
   onMessageChange: (message: string) => void;
   onToggleAISuggestion: () => void;
   onTemplateInsert?: (template: Template) => void;
+  onChatUpdate?: (updatedChat: Chat) => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -26,7 +27,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   showAISuggestion,
   onMessageChange,
   onToggleAISuggestion,
-  onTemplateInsert
+  onTemplateInsert,
+  onChatUpdate
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,7 +117,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <ChatHeader darkMode={darkMode} selectedChat={selectedChat} />
+      <ChatHeader darkMode={darkMode} selectedChat={selectedChat} onChatUpdate={onChatUpdate} />
       
       {error ? (
         <div className={`flex-1 flex items-center justify-center p-4 ${

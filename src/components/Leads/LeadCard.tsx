@@ -1,7 +1,9 @@
-import React from 'react';
-import { MessageCircle, Calendar, Edit, Trash2, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageCircle, Calendar, Trash2, MoreVertical, Hash } from 'lucide-react';
 import { Lead } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { LeadInfoModal } from '../Chat/LeadInfoModal';
+import { getStatusClasses } from '../../utils/statusUtils';
 
 interface LeadCardProps {
   darkMode: boolean;
@@ -19,16 +21,25 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   onDelete
 }) => {
   const navigate = useNavigate();
+  const [showLeadModal, setShowLeadModal] = useState(false);
   
-  const handleChatClick = () => {
+  const handleChatClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     navigate('/chats');
+  };
+  
+  const handleCardClick = () => {
+    setShowLeadModal(true);
   };
 
   if (viewMode === 'kanban') {
     return (
-      <div className={`p-4 rounded-lg border transition-all cursor-move hover:shadow-md ${
-        darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
+      <>
+        <div 
+          onClick={handleCardClick}
+          className={`p-4 rounded-lg border transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] ${
+            darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             {lead.profile_pic ? (
@@ -51,9 +62,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({
               </p>
             </div>
           </div>
-          <button className={`p-1 rounded transition-colors ${
-            darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-          }`}>
+          <button 
+            onClick={(e) => e.stopPropagation()}
+            className={`p-1 rounded transition-colors ${
+              darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+            }`}>
             <MoreVertical size={16} className="text-gray-400" />
           </button>
         </div>
@@ -67,9 +80,10 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         {lead.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {lead.tags.slice(0, 2).map((tag, index) => (
-              <span key={index} className={`text-xs px-2 py-1 rounded-full ${
+              <span key={index} className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
                 darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
               }`}>
+                <Hash className="w-3 h-3" />
                 {tag}
               </span>
             ))}
@@ -80,6 +94,14 @@ export const LeadCard: React.FC<LeadCardProps> = ({
             )}
           </div>
         )}
+        
+        <div className="mb-2">
+          <span className={`text-xs px-2 py-1 rounded-full border ${
+            getStatusClasses(lead.status || 'Open', darkMode)
+          }`}>
+            {lead.status || 'Open'}
+          </span>
+        </div>
         
         <div className="flex items-center justify-between text-xs">
           <span className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -100,29 +122,34 @@ export const LeadCard: React.FC<LeadCardProps> = ({
             >
               <MessageCircle size={14} />
             </button>
-            <button
-              onClick={() => onEdit(lead)}
-              className={`p-1.5 rounded transition-colors ${
-                darkMode 
-                  ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
-                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Edit size={14} />
-            </button>
           </div>
         </div>
       </div>
+      
+      <LeadInfoModal
+        darkMode={darkMode}
+        lead={lead}
+        isOpen={showLeadModal}
+        onClose={() => setShowLeadModal(false)}
+        onUpdate={(updatedLead) => {
+          onEdit(updatedLead);
+          setShowLeadModal(false);
+        }}
+      />
+    </>
     );
   }
 
   // List View
   return (
-    <tr className={`border-b transition-colors hover:bg-opacity-50 ${
-      darkMode 
-        ? 'border-gray-700 hover:bg-gray-800' 
-        : 'border-gray-200 hover:bg-gray-50'
-    }`}>
+    <>
+      <tr 
+        onClick={handleCardClick}
+        className={`border-b transition-colors hover:bg-opacity-50 cursor-pointer ${
+          darkMode 
+            ? 'border-gray-700 hover:bg-gray-800' 
+            : 'border-gray-200 hover:bg-gray-50'
+        }`}>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           {lead.profile_pic ? (
@@ -147,20 +174,19 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          lead.status === 'open' 
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+          getStatusClasses(lead.status || 'Open', darkMode)
         }`}>
-          {lead.status || 'open'}
+          {lead.status || 'Open'}
         </span>
       </td>
       <td className="px-6 py-4">
         <div className="flex flex-wrap gap-1">
           {lead.tags.map((tag, index) => (
-            <span key={index} className={`text-xs px-2 py-1 rounded-full ${
+            <span key={index} className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
               darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
             }`}>
+              <Hash className="w-3 h-3" />
               {tag}
             </span>
           ))}
@@ -182,17 +208,10 @@ export const LeadCard: React.FC<LeadCardProps> = ({
             <MessageCircle size={16} />
           </button>
           <button
-            onClick={() => onEdit(lead)}
-            className={`p-2 rounded-lg transition-colors ${
-              darkMode 
-                ? 'hover:bg-gray-700 text-gray-400 hover:text-white' 
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            onClick={() => onDelete(lead.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(lead.id);
+            }}
             className={`p-2 rounded-lg transition-colors ${
               darkMode 
                 ? 'hover:bg-gray-700 text-red-400 hover:text-red-300' 
@@ -204,5 +223,17 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         </div>
       </td>
     </tr>
+    
+    <LeadInfoModal
+      darkMode={darkMode}
+      lead={lead}
+      isOpen={showLeadModal}
+      onClose={() => setShowLeadModal(false)}
+      onUpdate={(updatedLead) => {
+        onEdit(updatedLead);
+        setShowLeadModal(false);
+      }}
+    />
+  </>
   );
 };

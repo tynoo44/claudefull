@@ -154,7 +154,6 @@ export async function createConversationForLead(leadId: string) {
       .insert([
         {
           lead_id: leadId,
-          status: 'open'
         }
       ])
       .select()

@@ -6,10 +6,12 @@ interface LeadsFiltersProps {
   searchTerm: string;
   selectedTags: string[];
   selectedStatus: string;
+  selectedProcedence: string;
   availableTags: string[];
   onSearchChange: (term: string) => void;
   onTagToggle: (tag: string) => void;
   onStatusChange: (status: string) => void;
+  onProcedenceChange: (procedence: string) => void;
   onClearFilters: () => void;
 }
 
@@ -18,26 +20,41 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
   searchTerm,
   selectedTags,
   selectedStatus,
+  selectedProcedence,
   availableTags,
   onSearchChange,
   onTagToggle,
   onStatusChange,
+  onProcedenceChange,
   onClearFilters
 }) => {
   const statuses = [
     { value: 'all', label: 'Todos los estados' },
-    { value: 'open', label: 'Nuevos' },
-    { value: 'Follow UP', label: 'Seguimiento' },
-    { value: 'Conectar y Cualificar', label: 'Cualificar' },
+    { value: 'Open', label: 'Open' },
+    { value: 'Conectar y Cualificar', label: 'Conectar y Cualificar' },
     { value: 'Situación Actual', label: 'Situación Actual' },
-    { value: 'Situación Deseada', label: 'Situación Deseada' }
+    { value: 'Situación Deseada', label: 'Situación Deseada' },
+    { value: 'Obstáculo', label: 'Obstáculo' },
+    { value: 'Compromiso', label: 'Compromiso' },
+    { value: 'Oferta', label: 'Oferta' },
+    { value: 'Agenda', label: 'Agenda' },
+    { value: 'Follow Up', label: 'Follow Up' },
+    { value: 'Freeze', label: 'Freeze' },
+    { value: 'Lose', label: 'Lose' }
   ];
 
-  const hasActiveFilters = searchTerm || selectedTags.length > 0 || selectedStatus !== 'all';
+  const procedences = [
+    { value: 'all', label: 'Todas las procedencias' },
+    { value: 'Outbound', label: 'Outbound' },
+    { value: 'Inbound', label: 'Inbound' },
+    { value: 'CTA', label: 'CTA' }
+  ];
+
+  const hasActiveFilters = searchTerm || selectedTags.length > 0 || selectedStatus !== 'all' || selectedProcedence !== 'all';
 
   return (
     <div className={`p-6 border-b space-y-4 ${darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
-      {/* Search and Status */}
+      {/* Search, Status and Procedence */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${
@@ -69,6 +86,27 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
             {statuses.map(status => (
               <option key={status.value} value={status.value}>
                 {status.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${
+            darkMode ? 'text-gray-400' : 'text-gray-500'
+          }`} />
+        </div>
+        
+        <div className="relative">
+          <select
+            value={selectedProcedence}
+            onChange={(e) => onProcedenceChange(e.target.value)}
+            className={`appearance-none pl-4 pr-10 py-3 rounded-xl border transition-all ${
+              darkMode 
+                ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
+                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+          >
+            {procedences.map(procedence => (
+              <option key={procedence.value} value={procedence.value}>
+                {procedence.label}
               </option>
             ))}
           </select>
@@ -122,6 +160,13 @@ export const LeadsFilters: React.FC<LeadsFiltersProps> = ({
                   darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
                 }`}>
                   Estado: {statuses.find(s => s.value === selectedStatus)?.label}
+                </span>
+              )}
+              {selectedProcedence !== 'all' && (
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  Procedencia: {procedences.find(p => p.value === selectedProcedence)?.label}
                 </span>
               )}
               {selectedTags.map(tag => (

@@ -73,7 +73,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     const statusCounts = dashboardStats.conversationsByStatus || {};
     // const openConversations = statusCounts['open'] || statusCounts['Open'] || 0;
     const qualifiedConversations = Object.entries(statusCounts)
-      .filter(([status]) => status !== 'open' && status !== 'Open')
+      .filter(([status]) => status !== 'Open')
       .reduce((sum, [, count]) => sum + count, 0);
 
     return [

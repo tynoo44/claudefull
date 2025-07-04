@@ -16,6 +16,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedProcedence, setSelectedProcedence] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   const [showModal, setShowModal] = useState(false);
@@ -47,7 +48,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         profile_pic: null,
         followers_count: null,
         user_id: null,
-        status: formData.status
+        status: formData.status,
+        procedence: formData.procedence || null
       };
       
       const createdLead = await SupabaseService.createLead(leadData);
@@ -67,7 +69,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         full_name: formData.full_name || null,
         notes: formData.notes || null,
         tags: formData.tags,
-        status: formData.status
+        status: formData.status,
+        procedence: formData.procedence || null
       };
       
       const updatedLead = await SupabaseService.updateLead(editingLead.id, leadData);
@@ -104,6 +107,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     setSearchTerm('');
     setSelectedTags([]);
     setSelectedStatus('all');
+    setSelectedProcedence('all');
   };
 
   const filteredLeads = leads.filter(lead => {
@@ -112,8 +116,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                          (lead.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     const matchesTags = selectedTags.length === 0 || 
                        selectedTags.some(tag => lead.tags.includes(tag));
-    const matchesStatus = selectedStatus === 'all' || (lead.status || 'open') === selectedStatus;
-    return matchesSearch && matchesTags && matchesStatus;
+    const matchesStatus = selectedStatus === 'all' || (lead.status || 'Open') === selectedStatus;
+    const matchesProcedence = selectedProcedence === 'all' || lead.procedence === selectedProcedence;
+    return matchesSearch && matchesTags && matchesStatus && matchesProcedence;
   });
 
   const allTags = [...new Set(leads.flatMap(lead => lead.tags))];
@@ -149,10 +154,12 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
               searchTerm={searchTerm}
               selectedTags={selectedTags}
               selectedStatus={selectedStatus}
+              selectedProcedence={selectedProcedence}
               availableTags={allTags}
               onSearchChange={setSearchTerm}
               onTagToggle={handleTagToggle}
               onStatusChange={setSelectedStatus}
+              onProcedenceChange={setSelectedProcedence}
               onClearFilters={handleClearFilters}
             />
           )}

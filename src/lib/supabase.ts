@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { LeadStatus } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -18,7 +19,8 @@ export interface Lead {
   notes: string | null;
   tags: string[];
   user_id: string | null;
-  status?: string;
+  status?: LeadStatus;
+  procedence?: 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
 }
 
 export interface MessageTemplate {
@@ -34,15 +36,12 @@ export interface MessageTemplate {
   updated_at: string;
   purpose: string | null;
   variables: string[] | null;
-  is_favorited: boolean | null;
-  usage_stats: any | null;
 }
 
 export interface Conversation {
   id: string;
   lead_id: string;
   opened_at: string;
-  status: string;
   updated_at: string;
   // Campos de la relación con leads
   username?: string;
@@ -298,7 +297,7 @@ export class SupabaseService {
     
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
-      .select('id, status, updated_at');
+      .select('id, updated_at');
     
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
@@ -310,12 +309,9 @@ export class SupabaseService {
 
     return {
       totalLeads: leadsData?.length || 0,
-      activeConversations: conversationsData?.filter(c => c.status === 'open').length || 0,
+      activeConversations: conversationsData?.length || 0,
       totalMessages: messagesData?.length || 0,
-      conversationsByStatus: conversationsData?.reduce((acc, conv) => {
-        acc[conv.status] = (acc[conv.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {}
+      conversationsByStatus: {}
     };
   }
 }

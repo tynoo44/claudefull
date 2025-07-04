@@ -10,17 +10,22 @@ export interface Template {
   isFavorite: boolean;
 }
 
+export type LeadStatus = 'Open' | 'Conectar y Cualificar' | 'Situación Actual' | 'Situación Deseada' | 'Obstáculo' | 'Compromiso' | 'Oferta' | 'Agenda' | 'Follow Up' | 'Freeze' | 'Lose';
+
+export type LeadProcedence = 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
+
 export interface Lead {
   id: number;
   username: string;
   fullName: string;
-  status: string;
-  stage: 'open' | 'qualify' | 'interested' | 'appointment' | 'closed';
+  status: LeadStatus;
+  stage: LeadStatus;
   lastUpdated: string;
   avatar: string;
   tags: string[];
   bio?: string;
   source?: string;
+  procedence?: LeadProcedence;
 }
 
 export interface Chat {
@@ -32,11 +37,14 @@ export interface Chat {
   time: string;
   unread: boolean;
   avatar: string;
-  status: string;
+  status: LeadStatus;
   isOnline: boolean;
   platform: 'instagram' | 'whatsapp' | 'facebook';
   tags?: string[];
-  leadData?: any;
+  leadData?: {
+    procedence?: LeadProcedence;
+    [key: string]: any;
+  };
 }
 
 export interface Message {

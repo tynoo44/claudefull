@@ -68,9 +68,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
         variables: newTemplate.variables.length > 0 ? newTemplate.variables : null,
         is_favorite: newTemplate.is_favorite,
         usage_count: 0,
-        conversion_rate: null,
-        is_favorited: newTemplate.is_favorite,
-        usage_stats: null
+        conversion_rate: null
       };
       
       const createdTemplate = await SupabaseService.createMessageTemplate(templateData);
@@ -94,8 +92,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
         tone: newTemplate.tone || null,
         purpose: newTemplate.purpose || null,
         variables: newTemplate.variables.length > 0 ? newTemplate.variables : null,
-        is_favorite: newTemplate.is_favorite,
-        is_favorited: newTemplate.is_favorite
+        is_favorite: newTemplate.is_favorite
       };
       
       const updatedTemplate = await SupabaseService.updateMessageTemplate(editingTemplate.id, templateData);
@@ -124,8 +121,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const toggleFavorite = async (template: MessageTemplate) => {
     try {
       const updatedTemplate = await SupabaseService.updateMessageTemplate(template.id, {
-        is_favorite: !template.is_favorite,
-        is_favorited: !template.is_favorite
+        is_favorite: !template.is_favorite
       });
       setTemplates(prev => prev.map(t => t.id === template.id ? updatedTemplate : t));
     } catch (error) {
