@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageCircle, Calendar, Trash2, MoreVertical, Hash } from 'lucide-react';
-import { Lead } from '../../lib/supabase';
+import { Lead, SupabaseService } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { LeadInfoModal } from '../Chat/LeadInfoModal';
 import { getStatusClasses } from '../../utils/statusUtils';
 
 interface LeadCardProps {
@@ -21,15 +20,33 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   onDelete
 }) => {
   const navigate = useNavigate();
-  const [showLeadModal, setShowLeadModal] = useState(false);
   
-  const handleChatClick = (e?: React.MouseEvent) => {
+  const handleChatClick = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    navigate('/chats');
+    
+    try {
+      // Get conversation for this lead
+      const { data: conversation, error } = await SupabaseService.supabase
+        .from('conversations')
+        .select('id')
+        .eq('lead_id', lead.id)
+        .single();
+
+      if (error || !conversation) {
+        console.error('No conversation found for lead:', lead.id);
+        alert('No se encontró conversación para este lead');
+        return;
+      }
+
+      // Navigate to chats with conversation selected
+      navigate('/chats', { state: { selectedChatId: conversation.id } });
+    } catch (error) {
+      console.error('Error navigating to chat:', error);
+    }
   };
   
   const handleCardClick = () => {
-    setShowLeadModal(true);
+    onEdit(lead);
   };
 
   if (viewMode === 'kanban') {
@@ -125,17 +142,6 @@ export const LeadCard: React.FC<LeadCardProps> = ({
           </div>
         </div>
       </div>
-      
-      <LeadInfoModal
-        darkMode={darkMode}
-        lead={lead}
-        isOpen={showLeadModal}
-        onClose={() => setShowLeadModal(false)}
-        onUpdate={(updatedLead) => {
-          onEdit(updatedLead);
-          setShowLeadModal(false);
-        }}
-      />
     </>
     );
   }
@@ -223,17 +229,6 @@ export const LeadCard: React.FC<LeadCardProps> = ({
         </div>
       </td>
     </tr>
-    
-    <LeadInfoModal
-      darkMode={darkMode}
-      lead={lead}
-      isOpen={showLeadModal}
-      onClose={() => setShowLeadModal(false)}
-      onUpdate={(updatedLead) => {
-        onEdit(updatedLead);
-        setShowLeadModal(false);
-      }}
-    />
   </>
   );
 };

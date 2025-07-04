@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { SupabaseService, Lead } from '../lib/supabase';
-import { LeadsHeader } from '../components/Leads/LeadsHeader';
-import { LeadsFilters } from '../components/Leads/LeadsFilters';
+import { LeadsHeaderNew } from '../components/Leads/LeadsHeaderNew';
+import { LeadsFiltersNew } from '../components/Leads/LeadsFiltersNew';
 import { LeadsKanban } from '../components/Leads/LeadsKanban';
-import { LeadsList } from '../components/Leads/LeadsList';
+import { LeadsListNew } from '../components/Leads/LeadsListNew';
 import { LeadModal } from '../components/Leads/LeadModal';
 
 interface LeadsPageProps {
@@ -135,7 +135,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="h-screen pt-16 flex flex-col">
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-          <LeadsHeader
+          <LeadsHeaderNew
             darkMode={darkMode}
             totalLeads={filteredLeads.length}
             viewMode={viewMode}
@@ -149,7 +149,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
           />
           
           {showFilters && (
-            <LeadsFilters
+            <LeadsFiltersNew
               darkMode={darkMode}
               searchTerm={searchTerm}
               selectedTags={selectedTags}
@@ -177,7 +177,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
               onDeleteLead={handleDeleteLead}
             />
           ) : (
-            <LeadsList
+            <LeadsListNew
               darkMode={darkMode}
               leads={filteredLeads}
               onEditLead={(lead) => {
@@ -185,6 +185,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                 setShowModal(true);
               }}
               onDeleteLead={handleDeleteLead}
+              onUpdateLead={(updatedLead) => {
+                setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
+              }}
             />
           )}
         </div>

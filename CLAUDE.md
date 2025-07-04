@@ -39,6 +39,12 @@ src/
 │   ├── Notifications/           # 🆕 Real-time notification system
 │   │   └── NotificationCenter.tsx # Toast + browser notifications
 │   └── Leads/                   # Lead management with real-time updates
+│       ├── LeadsListNew.tsx     # Professional table with inline editing
+│       ├── LeadsHeaderNew.tsx   # Optimized compact header
+│       ├── LeadsFiltersNew.tsx  # Horizontal filter layout
+│       ├── LeadsKanban.tsx      # Kanban board view
+│       ├── LeadCard.tsx         # Individual lead card component
+│       └── LeadModal.tsx        # Consolidated lead editing modal
 ├── pages/
 │   ├── AuthPage.tsx             # Supabase Auth with Google OAuth
 │   ├── AuthCallbackPage.tsx     # OAuth callback handler
@@ -315,7 +321,7 @@ className={`${
 ### ✅ Fully Implemented (Production Ready)
 - **Authentication**: Complete Supabase Auth with Google OAuth, email/password, and session management
 - **Dashboard**: Real KPI metrics from Supabase (92 leads, 406 messages, etc.)
-- **Lead Management**: Complete CRUD with status tracking, notes, tags, procedence filtering, and search
+- **Lead Management**: Professional redesigned interface with inline editing, sortable columns, and optimized UX
 - **Procedence System**: Lead source tracking (Outbound, Inbound, CTA) with filtering and display
 - **Template System**: Full CRUD with categories, usage tracking, favorites, and variables
 - **Chat Interface**: Modularized real-time messaging with resizable columns and procedence display
@@ -402,6 +408,16 @@ try {
 - **Search & Filtering**: Comprehensive search and filter capabilities including procedence
 - **Type Safety**: Complete TypeScript coverage with proper error handling
 - **UI/UX Polish**: Professional interface with dark mode and responsive design
+- **Leads Page Redesign**: Complete professional restructure with inline editing, sortable columns, and optimized UX
+
+#### 🎨 **Leads Page Redesign (Latest Update)**
+- **New Columns**: Added procedence, creation date, and last update with full date/time display
+- **Inline Editing**: Status and procedence dropdown editors directly in table rows
+- **Sortable Headers**: Click-to-sort functionality with visual indicators (default: last update)
+- **Consolidated Modal**: Fixed double modal issue - single LeadModal with name editing
+- **Chat Navigation**: Fixed chat button to navigate to specific lead conversations
+- **Optimized Layout**: Compact header design and horizontal filter layout for better space usage
+- **Professional UI**: Modern gradients, hover effects, and improved visual hierarchy
 
 ### 📊 Database Metrics (Real Data)
 - **92 Leads** with Instagram integration and status tracking

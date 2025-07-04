@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Chat, Template } from '@/types';
 import { SupabaseService } from '../lib/supabase';
 import { useSupabaseData } from '../hooks/useSupabaseData';
@@ -39,6 +40,18 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(480);
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
+  const location = useLocation();
+  const [pendingChatId, setPendingChatId] = useState<string | null>(null);
+
+  // Handle navigation state from leads page
+  useEffect(() => {
+    const state = location.state as { selectedChatId?: string } | null;
+    if (state?.selectedChatId) {
+      setPendingChatId(state.selectedChatId);
+      // Clear the state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Usar datos reales de Supabase solo para templates (chats ahora se cargan progresivamente)
   const { templatesFormatted, error: dataError, fetchAllData } = useSupabaseData();
@@ -92,6 +105,8 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             onChatSelect={handleChatSelect}
             onCollapseChange={setSidebarCollapsed}
             width={sidebarWidth}
+            pendingChatId={pendingChatId}
+            onPendingChatLoaded={() => setPendingChatId(null)}
           />
 
           {/* Chat Window */}

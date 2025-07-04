@@ -24,6 +24,7 @@ interface ConversationWithDetails {
     sender_type: string;
   } | null;
   unreadCount: number;
+  hasUnansweredMessages: boolean;
 }
 
 const CONVERSATIONS_PER_PAGE = 20;
@@ -103,7 +104,7 @@ export const useConversationPagination = () => {
       const conversationsWithDetails = await Promise.all(
         newConversations.map(async (conv) => {
           try {
-            const [lastMessageResult, unreadCountResult] = await Promise.all([
+            const [lastMessageResult, unreadCountResult, lastUserMessageResult] = await Promise.all([
               // Último mensaje
               supabase
                 .from('messages')
@@ -118,20 +119,42 @@ export const useConversationPagination = () => {
                 .select('id', { count: 'exact', head: true })
                 .eq('conversation_id', conv.id)
                 .eq('sender_type', 'Lead')
-                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+                
+              // Último mensaje del usuario (Setter)
+              supabase
+                .from('messages')
+                .select('id, created_at')
+                .eq('conversation_id', conv.id)
+                .eq('sender_type', 'Setter')
+                .order('created_at', { ascending: false })
+                .limit(1)
             ]);
+
+            const lastMessage = lastMessageResult.data?.[0] || null;
+            const lastUserMessage = lastUserMessageResult.data?.[0] || null;
+            
+            // Check if there are unanswered messages
+            let hasUnansweredMessages = false;
+            if (lastMessage && lastMessage.sender_type === 'Lead') {
+              if (!lastUserMessage || new Date(lastMessage.created_at) > new Date(lastUserMessage.created_at)) {
+                hasUnansweredMessages = true;
+              }
+            }
 
             return {
               ...conv,
-              lastMessage: lastMessageResult.data?.[0] || null,
-              unreadCount: unreadCountResult.count || 0
+              lastMessage,
+              unreadCount: unreadCountResult.count || 0,
+              hasUnansweredMessages
             };
           } catch (error) {
             console.error(`Error loading details for conversation ${conv.id}:`, error);
             return {
               ...conv,
               lastMessage: null,
-              unreadCount: 0
+              unreadCount: 0,
+              hasUnansweredMessages: false
             };
           }
         })
@@ -226,7 +249,7 @@ export const useConversationPagination = () => {
       if (error) throw error;
 
       // Cargar último mensaje y conteo
-      const [lastMessageResult, unreadCountResult] = await Promise.all([
+      const [lastMessageResult, unreadCountResult, lastUserMessageResult] = await Promise.all([
         supabase
           .from('messages')
           .select('id, text, created_at, sender_type')
@@ -239,13 +262,33 @@ export const useConversationPagination = () => {
           .select('id', { count: 'exact', head: true })
           .eq('conversation_id', conversationId)
           .eq('sender_type', 'Lead')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+          
+        supabase
+          .from('messages')
+          .select('id, created_at')
+          .eq('conversation_id', conversationId)
+          .eq('sender_type', 'Setter')
+          .order('created_at', { ascending: false })
+          .limit(1)
       ]);
+
+      const lastMessage = lastMessageResult.data?.[0] || null;
+      const lastUserMessage = lastUserMessageResult.data?.[0] || null;
+      
+      // Check if there are unanswered messages
+      let hasUnansweredMessages = false;
+      if (lastMessage && lastMessage.sender_type === 'Lead') {
+        if (!lastUserMessage || new Date(lastMessage.created_at) > new Date(lastUserMessage.created_at)) {
+          hasUnansweredMessages = true;
+        }
+      }
 
       const updatedConversation = {
         ...conversationData,
-        lastMessage: lastMessageResult.data?.[0] || null,
-        unreadCount: unreadCountResult.count || 0
+        lastMessage,
+        unreadCount: unreadCountResult.count || 0,
+        hasUnansweredMessages
       };
 
       // Actualizar en las listas
@@ -267,7 +310,8 @@ export const useConversationPagination = () => {
     statusFilter: string | null = null,
     procedenceFilter: string | null = null,
     tagFilter: string = '',
-    sortBy: 'time' | 'name' | 'status' = 'time'
+    sortBy: 'time' | 'name' | 'status' | 'unread' | 'start-date' = 'time',
+    sortAscending: boolean = false
   ) => {
     let filtered = [...conversations];
 
@@ -295,17 +339,35 @@ export const useConversationPagination = () => {
 
     // Aplicar ordenamiento
     filtered.sort((a, b) => {
+      let comparison = 0;
+      
       switch (sortBy) {
         case 'name':
           const nameA = a.leads.full_name || a.leads.username || '';
           const nameB = b.leads.full_name || b.leads.username || '';
-          return nameA.localeCompare(nameB);
+          comparison = nameA.localeCompare(nameB);
+          break;
         case 'status':
-          return a.leads.status.localeCompare(b.leads.status);
+          comparison = a.leads.status.localeCompare(b.leads.status);
+          break;
+        case 'unread':
+          // Show unanswered messages first, then by recency/age depending on direction
+          if (a.hasUnansweredMessages && !b.hasUnansweredMessages) return -1;
+          if (!a.hasUnansweredMessages && b.hasUnansweredMessages) return 1;
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          break;
+        case 'start-date':
+          // Sort by conversation start date
+          comparison = new Date(a.opened_at).getTime() - new Date(b.opened_at).getTime();
+          break;
         case 'time':
         default:
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          break;
       }
+      
+      // Apply sort direction
+      return sortAscending ? comparison : -comparison;
     });
 
     setVisibleConversations(filtered);

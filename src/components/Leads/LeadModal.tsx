@@ -123,7 +123,7 @@ export const LeadModal: React.FC<LeadModalProps> = ({
             />
           </div>
 
-          {/* Full Name */}
+          {/* Full Name - Always editable */}
           <div>
             <label className={`block text-sm font-medium mb-2 ${
               darkMode ? 'text-gray-300' : 'text-gray-700'

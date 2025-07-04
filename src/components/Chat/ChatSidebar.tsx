@@ -10,6 +10,8 @@ interface ChatSidebarProps {
   onChatSelect: (chat: Chat) => void;
   onCollapseChange?: (collapsed: boolean) => void;
   width?: number;
+  pendingChatId?: string | null;
+  onPendingChatLoaded?: () => void;
 }
 
 const STATUS_OPTIONS: LeadStatus[] = [
@@ -29,19 +31,23 @@ const STATUS_OPTIONS: LeadStatus[] = [
 const PROCEDENCE_OPTIONS: LeadProcedence[] = ['Outbound', 'Inbound', 'CTA', 'Spam'];
 
 const SORT_OPTIONS = [
-  { value: 'time', label: 'Último mensaje' },
-  { value: 'name', label: 'Nombre' },
-  { value: 'status', label: 'Estado' }
+  { value: 'time', label: 'Último mensaje', icon: '🕐' },
+  { value: 'name', label: 'Nombre', icon: '👤' },
+  { value: 'status', label: 'Estado', icon: '📊' },
+  { value: 'unread', label: 'Sin responder', icon: '🔴' },
+  { value: 'start-date', label: 'Fecha de inicio', icon: '📅' }
 ];
 
-type SortType = 'time' | 'name' | 'status';
+type SortType = 'time' | 'name' | 'status' | 'unread' | 'start-date';
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   darkMode,
   selectedChat,
   onChatSelect,
   onCollapseChange,
-  width = 384
+  width = 384,
+  pendingChatId,
+  onPendingChatLoaded
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,6 +55,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [procedenceFilter, setProcedenceFilter] = useState<LeadProcedence | null>(null);
   const [tagFilter, setTagFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortType>('time');
+  const [sortAscending, setSortAscending] = useState(false); // Default descending for most sorts
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showProcedenceDropdown, setShowProcedenceDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
@@ -108,7 +115,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       lastMessage: lastMessage?.text || 'Sin mensajes',
       timestamp: lastMessage ? lastMessage.created_at : conv.updated_at,
       time: time,
-      unread: conv.unreadCount > 0,
+      unread: conv.hasUnansweredMessages,
       avatar: leadData?.profile_pic || `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23${darkMode ? '374151' : 'E5E7EB'}" width="100" height="100"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${(leadData?.full_name || leadData?.username || 'U').charAt(0).toUpperCase()}</text></svg>`,
       status: (leadData?.status || 'Open') as LeadStatus,
       isOnline: true,
@@ -119,21 +126,34 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         id: leadData.id,
         procedence: leadData.procedence as LeadProcedence
       },
-      unreadCount: conv.unreadCount || 0
-    } as Chat;
+      unreadCount: conv.unreadCount || 0,
+      hasUnansweredMessages: conv.hasUnansweredMessages,
+      openedAt: conv.opened_at
+    } as Chat & { hasUnansweredMessages: boolean; openedAt: string };
   });
   
   // Aplicar filtros cuando cambien
   useEffect(() => {
-    applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy);
-  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, applyFilters]);
+    applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending);
+  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, applyFilters]);
+
+  // Handle pending chat selection
+  useEffect(() => {
+    if (pendingChatId && chats.length > 0) {
+      const chatToSelect = chats.find(chat => chat.id === pendingChatId);
+      if (chatToSelect) {
+        onChatSelect(chatToSelect);
+        onPendingChatLoaded?.();
+      }
+    }
+  }, [pendingChatId, chats, onChatSelect, onPendingChatLoaded]);
 
   if (isCollapsed) {
     return (
       <div className={`relative h-full w-16 border-r transition-all duration-300 flex flex-col ${
         darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
       }`}>
-        <div className="p-4">
+        <div className="p-4 flex-shrink-0">
           <button
             onClick={() => handleCollapse(false)}
             className={`w-full p-2 rounded-lg transition-colors ${
@@ -145,7 +165,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 space-y-2">
+        <div className="flex-1 overflow-y-scroll scrollbar-hide px-2 space-y-2">
           {chats.map((chat, index) => {
             // Trigger load more check when approaching end
             if (index === chats.length - 5) {
@@ -179,7 +199,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   />
                 )}
                 {chat.unread && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800 animate-pulse" />
                 )}
               </button>
             );
@@ -260,7 +280,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={() => setShowStatusDropdown(!showStatusDropdown)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
                 statusFilter
-                  ? 'bg-blue-600 text-white border-blue-600'
+                  ? `${getStatusClasses(statusFilter, darkMode)} border-transparent`
                   : darkMode
                     ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
                     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -299,7 +319,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         : darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    {status}
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${getStatusClasses(status, darkMode).split(' ')[0]}`} />
+                      {status}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -312,7 +335,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               onClick={() => setShowProcedenceDropdown(!showProcedenceDropdown)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
                 procedenceFilter
-                  ? 'bg-blue-600 text-white border-blue-600'
+                  ? procedenceFilter === 'Outbound' 
+                    ? darkMode ? 'bg-blue-600/20 text-blue-400 border-blue-500/30' : 'bg-blue-100 text-blue-700 border-blue-200'
+                    : procedenceFilter === 'Inbound'
+                    ? darkMode ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-green-100 text-green-700 border-green-200'
+                    : procedenceFilter === 'CTA'
+                    ? darkMode ? 'bg-purple-600/20 text-purple-400 border-purple-500/30' : 'bg-purple-100 text-purple-700 border-purple-200'
+                    : darkMode ? 'bg-red-600/20 text-red-400 border-red-500/30' : 'bg-red-100 text-red-700 border-red-200'
                   : darkMode
                     ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
                     : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -351,7 +380,18 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         : darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    {procedence}
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        procedence === 'Outbound' 
+                          ? darkMode ? 'bg-blue-400' : 'bg-blue-600'
+                          : procedence === 'Inbound'
+                          ? darkMode ? 'bg-green-400' : 'bg-green-600'
+                          : procedence === 'CTA'
+                          ? darkMode ? 'bg-purple-400' : 'bg-purple-600'
+                          : darkMode ? 'bg-red-400' : 'bg-red-600'
+                      }`} />
+                      {procedence}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -360,36 +400,72 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           
           {/* Sort */}
           <div className="relative">
-            <button
-              onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
-                darkMode
-                  ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <SortAsc className="w-4 h-4" />
-              {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label}
-            </button>
+            <div className={`flex items-center rounded-lg border text-sm transition-all ${
+              darkMode
+                ? 'bg-gray-700 border-gray-600 text-gray-300'
+                : 'bg-white border-gray-300 text-gray-700'
+            }`}>
+              <button
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className={`flex items-center gap-2 px-3 py-2 flex-1 rounded-l-lg transition-colors ${
+                  darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+                }`}
+              >
+                <SortAsc className="w-4 h-4" />
+                {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label}
+              </button>
+              <div className={`w-px h-6 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
+              <button
+                onClick={() => setSortAscending(!sortAscending)}
+                className={`px-2 py-2 rounded-r-lg transition-colors ${
+                  darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+                }`}
+                title={sortAscending ? 'Cambiar a descendente' : 'Cambiar a ascendente'}
+              >
+                <span className={`text-xs opacity-60 ${sortAscending ? 'rotate-180' : ''} transition-transform block`}>
+                  ▼
+                </span>
+              </button>
+            </div>
             {showSortDropdown && (
-              <div className={`absolute top-full left-0 mt-1 min-w-[150px] rounded-lg border shadow-lg z-50 ${
+              <div className={`absolute top-full left-0 mt-1 min-w-[250px] rounded-lg border shadow-lg z-50 ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               }`}>
                 {SORT_OPTIONS.map(option => (
-                  <button
+                  <div
                     key={option.value}
-                    onClick={() => {
-                      setSortBy(option.value as SortType);
-                      setShowSortDropdown(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                    className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
                       sortBy === option.value
                         ? darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-50 text-blue-600'
                         : darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
                     }`}
                   >
-                    {option.label}
-                  </button>
+                    <button
+                      onClick={() => {
+                        setSortBy(option.value as SortType);
+                        setSortAscending(option.value === 'name' ? true : false); // Name defaults to ascending, others to descending
+                        setShowSortDropdown(false);
+                      }}
+                      className="flex items-center gap-2 flex-1 text-left"
+                    >
+                      <span className="text-base">{option.icon}</span>
+                      {option.label}
+                    </button>
+                    {sortBy === option.value && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSortAscending(!sortAscending);
+                        }}
+                        className={`p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors`}
+                        title={sortAscending ? 'Cambiar a descendente' : 'Cambiar a ascendente'}
+                      >
+                        <span className={`text-xs opacity-60 ${sortAscending ? 'rotate-180' : ''} transition-transform block`}>
+                          ▼
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -522,7 +598,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       )}
                     </div>
                     {chat.unread && (
-                      <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-medium rounded-full ml-2 flex-shrink-0 shadow-lg">
+                      <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-full ml-2 flex-shrink-0 shadow-lg animate-pulse">
                         {(chat as any).unreadCount || '•'}
                       </span>
                     )}

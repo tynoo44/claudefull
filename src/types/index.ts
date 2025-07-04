@@ -45,6 +45,9 @@ export interface Chat {
     procedence?: LeadProcedence;
     [key: string]: any;
   };
+  unreadCount?: number;
+  hasUnansweredMessages?: boolean;
+  openedAt?: string;
 }
 
 export interface Message {

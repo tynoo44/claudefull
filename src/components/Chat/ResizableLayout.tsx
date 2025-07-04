@@ -68,7 +68,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   // Handle window resize separately to recalculate columns when needed
   useEffect(() => {
     const handleWindowResize = () => {
-      if (!containerRef.current || isResizingSidebar) return;
+      if (!containerRef.current) return;
       
       const containerWidth = containerRef.current.offsetWidth;
       const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
@@ -86,7 +86,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
     window.addEventListener('resize', handleWindowResize);
     return () => window.removeEventListener('resize', handleWindowResize);
-  }, [sidebarWidth, sidebarCollapsed, isResizingSidebar]);
+  }, [sidebarCollapsed]);
 
   // Throttle function for better performance
   const throttle = (func: Function, limit: number) => {
@@ -111,11 +111,22 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
       const mouseX = e.clientX - containerRect.left;
       
       if (isResizing === -1) {
-        // Resizing sidebar (optimized to prevent column recalculation)
+        // Resizing sidebar - only changes sidebar width, columns adjust naturally
         const maxWidth = getMaxSidebarWidth();
         const newWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(mouseX, maxWidth));
         setSidebarWidth(newWidth);
         onSidebarWidthChange?.(newWidth);
+        
+        // Recalculate column widths to maintain proportions
+        const availableWidth = containerRect.width - newWidth;
+        setColumnWidths(prevWidths => {
+          const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
+          if (currentTotal > 0) {
+            const scale = availableWidth / currentTotal;
+            return prevWidths.map(w => Math.max(MIN_COLUMN_WIDTH, w * scale));
+          }
+          return prevWidths;
+        });
       } else {
         // Resizing other columns
         const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
