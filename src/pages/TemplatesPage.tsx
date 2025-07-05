@@ -4,6 +4,8 @@ import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
 import { useTemplates } from '../hooks/useTemplates';
 import { useTemplateModal } from '../hooks/useTemplateModal';
+import { Template } from '../types';
+import { MessageTemplate } from '../lib/supabase';
 
 interface TemplatesPageProps {
   darkMode: boolean;
@@ -18,17 +20,10 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const { templates, loading, saveTemplate, deleteTemplate, toggleFavorite } = useTemplates();
 
   const {
-    showModal,
+    showModal: createModalShow,
     editingTemplate,
-    newTemplate,
-    variableInput,
     openCreateModal,
-    openEditModal,
     closeModal,
-    updateTemplate,
-    setVariableInput,
-    addVariable,
-    removeVariable,
   } = useTemplateModal();
 
   const categories = [
@@ -66,26 +61,67 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
     })
   );
 
-  const handleSaveTemplate = async () => {
-    const success = await saveTemplate(newTemplate, !!editingTemplate, editingTemplate?.id);
-    if (success) {
-      closeModal();
-    }
+
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
+  // Conversion function from MessageTemplate to Template
+  const convertToTemplate = (msgTemplate: MessageTemplate): Template => ({
+    id: msgTemplate.id,
+    name: msgTemplate.name,
+    content: msgTemplate.content,
+    category: msgTemplate.category || '',
+    tone: msgTemplate.tone || '',
+    variables: msgTemplate.variables || [],
+    uses: msgTemplate.usage_count || 0,
+    conversionRate: msgTemplate.conversion_rate || 0,
+    isFavorite: msgTemplate.is_favorite || false,
+    created_at: msgTemplate.created_at,
+    updated_at: msgTemplate.updated_at,
+  });
+
+  // Conversion function from Template to MessageTemplate
+  const convertToMessageTemplate = (template: Template): Partial<MessageTemplate> => ({
+    id: template.id,
+    name: template.name,
+    content: template.content,
+    category: template.category,
+    tone: template.tone,
+    variables: template.variables,
+    is_favorite: template.isFavorite,
+  });
+  const [showModal, setShowModal] = useState(false);
+
+  const handleTemplateClick = (template: MessageTemplate) => {
+    setSelectedTemplate(convertToTemplate(template));
+    setShowModal(true);
   };
 
-  const handleDeleteTemplate = async (templateId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este template?')) {
-      await deleteTemplate(templateId);
-    }
+  const handleModalClose = () => {
+    setShowModal(false);
+    setSelectedTemplate(null);
   };
 
-  const handleCopyTemplate = async (content: string) => {
+  const handleTemplateUpdate = async (updatedTemplate: Template) => {
+    const messageTemplate = convertToMessageTemplate(updatedTemplate);
+    const success = await saveTemplate(messageTemplate as any, true, updatedTemplate.id);
+    return success;
+  };
+
+  const handleDeleteTemplate = async (template: Template) => {
+    await deleteTemplate(template.id);
+  };
+
+  const handleCopyTemplate = async (template: Template) => {
     try {
-      await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(template.content);
       // Aquí podrías agregar una notificación de éxito
     } catch (error) {
       console.error('Error copying to clipboard:', error);
     }
+  };
+
+  const handleToggleFavorite = async (template: Template) => {
+    await toggleFavorite(template.id, !template.isFavorite);
   };
 
   if (loading) {
@@ -137,11 +173,9 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
             {filteredTemplates.map(template => (
               <TemplateCard
                 key={template.id}
-                template={template}
+                template={convertToTemplate(template)}
                 darkMode={darkMode}
-                onEdit={openEditModal}
-                onDelete={handleDeleteTemplate}
-                onToggleFavorite={toggleFavorite}
+                onClick={() => handleTemplateClick(template)}
                 onCopy={handleCopyTemplate}
               />
             ))}
@@ -150,17 +184,23 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
       </div>
 
       <TemplateModal
-        darkMode={darkMode}
+        template={selectedTemplate}
         isOpen={showModal}
-        editingTemplate={editingTemplate}
-        newTemplate={newTemplate}
-        variableInput={variableInput}
+        darkMode={darkMode}
+        onClose={handleModalClose}
+        onSave={handleTemplateUpdate}
+        onCopy={handleCopyTemplate}
+        onToggleFavorite={handleToggleFavorite}
+        onDelete={handleDeleteTemplate}
+      />
+
+      <TemplateModal
+        darkMode={darkMode}
+        isOpen={createModalShow}
+        template={editingTemplate ? convertToTemplate(editingTemplate) : null}
         onClose={closeModal}
-        onTemplateChange={updateTemplate}
-        onVariableInputChange={setVariableInput}
-        onAddVariable={addVariable}
-        onRemoveVariable={removeVariable}
-        onSave={handleSaveTemplate}
+        onSave={(template) => saveTemplate(convertToMessageTemplate(template) as any, !!editingTemplate, editingTemplate?.id)}
+        onToggleFavorite={handleToggleFavorite}
       />
     </div>
   );

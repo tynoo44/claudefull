@@ -134,6 +134,8 @@ export const useSupabaseData = () => {
       uses: template.usage_count || 0,
       conversionRate: template.conversion_rate || 0,
       isFavorite: template.is_favorite || false,
+      created_at: template.created_at,
+      updated_at: template.updated_at,
     }));
   };
 

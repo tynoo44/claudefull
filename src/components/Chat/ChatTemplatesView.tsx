@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Search, Star, FileText } from 'lucide-react';
 import { Template } from '@/types';
-import { ChatTemplateCard } from './ChatTemplateCard';
-import { ChatTemplateModal } from './ChatTemplateModal';
+import { TemplateCard } from '../Templates/TemplateCard';
+import { TemplateModal } from '../Templates/TemplateModal';
 
 interface ChatTemplatesViewProps {
   darkMode: boolean;
   templates: Template[];
   onTemplateInsert: (template: Template) => void;
-  onTemplateEdit: (template: Template) => void;
   onTemplateDelete: (template: Template) => void;
   onToggleFavorite: (template: Template) => void;
 }
@@ -19,7 +18,6 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
   darkMode,
   templates,
   onTemplateInsert,
-  onTemplateEdit,
   onTemplateDelete,
   onToggleFavorite,
 }) => {
@@ -46,6 +44,12 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
     }
   };
 
+  const handleSave = async (template: Template) => {
+    // TODO: Implement save logic
+    console.log('Saving template:', template);
+    return true;
+  };
+
   const handleTemplateClick = (template: Template) => {
     setSelectedTemplate(template);
     setShowModal(true);
@@ -61,10 +65,6 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
     handleModalClose();
   };
 
-  const handleModalEdit = (template: Template) => {
-    onTemplateEdit(template);
-    handleModalClose();
-  };
 
   const handleModalDelete = (template: Template) => {
     onTemplateDelete(template);
@@ -194,16 +194,16 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-4">
             {filteredTemplates.map(template => (
-              <ChatTemplateCard
+              <TemplateCard
                 key={template.id}
                 template={template}
                 darkMode={darkMode}
+                onClick={() => handleTemplateClick(template)}
                 onInsert={onTemplateInsert}
-                onAdaptWithAI={handleAdaptWithAI}
                 onCopy={handleCopy}
-                onClick={handleTemplateClick}
+                onAdaptWithAI={handleAdaptWithAI}
               />
             ))}
           </div>
@@ -211,17 +211,17 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
       </div>
 
       {/* Modal */}
-      <ChatTemplateModal
+      <TemplateModal
         template={selectedTemplate}
         isOpen={showModal}
         darkMode={darkMode}
         onClose={handleModalClose}
+        onSave={handleSave}
         onInsert={handleModalInsert}
         onAdaptWithAI={handleAdaptWithAI}
         onCopy={handleCopy}
-        onEdit={handleModalEdit}
-        onDelete={handleModalDelete}
         onToggleFavorite={onToggleFavorite}
+        onDelete={handleModalDelete}
       />
     </div>
   );

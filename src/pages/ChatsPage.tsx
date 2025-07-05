@@ -70,19 +70,22 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
     }
   };
 
-  const handleTemplateEdit = (template: Template) => {
-    // TODO: Implement template editing in chat context
-    console.log('Edit template:', template);
-  };
 
   const handleTemplateDelete = (template: Template) => {
     // TODO: Implement template deletion in chat context
     console.log('Delete template:', template);
   };
 
-  const handleToggleFavorite = (template: Template) => {
-    // TODO: Implement toggle favorite in chat context
-    console.log('Toggle favorite:', template);
+  const handleToggleFavorite = async (template: Template) => {
+    try {
+      await SupabaseService.updateMessageTemplate(template.id, {
+        is_favorite: !template.isFavorite
+      });
+      // Refetch data to update UI
+      fetchAllData();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   const handleChatSelect = (chat: Chat) => {
@@ -140,7 +143,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             darkMode={darkMode}
             templates={templatesFormatted}
             onTemplateInsert={insertTemplate}
-            onTemplateEdit={handleTemplateEdit}
             onTemplateDelete={handleTemplateDelete}
             onToggleFavorite={handleToggleFavorite}
           />

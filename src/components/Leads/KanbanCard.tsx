@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 import { useDrag, DragSourceMonitor } from 'react-dnd';
-import { Calendar, Clock, Hash, User, MapPin } from 'lucide-react';
+import { Calendar, Clock, Hash, User, MapPin, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Lead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
+import { createConversationForLead } from '../../lib/supabase-functions';
 
 interface KanbanCardProps {
   darkMode: boolean;
@@ -19,6 +21,7 @@ const PROCEDENCE_COLORS = {
 
 export const KanbanCard: React.FC<KanbanCardProps> = ({ darkMode, lead, onClick }) => {
   const dragRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const [{ isDragging }, drag] = useDrag({
     type: 'lead',
@@ -29,6 +32,18 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ darkMode, lead, onClick 
   });
 
   drag(dragRef);
+
+  const handleChatClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const conversation = await createConversationForLead(lead.id);
+      navigate('/chats', { 
+        state: { selectedChatId: conversation.id }
+      });
+    } catch (error) {
+      console.error('Error navigating to chat:', error);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -154,24 +169,38 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ darkMode, lead, onClick 
         </span>
       </div>
 
-      {/* Footer with Dates */}
+      {/* Footer with Dates and Actions */}
       <div
         className={`flex items-center justify-between text-xs pt-2 border-t ${
           darkMode ? 'border-gray-700' : 'border-gray-200'
         }`}
       >
-        <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          <Calendar className="w-3 h-3" />
-          <span title={`Creado: ${formatDateTime(lead.created_at)}`}>
-            {formatDate(lead.created_at)}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Calendar className="w-3 h-3" />
+            <span title={`Creado: ${formatDateTime(lead.created_at)}`}>
+              {formatDate(lead.created_at)}
+            </span>
+          </div>
+          <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Clock className="w-3 h-3" />
+            <span title={`Última actualización: ${formatDateTime(lead.updated_at)}`}>
+              {formatDate(lead.updated_at)}
+            </span>
+          </div>
         </div>
-        <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          <Clock className="w-3 h-3" />
-          <span title={`Última actualización: ${formatDateTime(lead.updated_at)}`}>
-            {formatDate(lead.updated_at)}
-          </span>
-        </div>
+        
+        <button
+          onClick={handleChatClick}
+          className={`p-1.5 rounded-lg transition-colors ${
+            darkMode
+              ? 'hover:bg-gray-700 text-gray-400 hover:text-blue-400'
+              : 'hover:bg-gray-100 text-gray-600 hover:text-blue-600'
+          }`}
+          title="Abrir chat"
+        >
+          <MessageCircle className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

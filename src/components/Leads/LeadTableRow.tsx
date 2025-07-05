@@ -3,6 +3,7 @@ import { ChevronDown, MessageCircle, Trash2, Clock, Hash, User, Edit3 } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { Lead, LeadStatus, LeadProcedence, SupabaseService } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
+import { createConversationForLead } from '../../lib/supabase-functions';
 
 interface LeadTableRowProps {
   lead: Lead;
@@ -66,9 +67,15 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
     }
   };
 
-  const handleChatClick = () => {
-    // Navigate to chats with lead ID as parameter
-    navigate(`/chats?lead=${lead.id}`);
+  const handleChatClick = async () => {
+    try {
+      const conversation = await createConversationForLead(lead.id);
+      navigate('/chats', { 
+        state: { selectedChatId: conversation.id }
+      });
+    } catch (error) {
+      console.error('Error navigating to chat:', error);
+    }
   };
 
   const getProcedenceColor = (procedence: LeadProcedence) => {
