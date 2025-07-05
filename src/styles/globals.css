@@ -125,3 +125,55 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
 }
+
+/* Message Content Styles */
+.message-content {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.message-content ul,
+.message-content ol {
+  padding-left: 1rem;
+}
+
+.message-content li {
+  margin-bottom: 0.25rem;
+}
+
+.message-content code {
+  font-family: 'Courier New', monospace;
+}
+
+.message-content pre {
+  margin: 0;
+}
+
+.message-content hr {
+  margin: 1rem 0;
+}
+
+/* Animation for message options */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-content > div {
+  animation: messageSlideIn 0.3s ease-out;
+}

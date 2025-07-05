@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bot, Send, Sparkles, RefreshCw, MessageSquare, TrendingUp, Lightbulb, ChevronDown } from 'lucide-react';
 import { generateAIResponse, generateQuickActions, GEMINI_MODELS, type GeminiModel } from '../../lib/gemini';
+import { MessageContent } from './MessageContent';
 
 interface AIChatSidebarProps {
   darkMode: boolean;
@@ -71,7 +72,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -154,7 +155,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -321,7 +322,12 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                       : 'bg-gray-100 text-gray-900 border border-gray-200'
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <MessageContent 
+                  content={message.content} 
+                  className={`text-sm ${
+                    message.role === 'user' ? 'text-white' : ''
+                  }`}
+                />
               </div>
               <p
                 className={`text-xs mt-1 ${

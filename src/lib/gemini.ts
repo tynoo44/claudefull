@@ -126,7 +126,11 @@ Conversación entre setter y lead:
 ${messages.map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content}`).join('\n')}
 
 **ANÁLISIS RÁPIDO**:
-[Identifica: fase actual, último mensaje del lead, qué necesitas obtener]
+- **Fase actual**: [Especifica en qué fase están]
+- **Último mensaje del lead**: "[Cita el mensaje]"
+- **Qué necesitas obtener**: [Objetivo específico para avanzar]
+
+---
 
 **SUGERENCIAS DE RESPUESTA**:
 
@@ -145,7 +149,10 @@ ${messages.map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content
 [Mensaje más libre pero alineado con el objetivo]
 \`\`\`
 
-**POR QUÉ ESTAS OPCIONES**: [Explica brevemente la estrategia detrás de cada sugerencia]
+**POR QUÉ ESTAS OPCIONES**:
+- **Opción 1**: [Estrategia de esta opción]
+- **Opción 2**: [Estrategia de esta opción]
+- **Opción 3**: [Estrategia de esta opción]
 
 Recuerda: Estas son sugerencias para TI como setter. Copia y pega la que prefieras.`;
 
