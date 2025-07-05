@@ -119,13 +119,10 @@ export const LeadsListNew: React.FC<LeadsListNewProps> = ({
     
     try {
       // Get conversation for this lead
-      const { data: conversation, error } = await SupabaseService.supabase
-        .from('conversations')
-        .select('id')
-        .eq('lead_id', lead.id)
-        .single();
+      const conversations = await SupabaseService.getConversations();
+      const conversation = conversations.find(conv => conv.lead_id === lead.id);
 
-      if (error || !conversation) {
+      if (!conversation) {
         console.error('No conversation found for lead:', lead.id);
         alert('No se encontró conversación para este lead');
         return;
@@ -152,7 +149,7 @@ export const LeadsListNew: React.FC<LeadsListNewProps> = ({
   const handleProcedenceChange = async (lead: Lead, newProcedence: LeadProcedence | '') => {
     try {
       const updatedLead = await SupabaseService.updateLead(lead.id, { 
-        procedence: newProcedence || null 
+        procedence: newProcedence || undefined 
       });
       onUpdateLead?.(updatedLead);
       setOpenDropdowns({});

@@ -6,6 +6,10 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Export types
+export type LeadProcedence = 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
+export type { LeadStatus };
+
 // Tipos para las tablas de la base de datos
 export interface Lead {
   id: string;
@@ -20,7 +24,7 @@ export interface Lead {
   tags: string[];
   user_id: string | null;
   status?: LeadStatus;
-  procedence?: 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
+  procedence?: LeadProcedence;
 }
 
 export interface MessageTemplate {

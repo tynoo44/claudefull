@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SupabaseService, Lead } from '../lib/supabase';
 import { LeadsHeaderNew } from '../components/Leads/LeadsHeaderNew';
-import { LeadsFiltersNew } from '../components/Leads/LeadsFiltersNew';
-import { LeadsKanban } from '../components/Leads/LeadsKanban';
+import { LeadsKanbanNew } from '../components/Leads/LeadsKanbanNew';
 import { LeadsListNew } from '../components/Leads/LeadsListNew';
 import { LeadModal } from '../components/Leads/LeadModal';
 
@@ -146,37 +145,31 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
               setEditingLead(null);
               setShowModal(true);
             }}
+            // Filter props
+            searchTerm={searchTerm}
+            selectedTags={selectedTags}
+            selectedStatus={selectedStatus}
+            selectedProcedence={selectedProcedence}
+            availableTags={allTags}
+            onSearchChange={setSearchTerm}
+            onTagToggle={handleTagToggle}
+            onStatusChange={setSelectedStatus}
+            onProcedenceChange={setSelectedProcedence}
+            onClearFilters={handleClearFilters}
           />
-          
-          {showFilters && (
-            <LeadsFiltersNew
-              darkMode={darkMode}
-              searchTerm={searchTerm}
-              selectedTags={selectedTags}
-              selectedStatus={selectedStatus}
-              selectedProcedence={selectedProcedence}
-              availableTags={allTags}
-              onSearchChange={setSearchTerm}
-              onTagToggle={handleTagToggle}
-              onStatusChange={setSelectedStatus}
-              onProcedenceChange={setSelectedProcedence}
-              onClearFilters={handleClearFilters}
-            />
-          )}
         </div>
 
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 overflow-hidden">
           {viewMode === 'kanban' ? (
-            <LeadsKanban
+            <LeadsKanbanNew
               darkMode={darkMode}
               leads={filteredLeads}
-              onEditLead={(lead) => {
-                setEditingLead(lead);
-                setShowModal(true);
+              onLeadUpdate={(updatedLead) => {
+                setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
               }}
-              onDeleteLead={handleDeleteLead}
             />
           ) : (
+            <div className="p-6 h-full overflow-auto">
             <LeadsListNew
               darkMode={darkMode}
               leads={filteredLeads}
@@ -189,6 +182,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                 setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
               }}
             />
+            </div>
           )}
         </div>
 

@@ -38,7 +38,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   setShowAISuggestion
 }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(480);
+  const [sidebarWidth, setSidebarWidth] = useState(522);
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
   const location = useLocation();
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);

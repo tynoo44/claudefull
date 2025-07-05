@@ -14,7 +14,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   onSidebarWidthChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(480); // Default 480px (25% wider than 384px)
+  const [sidebarWidth, setSidebarWidth] = useState(522); // Default 522px (5% wider than 497px)
   const [columnWidths, setColumnWidths] = useState<number[]>([0, 0, 0]);
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [isResizingSidebar, setIsResizingSidebar] = useState(false);

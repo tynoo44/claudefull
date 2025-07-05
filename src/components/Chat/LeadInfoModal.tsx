@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Tag, Save, Plus, User, Instagram, Hash, Calendar, FileText, ChevronDown } from 'lucide-react';
-import { Lead } from '../../lib/supabase';
+import { X, Save, Plus, User, Instagram, Hash, Calendar, FileText, ChevronDown } from 'lucide-react';
+import { Lead, LeadStatus, LeadProcedence } from '../../lib/supabase';
 import { SupabaseService } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
 
@@ -12,7 +12,7 @@ interface LeadInfoModalProps {
   onUpdate?: (updatedLead: Lead) => void;
 }
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: LeadStatus[] = [
   'Open',
   'Conectar y Cualificar',
   'Situación Actual',
@@ -68,7 +68,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
     });
   };
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = (newStatus: LeadStatus) => {
     setEditedLead({
       ...editedLead,
       status: newStatus
@@ -104,7 +104,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       
-      <div className={`relative w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden ${
+      <div className={`lead-modal relative w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden ${
         darkMode ? 'bg-gray-800' : 'bg-white'
       }`}>
         {/* Header */}
@@ -240,7 +240,10 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
               </label>
               <select
                 value={editedLead.procedence || ''}
-                onChange={(e) => setEditedLead({ ...editedLead, procedence: e.target.value as 'Outbound' | 'Inbound' | 'CTA' | '' })}
+                onChange={(e) => setEditedLead({ 
+                  ...editedLead, 
+                  procedence: e.target.value ? e.target.value as LeadProcedence : undefined 
+                })}
                 className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'

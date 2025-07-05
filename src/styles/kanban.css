@@ -1,0 +1,207 @@
+/* Kanban specific styles for better performance and UX */
+
+/* Smooth scrolling for kanban container */
+#kanban-container {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+/* Light mode horizontal scrollbar */
+#kanban-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+#kanban-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#kanban-container::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+#kanban-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+
+/* Dark mode scrollbars - very subtle */
+.dark #kanban-container {
+  scrollbar-color: rgba(75, 85, 99, 0.2) transparent;
+}
+
+.dark #kanban-container::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.2);
+}
+
+.dark #kanban-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.4);
+}
+
+/* Column vertical scrollbars - very subtle in dark mode */
+.dark .kanban-column-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 85, 99, 0.1) transparent;
+}
+
+.dark .kanban-column-content::-webkit-scrollbar {
+  width: 3px;
+}
+
+.dark .kanban-column-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark .kanban-column-content::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.1);
+  border-radius: 2px;
+}
+
+.dark .kanban-column-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.25);
+}
+
+/* Even more subtle on hover only */
+.dark .kanban-column-content::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.dark .kanban-column-content:hover::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.15);
+}
+
+/* Hide column scrollbars completely in dark mode option */
+.dark .kanban-column-content.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dark .kanban-column-content.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Drag preview styling */
+.drag-preview {
+  transform: rotate(5deg);
+  opacity: 0.8;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Column drop zone styling */
+.drop-zone-active {
+  background: rgba(59, 130, 246, 0.1);
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+}
+
+/* Optimize text rendering */
+.kanban-text {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text selection during drag */
+.kanban-container * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Re-enable text selection for modal inputs */
+.lead-modal * {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Smooth hover transitions */
+.kanban-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.kanban-card:hover {
+  transform: translateY(-2px);
+}
+
+.kanban-card:active {
+  transform: translateY(0);
+}
+
+/* Column header animations */
+.column-header {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.column-header:hover {
+  transform: translateY(-1px);
+}
+
+/* Custom range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: rgba(156, 163, 175, 0.3);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #3b82f6;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-track {
+  background: rgba(156, 163, 175, 0.3);
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background: #3b82f6;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+/* Minimize/maximize button animations */
+.minimize-button {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.minimize-button:hover {
+  transform: scale(1.05);
+}
+
+/* Loading spinner for drop operations */
+@keyframes kanban-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kanban-loading {
+  animation: kanban-spin 1s linear infinite;
+}

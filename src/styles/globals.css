@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './kanban.css';
+
 * {
   box-sizing: border-box;
 }
@@ -48,7 +50,30 @@ body {
   }
   
   .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-600;
+    @apply bg-gray-700;
+  }
+  
+  /* Dark mode scrollbar styling */
+  .dark {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  }
+  
+  .dark::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dark::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .dark::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.3);
+    border-radius: 4px;
+  }
+  
+  .dark::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.5);
   }
   
   /* Hide scrollbars completely */

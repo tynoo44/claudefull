@@ -45,7 +45,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   selectedChat,
   onChatSelect,
   onCollapseChange,
-  width = 384,
+  width = 418,
   pendingChatId,
   onPendingChatLoaded
 }) => {
@@ -176,7 +176,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               <button
                 key={chat.id}
                 onClick={() => onChatSelect(chat)}
-                className={`relative w-12 h-12 rounded-lg flex items-center justify-center transition-all ${
+                className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all ${
                   selectedChat?.id === chat.id
                     ? 'bg-blue-600 text-white shadow-lg scale-105'
                     : darkMode
@@ -186,15 +186,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 title={chat.leadName}
               >
                 {chat.avatar.startsWith('data:image/svg') ? (
-                  <div dangerouslySetInnerHTML={{ __html: decodeURIComponent(chat.avatar.split(',')[1]) }} className="w-full h-full rounded-lg" />
+                  <div dangerouslySetInnerHTML={{ __html: decodeURIComponent(chat.avatar.split(',')[1]) }} className="w-full h-full rounded-full" />
                 ) : (
                   <img 
                     src={chat.avatar} 
                     alt={chat.leadName} 
-                    className="w-full h-full object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-full"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23${darkMode ? '374151' : 'E5E7EB'}" width="100" height="100"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${chat.leadName.charAt(0).toUpperCase()}</text></svg>`;
+                      target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle fill="%23${darkMode ? '374151' : 'E5E7EB'}" cx="50" cy="50" r="50"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${chat.leadName.charAt(0).toUpperCase()}</text></svg>`;
                     }}
                   />
                 )}
@@ -528,7 +528,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       className="w-12 h-12 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23${darkMode ? '374151' : 'E5E7EB'}" width="100" height="100"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${chat.leadName.charAt(0).toUpperCase()}</text></svg>`;
+                        target.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle fill="%23${darkMode ? '374151' : 'E5E7EB'}" cx="50" cy="50" r="50"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${chat.leadName.charAt(0).toUpperCase()}</text></svg>`;
                       }}
                     />
                   )}
