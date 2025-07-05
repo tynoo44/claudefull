@@ -22,21 +22,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
 
     try {
       if (isSignUp) {
-        const { data } = await AuthService.signUpWithEmail(email, password, fullName);
-        if (data.user) {
+        const result = await AuthService.signUpWithEmail(email, password, fullName);
+        if (result.user) {
           // Create user profile in public.users table
-          await AuthService.upsertUserProfile(data.user.id, {
-            email: data.user.email!,
-            full_name: fullName
+          await AuthService.upsertUserProfile(result.user.id, {
+            email: result.user.email!,
+            full_name: fullName,
           });
         }
         alert('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
       } else {
         await AuthService.signInWithEmail(email, password);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Auth error:', err);
-      setError(err.message || 'Error al autenticar');
+      setError(err instanceof Error ? err.message : 'Error al autenticar');
     } finally {
       setLoading(false);
     }
@@ -48,44 +48,48 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
 
     try {
       await AuthService.signInWithGoogle();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Google auth error:', err);
-      setError(err.message || 'Error al autenticar con Google');
+      setError(err instanceof Error ? err.message : 'Error al autenticar con Google');
       setLoading(false);
     }
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center px-4 ${
-      darkMode ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
-      <div className={`max-w-md w-full p-8 rounded-2xl shadow-xl ${
-        darkMode ? 'bg-gray-800' : 'bg-white'
-      }`}>
+    <div
+      className={`min-h-screen flex items-center justify-center px-4 ${
+        darkMode ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+    >
+      <div
+        className={`max-w-md w-full p-8 rounded-2xl shadow-xl ${
+          darkMode ? 'bg-gray-800' : 'bg-white'
+        }`}
+      >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
-            darkMode ? 'bg-blue-900/20' : 'bg-blue-50'
-          }`}>
+          <div
+            className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+              darkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+            }`}
+          >
             <span className="text-2xl">🚀</span>
           </div>
-          <h1 className={`text-3xl font-bold ${
-            darkMode ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             SetterAI
           </h1>
-          <p className={`mt-2 text-sm ${
-            darkMode ? 'text-gray-400' : 'text-gray-600'
-          }`}>
+          <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             {isSignUp ? 'Crea tu cuenta' : 'Inicia sesión en tu cuenta'}
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${
-            darkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-600'
-          }`}>
+          <div
+            className={`mb-4 p-3 rounded-lg text-sm ${
+              darkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-600'
+            }`}
+          >
             {error}
           </div>
         )}
@@ -95,8 +99,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           onClick={handleGoogleLogin}
           disabled={loading}
           className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-            darkMode 
-              ? 'bg-white text-gray-900 hover:bg-gray-100' 
+            darkMode
+              ? 'bg-white text-gray-900 hover:bg-gray-100'
               : 'bg-gray-900 text-white hover:bg-gray-800'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
@@ -130,14 +134,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
         {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className={`w-full border-t ${
-              darkMode ? 'border-gray-700' : 'border-gray-200'
-            }`} />
+            <div
+              className={`w-full border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+            />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className={`px-2 ${
-              darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500'
-            }`}>
+            <span
+              className={`px-2 ${
+                darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500'
+              }`}
+            >
               O continúa con email
             </span>
           </div>
@@ -147,19 +153,21 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}
+              >
                 Nombre completo
               </label>
               <input
                 type="text"
                 required={isSignUp}
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={e => setFullName(e.target.value)}
                 className={`w-full px-4 py-3 rounded-xl border transition-all ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                 placeholder="Juan Pérez"
@@ -168,23 +176,27 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           )}
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}
+            >
               Correo electrónico
             </label>
             <div className="relative">
-              <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`} />
+              <Mail
+                className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}
+              />
               <input
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className={`w-full pl-12 pr-4 py-3 rounded-xl border transition-all ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                 placeholder="tu@email.com"
@@ -193,23 +205,27 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}
+            >
               Contraseña
             </label>
             <div className="relative">
-              <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`} />
+              <Lock
+                className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}
+              />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className={`w-full pl-12 pr-12 py-3 rounded-xl border transition-all ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                 placeholder="••••••••"
@@ -218,7 +234,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className={`absolute right-4 top-1/2 -translate-y-1/2 ${
-                  darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                  darkMode
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -233,16 +251,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
                   type="checkbox"
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <span className={`ml-2 text-sm ${
-                  darkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                <span className={`ml-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Recordarme
                 </span>
               </label>
               <button
                 type="button"
                 className={`text-sm ${
-                  darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+                  darkMode
+                    ? 'text-blue-400 hover:text-blue-300'
+                    : 'text-blue-600 hover:text-blue-500'
                 }`}
               >
                 ¿Olvidaste tu contraseña?
@@ -260,8 +278,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
                 <Loader2 className="w-5 h-5 animate-spin" />
                 {isSignUp ? 'Creando cuenta...' : 'Iniciando sesión...'}
               </>
+            ) : isSignUp ? (
+              'Crear cuenta'
             ) : (
-              isSignUp ? 'Crear cuenta' : 'Iniciar sesión'
+              'Iniciar sesión'
             )}
           </button>
         </form>
@@ -287,19 +307,23 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className={`text-xs ${
-            darkMode ? 'text-gray-500' : 'text-gray-400'
-          }`}>
+          <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
             Al continuar, aceptas nuestros{' '}
-            <a href="#" className={`${
-              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
-            }`}>
+            <a
+              href="#"
+              className={`${
+                darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+              }`}
+            >
               Términos de Servicio
             </a>{' '}
             y{' '}
-            <a href="#" className={`${
-              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
-            }`}>
+            <a
+              href="#"
+              className={`${
+                darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
+              }`}
+            >
               Política de Privacidad
             </a>
           </p>

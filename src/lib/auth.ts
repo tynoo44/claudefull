@@ -10,14 +10,17 @@ export interface AuthUser {
 export class AuthService {
   // Obtener usuario actual
   static async getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
     if (error || !user) return null;
-    
+
     return {
       id: user.id,
       email: user.email!,
       full_name: user.user_metadata?.full_name,
-      avatar_url: user.user_metadata?.avatar_url
+      avatar_url: user.user_metadata?.avatar_url,
     } as AuthUser;
   }
 
@@ -30,10 +33,10 @@ export class AuthService {
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-        }
-      }
+        },
+      },
     });
-    
+
     if (error) throw error;
     return data;
   }
@@ -42,9 +45,9 @@ export class AuthService {
   static async signInWithEmail(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
-    
+
     if (error) throw error;
     return data;
   }
@@ -56,11 +59,11 @@ export class AuthService {
       password,
       options: {
         data: {
-          full_name: fullName
-        }
-      }
+          full_name: fullName,
+        },
+      },
     });
-    
+
     if (error) throw error;
     return data;
   }
@@ -73,13 +76,13 @@ export class AuthService {
 
   // Escuchar cambios de autenticación
   static onAuthStateChange(callback: (user: AuthUser | null) => void) {
-    return supabase.auth.onAuthStateChange(async (event, session) => {
+    return supabase.auth.onAuthStateChange(async (_, session) => {
       if (session?.user) {
         const user: AuthUser = {
           id: session.user.id,
           email: session.user.email!,
           full_name: session.user.user_metadata?.full_name,
-          avatar_url: session.user.user_metadata?.avatar_url
+          avatar_url: session.user.user_metadata?.avatar_url,
         };
         callback(user);
       } else {
@@ -90,14 +93,20 @@ export class AuthService {
 
   // Obtener sesión actual
   static async getSession() {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
     if (error) throw error;
     return session;
   }
 
   // Refrescar sesión
   static async refreshSession() {
-    const { data: { session }, error } = await supabase.auth.refreshSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.refreshSession();
     if (error) throw error;
     return session;
   }
@@ -109,23 +118,27 @@ export class AuthService {
   }
 
   // Crear o actualizar perfil de usuario en la tabla public.users
-  static async upsertUserProfile(userId: string, data: {
-    email: string;
-    full_name?: string;
-    avatar_url?: string;
-  }) {
-    const { error } = await supabase
-      .from('users')
-      .upsert({
+  static async upsertUserProfile(
+    userId: string,
+    data: {
+      email: string;
+      full_name?: string;
+      avatar_url?: string;
+    },
+  ) {
+    const { error } = await supabase.from('users').upsert(
+      {
         id: userId,
         email: data.email,
         full_name: data.full_name,
         avatar_url: data.avatar_url,
-        created_at: new Date().toISOString()
-      }, {
-        onConflict: 'id'
-      });
-    
+        created_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'id',
+      },
+    );
+
     if (error) throw error;
   }
 }

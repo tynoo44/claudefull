@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Chat, Template } from '@/types';
 import { SupabaseService } from '../lib/supabase';
 import { useSupabaseData } from '../hooks/useSupabaseData';
+import { useConversationMessages } from '../hooks/useConversationMessages';
 import { ChatSidebar } from '../components/Chat/ChatSidebar';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { TemplatesSidebar } from '../components/Chat/TemplatesSidebar';
@@ -35,13 +36,16 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   selectChat,
   setSelectedTemplate,
   setMessage,
-  setShowAISuggestion
+  setShowAISuggestion,
 }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(522);
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
   const location = useLocation();
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);
+  
+  // Load messages for current conversation
+  const { messages } = useConversationMessages(localSelectedChat?.id || selectedChat?.id || null);
 
   // Handle navigation state from leads page
   useEffect(() => {
@@ -59,7 +63,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   const insertTemplate = async (template: Template) => {
     setMessage(template.content);
     setSelectedTemplate(template);
-    
+
     try {
       await SupabaseService.incrementTemplateUsage(template.id);
     } catch (error) {
@@ -71,7 +75,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
     selectChat(chat);
     setLocalSelectedChat(chat);
   };
-  
+
   const handleChatUpdate = async (updatedChat: Chat) => {
     setLocalSelectedChat(updatedChat);
     // El ChatSidebar ahora maneja sus propias actualizaciones
@@ -81,11 +85,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   if (dataError && !templatesFormatted.length) {
     return (
       <div className={`h-screen pt-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <ErrorState
-          darkMode={darkMode}
-          error={dataError}
-          onRetry={fetchAllData}
-        />
+        <ErrorState darkMode={darkMode} error={dataError} onRetry={fetchAllData} />
       </div>
     );
   }
@@ -93,8 +93,8 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="flex-1 pt-16 overflow-hidden">
-        <ResizableLayout 
-          darkMode={darkMode} 
+        <ResizableLayout
+          darkMode={darkMode}
           sidebarCollapsed={sidebarCollapsed}
           onSidebarWidthChange={setSidebarWidth}
         >
@@ -117,7 +117,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             showAISuggestion={showAISuggestion}
             onMessageChange={setMessage}
             onToggleAISuggestion={() => setShowAISuggestion(!showAISuggestion)}
-            onTemplateInsert={(template) => setSelectedTemplate(template)}
+            onTemplateInsert={template => setSelectedTemplate(template)}
             onChatUpdate={handleChatUpdate}
           />
 
@@ -132,7 +132,11 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
           {/* AI Chat */}
           <AIChatSidebar
             darkMode={darkMode}
-            conversationContext={selectedChat ? 'Contexto de la conversación' : undefined}
+            conversationContext={selectedChat ? `Chat con ${selectedChat.leadName || selectedChat.username || 'lead'}` : undefined}
+            currentConversation={localSelectedChat || selectedChat ? {
+              ...(localSelectedChat || selectedChat),
+              messages: messages
+            } : null}
           />
         </ResizableLayout>
       </div>

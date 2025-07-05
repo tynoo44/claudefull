@@ -10,20 +10,20 @@ export const useAppState = () => {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [showModal, setShowModal] = useState<ModalType>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  
+
   // View preferences
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   // Selected items
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  
+
   // Form state
   const [message, setMessage] = useState('');
   const [showAISuggestion, setShowAISuggestion] = useState(false);
-  
+
   // Data state - Se eliminan los datos mock, ahora se usan los hooks de Supabase
   const [leads, setLeads] = useState<Lead[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -47,7 +47,9 @@ export const useAppState = () => {
     checkAuth();
 
     // Subscribe to auth changes
-    const { data: { subscription } } = AuthService.onAuthStateChange((user) => {
+    const {
+      data: { subscription },
+    } = AuthService.onAuthStateChange(user => {
       if (user) {
         setIsAuthenticated(true);
         setCurrentUser(user);
@@ -99,9 +101,7 @@ export const useAppState = () => {
   const selectChat = useCallback((chat: Chat) => {
     setSelectedChat(chat);
     // Mark chat as read
-    setChats(prev => prev.map(c => 
-      c.id === chat.id ? { ...c, unread: false } : c
-    ));
+    setChats(prev => prev.map(c => (c.id === chat.id ? { ...c, unread: false } : c)));
   }, []);
 
   const selectLead = useCallback((lead: Lead) => {
@@ -109,22 +109,26 @@ export const useAppState = () => {
   }, []);
 
   const updateLead = useCallback((updatedLead: Lead) => {
-    setLeads(prev => prev.map(lead => 
-      lead.id === updatedLead.id ? updatedLead : lead
-    ));
+    setLeads(prev => prev.map(lead => (lead.id === updatedLead.id ? updatedLead : lead)));
   }, []);
 
-  const addLead = useCallback((newLead: Omit<Lead, 'id'>) => {
-    const id = Math.max(...leads.map(l => l.id)) + 1;
-    setLeads(prev => [...prev, { ...newLead, id }]);
-  }, [leads]);
+  const addLead = useCallback(
+    (newLead: Omit<Lead, 'id'>) => {
+      const id = Math.max(...leads.map(l => parseInt(l.id))) + 1;
+      setLeads(prev => [...prev, { ...newLead, id: id.toString() }]);
+    },
+    [leads],
+  );
 
-  const deleteLead = useCallback((leadId: number) => {
-    setLeads(prev => prev.filter(lead => lead.id !== leadId));
-    if (selectedLead?.id === leadId) {
-      setSelectedLead(null);
-    }
-  }, [selectedLead]);
+  const deleteLead = useCallback(
+    (leadId: string) => {
+      setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      if (selectedLead?.id === leadId) {
+        setSelectedLead(null);
+      }
+    },
+    [selectedLead],
+  );
 
   return {
     // State
@@ -144,7 +148,7 @@ export const useAppState = () => {
     leads,
     chats,
     templates,
-    
+
     // Actions
     setCurrentPage,
     setShowProfileMenu,

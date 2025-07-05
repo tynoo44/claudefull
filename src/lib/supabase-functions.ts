@@ -7,7 +7,8 @@ export async function getConversationsWithDetails() {
     // Primero obtenemos todas las conversaciones con sus leads
     const { data: conversations, error: convError } = await supabase
       .from('conversations')
-      .select(`
+      .select(
+        `
         *,
         leads!inner (
           id,
@@ -19,7 +20,8 @@ export async function getConversationsWithDetails() {
           notes,
           followers_count
         )
-      `)
+      `,
+      )
       .order('updated_at', { ascending: false });
 
     if (convError) {
@@ -33,7 +35,7 @@ export async function getConversationsWithDetails() {
 
     // Obtener el último mensaje de cada conversación
     const conversationsWithMessages = await Promise.all(
-      conversations.map(async (conv) => {
+      conversations.map(async conv => {
         try {
           const { data: messages, error: msgError } = await supabase
             .from('messages')
@@ -58,17 +60,17 @@ export async function getConversationsWithDetails() {
           return {
             ...conv,
             lastMessage: messages?.[0] || null,
-            unreadCount: unreadCount || 0
+            unreadCount: unreadCount || 0,
           };
         } catch (error) {
           console.error(`Error processing conversation ${conv.id}:`, error);
           return {
             ...conv,
             lastMessage: null,
-            unreadCount: 0
+            unreadCount: 0,
           };
         }
-      })
+      }),
     );
 
     return conversationsWithMessages;
@@ -101,7 +103,7 @@ export async function getMessagesForConversation(conversationId: string) {
 export async function sendMessageToConversation(
   conversationId: string,
   text: string,
-  senderType: 'Lead' | 'Setter' = 'Setter'
+  senderType: 'Lead' | 'Setter' = 'Setter',
 ) {
   try {
     const { data, error } = await supabase
@@ -111,8 +113,8 @@ export async function sendMessageToConversation(
           conversation_id: conversationId,
           text,
           sender_type: senderType,
-          platform_message_id: null
-        }
+          platform_message_id: null,
+        },
       ])
       .select()
       .single();
@@ -154,7 +156,7 @@ export async function createConversationForLead(leadId: string) {
       .insert([
         {
           lead_id: leadId,
-        }
+        },
       ])
       .select()
       .single();
@@ -181,11 +183,11 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
+        filter: `conversation_id=eq.${conversationId}`,
       },
-      (payload) => {
+      payload => {
         callback(payload.new);
-      }
+      },
     )
     .subscribe();
 
@@ -202,11 +204,11 @@ export function subscribeToConversations(callback: (conversation: any) => void) 
       {
         event: '*',
         schema: 'public',
-        table: 'conversations'
+        table: 'conversations',
       },
-      (payload) => {
+      payload => {
         callback(payload);
-      }
+      },
     )
     .subscribe();
 

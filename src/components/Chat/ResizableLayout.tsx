@@ -11,14 +11,13 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   children,
   darkMode,
   sidebarCollapsed = false,
-  onSidebarWidthChange
+  onSidebarWidthChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(522); // Default 522px (5% wider than 497px)
   const [columnWidths, setColumnWidths] = useState<number[]>([0, 0, 0]);
   const [isResizing, setIsResizing] = useState<number | null>(null);
-  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
-  
+
   // Sidebar constraints (25% wider)
   const MIN_SIDEBAR_WIDTH = sidebarCollapsed ? 80 : 350; // 25% wider than original
   const MIN_COLUMN_WIDTH = 300;
@@ -33,22 +32,22 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   useEffect(() => {
     const calculateWidths = () => {
       if (!containerRef.current) return;
-      
+
       const containerWidth = containerRef.current.offsetWidth;
       const maxSidebarWidth = getMaxSidebarWidth();
-      
+
       // Ensure sidebar width is within bounds
       const actualSidebarWidth = sidebarCollapsed ? 80 : Math.min(sidebarWidth, maxSidebarWidth);
       if (actualSidebarWidth !== sidebarWidth && !sidebarCollapsed) {
         setSidebarWidth(actualSidebarWidth);
         onSidebarWidthChange?.(actualSidebarWidth);
       }
-      
+
       const availableWidth = containerWidth - actualSidebarWidth;
-      
+
       // Default proportions for the 3 resizable columns (chat, templates, AI)
       const defaultProportions = [0.5, 0.25, 0.25];
-      
+
       setColumnWidths(prevWidths => {
         // If we have existing widths, maintain proportions
         const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
@@ -56,7 +55,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
           const scale = availableWidth / currentTotal;
           return prevWidths.map(w => Math.max(MIN_COLUMN_WIDTH, w * scale));
         }
-        
+
         // Otherwise use default proportions
         return defaultProportions.map(p => Math.max(MIN_COLUMN_WIDTH, availableWidth * p));
       });
@@ -69,11 +68,11 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   useEffect(() => {
     const handleWindowResize = () => {
       if (!containerRef.current) return;
-      
+
       const containerWidth = containerRef.current.offsetWidth;
       const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
       const availableWidth = containerWidth - actualSidebarWidth;
-      
+
       setColumnWidths(prevWidths => {
         const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
         if (currentTotal > 0) {
@@ -89,13 +88,13 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   }, [sidebarCollapsed]);
 
   // Throttle function for better performance
-  const throttle = (func: Function, limit: number) => {
+  const throttle = <T extends unknown[]>(func: (...args: T) => void, limit: number) => {
     let inThrottle: boolean;
-    return function(this: any, ...args: any[]) {
+    return function (...args: T) {
       if (!inThrottle) {
-        func.apply(this, args);
+        func(...args);
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        setTimeout(() => (inThrottle = false), limit);
       }
     };
   };
@@ -109,14 +108,14 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       const containerRect = containerRef.current.getBoundingClientRect();
       const mouseX = e.clientX - containerRect.left;
-      
+
       if (isResizing === -1) {
         // Resizing sidebar - only changes sidebar width, columns adjust naturally
         const maxWidth = getMaxSidebarWidth();
         const newWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(mouseX, maxWidth));
         setSidebarWidth(newWidth);
         onSidebarWidthChange?.(newWidth);
-        
+
         // Recalculate column widths to maintain proportions
         const availableWidth = containerRect.width - newWidth;
         setColumnWidths(prevWidths => {
@@ -131,24 +130,24 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         // Resizing other columns
         const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
         const mouseXRelative = mouseX - actualSidebarWidth;
-        
+
         setColumnWidths(prevWidths => {
           const newWidths = [...prevWidths];
           const totalWidth = containerRect.width - actualSidebarWidth;
-          
+
           if (isResizing === 0) {
             // Resizing between chat and templates (AI remains fixed)
             const aiWidth = prevWidths[2]; // Keep AI column fixed
             const availableSpace = totalWidth - aiWidth;
-            
+
             // Calculate limits for chat width
             const maxChatWidth = availableSpace - MIN_COLUMN_WIDTH; // Leave minimum space for templates
             const minChatWidth = MIN_COLUMN_WIDTH;
-            
+
             // Calculate new chat width based on mouse position
             const newChatWidth = Math.max(minChatWidth, Math.min(mouseXRelative, maxChatWidth));
             const newTemplatesWidth = availableSpace - newChatWidth;
-            
+
             newWidths[0] = newChatWidth;
             newWidths[1] = newTemplatesWidth;
             newWidths[2] = aiWidth; // AI stays fixed
@@ -156,22 +155,25 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
             // Resizing between templates and AI (chat remains fixed)
             const chatWidth = prevWidths[0]; // Keep chat column fixed
             const availableSpace = totalWidth - chatWidth;
-            
+
             // Calculate limits for templates width
             const maxTemplatesWidth = availableSpace - MIN_COLUMN_WIDTH; // Leave minimum space for AI
             const minTemplatesWidth = MIN_COLUMN_WIDTH;
-            
+
             // Calculate new templates width based on mouse position (relative to templates start)
             const templatesStartX = chatWidth;
             const templatesMouseX = mouseXRelative - templatesStartX;
-            const newTemplatesWidth = Math.max(minTemplatesWidth, Math.min(templatesMouseX, maxTemplatesWidth));
+            const newTemplatesWidth = Math.max(
+              minTemplatesWidth,
+              Math.min(templatesMouseX, maxTemplatesWidth),
+            );
             const newAIWidth = availableSpace - newTemplatesWidth;
-            
+
             newWidths[0] = chatWidth; // Chat stays fixed
             newWidths[1] = newTemplatesWidth;
             newWidths[2] = newAIWidth;
           }
-          
+
           return newWidths;
         });
       }
@@ -179,7 +181,6 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
     const handleMouseUp = () => {
       setIsResizing(null);
-      setIsResizingSidebar(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -206,7 +207,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   return (
     <div ref={containerRef} className="flex h-full w-full">
       {/* Sidebar - Resizable width */}
-      <div 
+      <div
         style={{ width: `${actualSidebarWidth}px` }}
         className="flex-shrink-0 h-full overflow-hidden transition-all duration-300"
       >
@@ -221,13 +222,12 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
           }`}
           onMouseDown={() => {
             setIsResizing(-1);
-            setIsResizingSidebar(true);
           }}
         />
       )}
 
       {/* Chat Column */}
-      <div 
+      <div
         style={{ width: `${columnWidths[0]}px` }}
         className="h-full overflow-hidden flex-shrink-0"
       >
@@ -243,7 +243,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
       />
 
       {/* Templates Column */}
-      <div 
+      <div
         style={{ width: `${columnWidths[1]}px` }}
         className="h-full overflow-hidden flex-shrink-0"
       >
@@ -259,7 +259,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
       />
 
       {/* AI Column */}
-      <div 
+      <div
         style={{ width: `${columnWidths[2]}px` }}
         className="h-full overflow-hidden flex-shrink-0"
       >

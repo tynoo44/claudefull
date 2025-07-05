@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { LeadStatus } from '../types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Export types
 export type LeadProcedence = 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
@@ -40,6 +40,7 @@ export interface MessageTemplate {
   updated_at: string;
   purpose: string | null;
   variables: string[] | null;
+  last_used?: string;
 }
 
 export interface Conversation {
@@ -70,51 +71,43 @@ export class SupabaseService {
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as Lead[];
   }
 
   static async getLeadById(id: string) {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
+    const { data, error } = await supabase.from('leads').select('*').eq('id', id).single();
+
     if (error) throw error;
     return data as Lead;
   }
 
   static async createLead(leadData: Omit<Lead, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('leads')
-      .insert([leadData])
-      .select()
-      .single();
-    
+    const { data, error } = await supabase.from('leads').insert([leadData]).select().single();
+
     if (error) throw error;
     return data as Lead;
   }
 
-  static async updateLead(id: string, leadData: Partial<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>) {
+  static async updateLead(
+    id: string,
+    leadData: Partial<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>,
+  ) {
     const { data, error } = await supabase
       .from('leads')
       .update(leadData)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data as Lead;
   }
 
   static async deleteLead(id: string) {
-    const { error } = await supabase
-      .from('leads')
-      .delete()
-      .eq('id', id);
-    
+    const { error } = await supabase.from('leads').delete().eq('id', id);
+
     if (error) throw error;
     return true;
   }
@@ -125,7 +118,7 @@ export class SupabaseService {
       .from('message_templates')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as MessageTemplate[];
   }
@@ -136,40 +129,42 @@ export class SupabaseService {
       .select('*')
       .eq('category', category)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data as MessageTemplate[];
   }
 
-  static async createMessageTemplate(templateData: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>) {
+  static async createMessageTemplate(
+    templateData: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>,
+  ) {
     const { data, error } = await supabase
       .from('message_templates')
       .insert([templateData])
       .select()
       .single();
-    
+
     if (error) throw error;
     return data as MessageTemplate;
   }
 
-  static async updateMessageTemplate(id: string, templateData: Partial<Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>>) {
+  static async updateMessageTemplate(
+    id: string,
+    templateData: Partial<Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>>,
+  ) {
     const { data, error } = await supabase
       .from('message_templates')
       .update(templateData)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data as MessageTemplate;
   }
 
   static async deleteMessageTemplate(id: string) {
-    const { error } = await supabase
-      .from('message_templates')
-      .delete()
-      .eq('id', id);
-    
+    const { error } = await supabase.from('message_templates').delete().eq('id', id);
+
     if (error) throw error;
     return true;
   }
@@ -181,9 +176,9 @@ export class SupabaseService {
       .select('usage_count')
       .eq('id', id)
       .single();
-    
+
     if (fetchError) throw fetchError;
-    
+
     // Update with incremented value
     const { data, error } = await supabase
       .from('message_templates')
@@ -191,7 +186,7 @@ export class SupabaseService {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) throw error;
     return data as MessageTemplate;
   }
@@ -200,7 +195,8 @@ export class SupabaseService {
   static async getConversations() {
     const { data, error } = await supabase
       .from('conversations')
-      .select(`
+      .select(
+        `
         *,
         leads (
           username,
@@ -208,9 +204,10 @@ export class SupabaseService {
           profile_pic,
           status
         )
-      `)
+      `,
+      )
       .order('updated_at', { ascending: false });
-    
+
     if (error) throw error;
     return data;
   }
@@ -219,7 +216,8 @@ export class SupabaseService {
   static async getConversationsWithLastMessage() {
     const { data: conversations, error: convError } = await supabase
       .from('conversations')
-      .select(`
+      .select(
+        `
         *,
         leads (
           username,
@@ -227,14 +225,15 @@ export class SupabaseService {
           profile_pic,
           status
         )
-      `)
+      `,
+      )
       .order('updated_at', { ascending: false });
-    
+
     if (convError) throw convError;
 
     // Get last message for each conversation
     const conversationsWithMessages = await Promise.all(
-      conversations?.map(async (conv) => {
+      conversations?.map(async conv => {
         const { data: messages } = await supabase
           .from('messages')
           .select('text, created_at, sender_type')
@@ -244,9 +243,9 @@ export class SupabaseService {
 
         return {
           ...conv,
-          lastMessage: messages && messages.length > 0 ? messages[0] : null
+          lastMessage: messages && messages.length > 0 ? messages[0] : null,
         };
-      }) || []
+      }) || [],
     );
 
     return conversationsWithMessages;
@@ -255,17 +254,19 @@ export class SupabaseService {
   static async getConversationById(id: string) {
     const { data, error } = await supabase
       .from('conversations')
-      .select(`
+      .select(
+        `
         *,
         leads (
           username,
           full_name,
           profile_pic
         )
-      `)
+      `,
+      )
       .eq('id', id)
       .single();
-    
+
     if (error) throw error;
     return data;
   }
@@ -277,18 +278,14 @@ export class SupabaseService {
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
-    
+
     if (error) throw error;
     return data as Message[];
   }
 
   static async sendMessage(messageData: Omit<Message, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([messageData])
-      .select()
-      .single();
-    
+    const { data, error } = await supabase.from('messages').insert([messageData]).select().single();
+
     if (error) throw error;
     return data as Message;
   }
@@ -298,11 +295,11 @@ export class SupabaseService {
     const { data: leadsData, error: leadsError } = await supabase
       .from('leads')
       .select('id, created_at');
-    
+
     const { data: conversationsData, error: conversationsError } = await supabase
       .from('conversations')
       .select('id, updated_at');
-    
+
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
       .select('id, created_at');
@@ -315,7 +312,7 @@ export class SupabaseService {
       totalLeads: leadsData?.length || 0,
       activeConversations: conversationsData?.length || 0,
       totalMessages: messagesData?.length || 0,
-      conversationsByStatus: {}
+      conversationsByStatus: {},
     };
   }
 }

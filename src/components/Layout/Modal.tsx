@@ -16,7 +16,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
-  darkMode
+  darkMode,
 }) => {
   if (!isOpen) return null;
 
@@ -24,7 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl',
-    xl: 'max-w-4xl'
+    xl: 'max-w-4xl',
   };
 
   return (
@@ -37,20 +37,22 @@ export const Modal: React.FC<ModalProps> = ({
         />
 
         {/* Modal */}
-        <div className={`inline-block w-full ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform ${
-          darkMode ? 'bg-gray-800' : 'bg-white'
-        } shadow-xl rounded-lg`}>
+        <div
+          className={`inline-block w-full ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          } shadow-xl rounded-lg`}
+        >
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-lg font-medium ${
-              darkMode ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               {title}
             </h3>
             <button
               onClick={onClose}
               className={`p-1 rounded-lg transition-colors ${
-                darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                darkMode
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               }`}
             >
               <X size={20} />
@@ -58,9 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
 
           {/* Content */}
-          <div>
-            {children}
-          </div>
+          <div>{children}</div>
         </div>
       </div>
     </div>

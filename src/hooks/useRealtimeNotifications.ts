@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface NotificationMessage {
   id: string;
@@ -23,35 +24,36 @@ export const useRealtimeNotifications = () => {
   const [notifications, setNotifications] = useState<NotificationState>({
     messages: [],
     unreadCount: 0,
-    isVisible: false
+    isVisible: false,
   });
-  
+
   const [activeToasts, setActiveToasts] = useState<string[]>([]);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Inicializar audio para notificaciones
   useEffect(() => {
     // Crear un tono simple usando Web Audio API
     const createNotificationSound = () => {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
       oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
+
       oscillator.start();
       oscillator.stop(audioContext.currentTime + 0.3);
     };
 
-    audioRef.current = { play: createNotificationSound } as any;
+    audioRef.current = { play: createNotificationSound } as HTMLAudioElement;
   }, []);
 
   // Configurar suscripción a mensajes en tiempo real
@@ -68,49 +70,52 @@ export const useRealtimeNotifications = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: 'sender_type=eq.Lead' // Solo mensajes de leads
+          filter: 'sender_type=eq.Lead', // Solo mensajes de leads
         },
-        async (payload) => {
+        async payload => {
           console.log('New lead message for notification:', payload);
-          
+
           try {
             // Obtener información del lead y conversación
             const { data: conversationData } = await supabase
               .from('conversations')
-              .select(`
+              .select(
+                `
                 id,
                 leads (
                   full_name,
                   username
                 )
-              `)
+              `,
+              )
               .eq('id', payload.new.conversation_id)
               .single();
 
             if (conversationData) {
-              const leadName = conversationData.leads?.full_name || 
-                              conversationData.leads?.username || 
-                              'Usuario desconocido';
-              
+              const leadName =
+                conversationData.leads?.[0]?.full_name ||
+                conversationData.leads?.[0]?.username ||
+                'Usuario desconocido';
+
               const newNotification: NotificationMessage = {
                 id: payload.new.id,
                 conversationId: payload.new.conversation_id,
                 leadName,
                 messageText: payload.new.text,
                 timestamp: payload.new.created_at,
-                read: false
+                read: false,
               };
 
               // Añadir notificación
               setNotifications(prev => ({
                 messages: [newNotification, ...prev.messages].slice(0, MAX_NOTIFICATIONS),
                 unreadCount: prev.unreadCount + 1,
-                isVisible: true
+                isVisible: true,
               }));
 
               // Mostrar toast
               setActiveToasts(prev => [...prev, newNotification.id]);
-              
+
               // Reproducir sonido
               if (audioRef.current?.play) {
                 try {
@@ -123,11 +128,12 @@ export const useRealtimeNotifications = () => {
               // Solicitar permiso para notificaciones del navegador
               if (Notification.permission === 'granted') {
                 const notification = new Notification(`Nuevo mensaje de ${leadName}`, {
-                  body: payload.new.text.length > 100 
-                    ? payload.new.text.substring(0, 100) + '...' 
-                    : payload.new.text,
-                  icon: '/favicon.ico',
-                  tag: payload.new.conversation_id // Previene notificaciones duplicadas
+                  body:
+                    payload.new.text.length > 100
+                      ? payload.new.text.substring(0, 100) + '...'
+                      : payload.new.text,
+                  icon: '/vite.svg',
+                  tag: payload.new.conversation_id, // Previene notificaciones duplicadas
                 });
 
                 notification.onclick = () => {
@@ -148,7 +154,7 @@ export const useRealtimeNotifications = () => {
           } catch (error) {
             console.error('Error processing notification:', error);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -168,10 +174,10 @@ export const useRealtimeNotifications = () => {
   const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev => ({
       ...prev,
-      messages: prev.messages.map(msg => 
-        msg.id === notificationId ? { ...msg, read: true } : msg
+      messages: prev.messages.map(msg =>
+        msg.id === notificationId ? { ...msg, read: true } : msg,
       ),
-      unreadCount: Math.max(0, prev.unreadCount - 1)
+      unreadCount: Math.max(0, prev.unreadCount - 1),
     }));
   }, []);
 
@@ -180,7 +186,7 @@ export const useRealtimeNotifications = () => {
     setNotifications(prev => ({
       ...prev,
       messages: prev.messages.map(msg => ({ ...msg, read: true })),
-      unreadCount: 0
+      unreadCount: 0,
     }));
   }, []);
 
@@ -189,7 +195,7 @@ export const useRealtimeNotifications = () => {
     setNotifications({
       messages: [],
       unreadCount: 0,
-      isVisible: false
+      isVisible: false,
     });
   }, []);
 
@@ -211,7 +217,7 @@ export const useRealtimeNotifications = () => {
   // Inicializar suscripción
   useEffect(() => {
     setupRealtimeSubscription();
-    
+
     // Solicitar permisos automáticamente
     requestNotificationPermission();
 
@@ -227,7 +233,7 @@ export const useRealtimeNotifications = () => {
     unreadCount: notifications.unreadCount,
     isVisible: notifications.isVisible,
     activeToasts,
-    
+
     // Funciones
     markAsRead,
     markAllAsRead,
@@ -236,8 +242,8 @@ export const useRealtimeNotifications = () => {
     showNotifications,
     removeToast,
     requestNotificationPermission,
-    
+
     // Estado
-    hasUnread: notifications.unreadCount > 0
+    hasUnread: notifications.unreadCount > 0,
   };
 };

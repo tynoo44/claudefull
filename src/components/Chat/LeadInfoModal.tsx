@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, User, Instagram, Hash, Calendar, FileText, ChevronDown } from 'lucide-react';
+import {
+  X,
+  Save,
+  Plus,
+  User,
+  Instagram,
+  Hash,
+  Calendar,
+  FileText,
+  ChevronDown,
+} from 'lucide-react';
 import { Lead, LeadStatus, LeadProcedence } from '../../lib/supabase';
 import { SupabaseService } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
@@ -23,7 +33,7 @@ const STATUS_OPTIONS: LeadStatus[] = [
   'Agenda',
   'Follow Up',
   'Freeze',
-  'Lose'
+  'Lose',
 ];
 
 export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
@@ -31,7 +41,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
   lead,
   isOpen,
   onClose,
-  onUpdate
+  onUpdate,
 }) => {
   const [editedLead, setEditedLead] = useState<Lead | null>(null);
   const [newTag, setNewTag] = useState('');
@@ -44,7 +54,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
         ...lead,
         status: lead.status || 'Open',
         tags: lead.tags || [],
-        notes: lead.notes || ''
+        notes: lead.notes || '',
       });
     }
   }, [lead]);
@@ -55,7 +65,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
     if (newTag.trim() && !editedLead.tags.includes(newTag.trim())) {
       setEditedLead({
         ...editedLead,
-        tags: [...editedLead.tags, newTag.trim()]
+        tags: [...editedLead.tags, newTag.trim()],
       });
       setNewTag('');
     }
@@ -64,30 +74,30 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
   const handleRemoveTag = (tagToRemove: string) => {
     setEditedLead({
       ...editedLead,
-      tags: editedLead.tags.filter(tag => tag !== tagToRemove)
+      tags: editedLead.tags.filter(tag => tag !== tagToRemove),
     });
   };
 
   const handleStatusChange = (newStatus: LeadStatus) => {
     setEditedLead({
       ...editedLead,
-      status: newStatus
+      status: newStatus,
     });
     setShowStatusDropdown(false);
   };
 
   const handleSave = async () => {
     if (!editedLead) return;
-    
+
     setSaving(true);
     try {
       const updatedLead = await SupabaseService.updateLead(editedLead.id, {
         status: editedLead.status,
         tags: editedLead.tags,
         notes: editedLead.notes,
-        procedence: editedLead.procedence
+        procedence: editedLead.procedence,
       });
-      
+
       if (onUpdate) {
         onUpdate(updatedLead);
       }
@@ -103,26 +113,26 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      
-      <div className={`lead-modal relative w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden ${
-        darkMode ? 'bg-gray-800' : 'bg-white'
-      }`}>
+
+      <div
+        className={`lead-modal relative w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden ${
+          darkMode ? 'bg-gray-800' : 'bg-white'
+        }`}
+      >
         {/* Header */}
-        <div className={`px-6 py-4 border-b ${
-          darkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'
-        }`}>
+        <div
+          className={`px-6 py-4 border-b ${
+            darkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <h2 className={`text-xl font-semibold ${
-              darkMode ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Información del Lead
             </h2>
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
-                darkMode
-                  ? 'hover:bg-gray-700 text-gray-400'
-                  : 'hover:bg-gray-100 text-gray-600'
+                darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
               }`}
             >
               <X className="w-5 h-5" />
@@ -142,39 +152,43 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
                   className="w-20 h-20 rounded-full object-cover"
                 />
               ) : (
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                }`}>
-                  <User className={`w-10 h-10 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                    darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}
+                >
+                  <User className={`w-10 h-10 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1">
-              <h3 className={`text-lg font-semibold ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 {editedLead.full_name || editedLead.username}
               </h3>
-              
-              <div className={`flex items-center gap-2 mt-1 ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+
+              <div
+                className={`flex items-center gap-2 mt-1 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
                 <Instagram className="w-4 h-4" />
                 <span className="text-sm">@{editedLead.username}</span>
                 {editedLead.followers_count && (
                   <>
                     <span className="text-sm">•</span>
-                    <span className="text-sm">{editedLead.followers_count.toLocaleString()} seguidores</span>
+                    <span className="text-sm">
+                      {editedLead.followers_count.toLocaleString()} seguidores
+                    </span>
                   </>
                 )}
               </div>
-              
-              <div className={`flex items-center gap-2 mt-2 ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+
+              <div
+                className={`flex items-center gap-2 mt-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm">
                   Creado: {new Date(editedLead.created_at).toLocaleDateString('es-ES')}
@@ -186,30 +200,35 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
           {/* Status and Procedence Section */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}
+              >
                 Estado
               </label>
               <div className="relative">
                 <button
                   onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                  className={`w-full px-4 py-2 rounded-lg border text-left flex items-center justify-between transition-colors ${
-                    getStatusClasses(editedLead?.status || 'Open', darkMode)
-                  }`}
+                  className={`w-full px-4 py-2 rounded-lg border text-left flex items-center justify-between transition-colors ${getStatusClasses(
+                    editedLead?.status || 'Open',
+                    darkMode,
+                  )}`}
                 >
                   <span>{editedLead.status}</span>
-                  <ChevronDown className={`w-4 h-4 ${
-                    showStatusDropdown ? 'rotate-180' : ''
-                  } transition-transform`} />
+                  <ChevronDown
+                    className={`w-4 h-4 ${
+                      showStatusDropdown ? 'rotate-180' : ''
+                    } transition-transform`}
+                  />
                 </button>
-                
+
                 {showStatusDropdown && (
-                  <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg border shadow-lg z-10 ${
-                    darkMode
-                      ? 'bg-gray-700 border-gray-600'
-                      : 'bg-white border-gray-200'
-                  }`}>
+                  <div
+                    className={`absolute top-full left-0 right-0 mt-1 rounded-lg border shadow-lg z-10 ${
+                      darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                    }`}
+                  >
                     {STATUS_OPTIONS.map(status => (
                       <button
                         key={status}
@@ -233,17 +252,21 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                darkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  darkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}
+              >
                 Procedencia
               </label>
               <select
                 value={editedLead.procedence || ''}
-                onChange={(e) => setEditedLead({ 
-                  ...editedLead, 
-                  procedence: e.target.value ? e.target.value as LeadProcedence : undefined 
-                })}
+                onChange={e =>
+                  setEditedLead({
+                    ...editedLead,
+                    procedence: e.target.value ? (e.target.value as LeadProcedence) : undefined,
+                  })
+                }
                 className={`w-full px-4 py-2 rounded-lg border transition-colors ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -260,9 +283,11 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
 
           {/* Tags Section */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}
+            >
               Etiquetas
             </label>
             <div className="flex flex-wrap gap-2 mb-3">
@@ -270,30 +295,25 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
                 <span
                   key={index}
                   className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
-                    darkMode
-                      ? 'bg-blue-600/20 text-blue-400'
-                      : 'bg-blue-100 text-blue-700'
+                    darkMode ? 'bg-blue-600/20 text-blue-400' : 'bg-blue-100 text-blue-700'
                   }`}
                 >
                   <Hash className="w-3 h-3" />
                   {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1 hover:opacity-70"
-                  >
+                  <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:opacity-70">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               ))}
             </div>
-            
+
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Añadir etiqueta..."
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                onChange={e => setNewTag(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleAddTag()}
                 className={`flex-1 px-3 py-2 rounded-lg border ${
                   darkMode
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
@@ -312,15 +332,17 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
 
           {/* Notes Section */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}
+            >
               <FileText className="w-4 h-4 inline mr-1" />
               Notas
             </label>
             <textarea
               value={editedLead.notes || ''}
-              onChange={(e) => setEditedLead({ ...editedLead, notes: e.target.value })}
+              onChange={e => setEditedLead({ ...editedLead, notes: e.target.value })}
               placeholder="Añade notas sobre este lead..."
               rows={4}
               className={`w-full px-4 py-3 rounded-lg border resize-none ${
@@ -333,9 +355,11 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className={`px-6 py-4 border-t ${
-          darkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'
-        }`}>
+        <div
+          className={`px-6 py-4 border-t ${
+            darkMode ? 'border-gray-700 bg-gray-900/50' : 'border-gray-200 bg-gray-50'
+          }`}
+        >
           <div className="flex justify-end gap-3">
             <button
               onClick={onClose}

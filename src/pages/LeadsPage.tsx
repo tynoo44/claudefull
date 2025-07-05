@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SupabaseService, Lead } from '../lib/supabase';
-import { LeadsHeaderNew } from '../components/Leads/LeadsHeaderNew';
-import { LeadsKanbanNew } from '../components/Leads/LeadsKanbanNew';
-import { LeadsListNew } from '../components/Leads/LeadsListNew';
+import { LeadsHeader } from '../components/Leads/LeadsHeader';
+import { LeadsKanban } from '../components/Leads/LeadsKanban';
+import { LeadsList } from '../components/Leads/LeadsList';
 import { LeadModal } from '../components/Leads/LeadModal';
 
 interface LeadsPageProps {
@@ -48,9 +48,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         followers_count: null,
         user_id: null,
         status: formData.status,
-        procedence: formData.procedence || null
+        procedence: formData.procedence || null,
       };
-      
+
       const createdLead = await SupabaseService.createLead(leadData);
       setLeads(prev => [createdLead, ...prev]);
       setShowModal(false);
@@ -62,18 +62,18 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
   const handleEditLead = async (formData: any) => {
     if (!editingLead) return;
-    
+
     try {
       const leadData = {
         full_name: formData.full_name || null,
         notes: formData.notes || null,
         tags: formData.tags,
         status: formData.status,
-        procedence: formData.procedence || null
+        procedence: formData.procedence || null,
       };
-      
+
       const updatedLead = await SupabaseService.updateLead(editingLead.id, leadData);
-      setLeads(prev => prev.map(lead => lead.id === editingLead.id ? updatedLead : lead));
+      setLeads(prev => prev.map(lead => (lead.id === editingLead.id ? updatedLead : lead)));
       setShowModal(false);
       setEditingLead(null);
     } catch (error) {
@@ -84,7 +84,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
   const handleDeleteLead = async (leadId: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este lead?')) return;
-    
+
     try {
       await SupabaseService.deleteLead(leadId);
       setLeads(prev => prev.filter(lead => lead.id !== leadId));
@@ -95,11 +95,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   };
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
   const handleClearFilters = () => {
@@ -110,13 +106,15 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   };
 
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-                         (lead.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    const matchesTags = selectedTags.length === 0 || 
-                       selectedTags.some(tag => lead.tags.includes(tag));
+    const matchesSearch =
+      lead.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (lead.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    const matchesTags =
+      selectedTags.length === 0 || selectedTags.some(tag => lead.tags.includes(tag));
     const matchesStatus = selectedStatus === 'all' || (lead.status || 'Open') === selectedStatus;
-    const matchesProcedence = selectedProcedence === 'all' || lead.procedence === selectedProcedence;
+    const matchesProcedence =
+      selectedProcedence === 'all' || lead.procedence === selectedProcedence;
     return matchesSearch && matchesTags && matchesStatus && matchesProcedence;
   });
 
@@ -124,7 +122,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div
+        className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
+      >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -134,7 +134,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="h-screen pt-16 flex flex-col">
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
-          <LeadsHeaderNew
+          <LeadsHeader
             darkMode={darkMode}
             totalLeads={filteredLeads.length}
             viewMode={viewMode}
@@ -161,27 +161,31 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
         <div className="flex-1 overflow-hidden">
           {viewMode === 'kanban' ? (
-            <LeadsKanbanNew
+            <LeadsKanban
               darkMode={darkMode}
               leads={filteredLeads}
-              onLeadUpdate={(updatedLead) => {
-                setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
+              onLeadUpdate={updatedLead => {
+                setLeads(prev =>
+                  prev.map(lead => (lead.id === updatedLead.id ? updatedLead : lead)),
+                );
               }}
             />
           ) : (
             <div className="p-6 h-full overflow-auto">
-            <LeadsListNew
-              darkMode={darkMode}
-              leads={filteredLeads}
-              onEditLead={(lead) => {
-                setEditingLead(lead);
-                setShowModal(true);
-              }}
-              onDeleteLead={handleDeleteLead}
-              onUpdateLead={(updatedLead) => {
-                setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
-              }}
-            />
+              <LeadsList
+                darkMode={darkMode}
+                leads={filteredLeads}
+                onEditLead={lead => {
+                  setEditingLead(lead);
+                  setShowModal(true);
+                }}
+                onDeleteLead={handleDeleteLead}
+                onUpdateLead={updatedLead => {
+                  setLeads(prev =>
+                    prev.map(lead => (lead.id === updatedLead.id ? updatedLead : lead)),
+                  );
+                }}
+              />
             </div>
           )}
         </div>

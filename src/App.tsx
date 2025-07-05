@@ -24,14 +24,13 @@ const AppContent: React.FC = () => {
     showAISuggestion,
     chats,
     templates,
-    
+
     // Actions
     setShowProfileMenu,
     setSelectedTemplate,
     setMessage,
     setShowAISuggestion,
     toggleDarkMode,
-    login,
     logout,
     selectChat,
   } = useAppState();
@@ -69,65 +68,61 @@ const AppContent: React.FC = () => {
           logout={logout}
         />
       )}
-      
+
       <div className="flex-1 overflow-y-auto">
         <Routes>
-          <Route path="/auth" element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />
-          } />
+          <Route
+            path="/auth"
+            element={
+              isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />
+            }
+          />
           <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
-          <Route path="/dashboard" element={
-            isAuthenticated ? (
-              <DashboardPage
-                darkMode={darkMode}
-              />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          } />
-          <Route path="/chats" element={
-            isAuthenticated ? (
-              <ChatsPage
-                darkMode={darkMode}
-                chats={chats}
-                templates={templates}
-                selectedChat={selectedChat}
-                selectedTemplate={selectedTemplate}
-                message={message}
-                showAISuggestion={showAISuggestion}
-                selectChat={selectChat}
-                setSelectedTemplate={setSelectedTemplate}
-                setMessage={setMessage}
-                setShowAISuggestion={setShowAISuggestion}
-              />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          } />
-          <Route path="/leads" element={
-            isAuthenticated ? (
-              <LeadsPage darkMode={darkMode} />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          } />
-          <Route path="/templates" element={
-            isAuthenticated ? (
-              <TemplatesPage darkMode={darkMode} />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          } />
-          <Route path="/calendar" element={
-            isAuthenticated ? (
-              <CalendarPage darkMode={darkMode} />
-            ) : (
-              <Navigate to="/auth" />
-            )
-          } />
-          <Route path="/" element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/auth"} />
-          } />
+          <Route
+            path="/dashboard"
+            element={
+              isAuthenticated ? <DashboardPage darkMode={darkMode} /> : <Navigate to="/auth" />
+            }
+          />
+          <Route
+            path="/chats"
+            element={
+              isAuthenticated ? (
+                <ChatsPage
+                  darkMode={darkMode}
+                  chats={chats}
+                  templates={templates}
+                  selectedChat={selectedChat}
+                  selectedTemplate={selectedTemplate}
+                  message={message}
+                  showAISuggestion={showAISuggestion}
+                  selectChat={selectChat}
+                  setSelectedTemplate={setSelectedTemplate}
+                  setMessage={setMessage}
+                  setShowAISuggestion={setShowAISuggestion}
+                />
+              ) : (
+                <Navigate to="/auth" />
+              )
+            }
+          />
+          <Route
+            path="/leads"
+            element={isAuthenticated ? <LeadsPage darkMode={darkMode} /> : <Navigate to="/auth" />}
+          />
+          <Route
+            path="/templates"
+            element={
+              isAuthenticated ? <TemplatesPage darkMode={darkMode} /> : <Navigate to="/auth" />
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              isAuthenticated ? <CalendarPage darkMode={darkMode} /> : <Navigate to="/auth" />
+            }
+          />
+          <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/auth'} />} />
         </Routes>
       </div>
     </div>

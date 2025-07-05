@@ -34,47 +34,29 @@
     },
     "puppeteer": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ],
-      "autoApprove": [
-        "puppeteer_navigate"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "autoApprove": ["puppeteer_navigate"]
     },
     "sequential-thinking": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
       "env": {},
-      "autoApprove": [
-        "sequentialthinking"
-      ]
+      "autoApprove": ["sequentialthinking"]
     },
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
       "env": {
         "MEMORY_FILE_PATH": "/home/raul/.codeium/windsurf/custom-memory.json"
       }
     },
     "ddg-search": {
       "command": "uvx",
-      "args": [
-        "duckduckgo-mcp-server"
-      ]
+      "args": ["duckduckgo-mcp-server"]
     },
     "mcp-compass": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@liuyoshio/mcp-compass"
-      ]
+      "args": ["-y", "@liuyoshio/mcp-compass"]
     },
     "serena": {
       "command": "/abs/path/to/uv",
@@ -89,34 +71,17 @@
     },
     "memory-docker": {
       "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "-v",
-        "claude-memory:/app/dist",
-        "--rm",
-        "mcp/memory"
-      ]
+      "args": ["run", "-i", "-v", "claude-memory:/app/dist", "--rm", "mcp/memory"]
     },
     "github.com/upstash/context7-mcp": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
+      "args": ["-y", "@upstash/context7-mcp@latest"],
       "disabled": false,
-      "autoApprove": [
-        "resolve-library-id",
-        "get-library-docs"
-      ]
+      "autoApprove": ["resolve-library-id", "get-library-docs"]
     },
     "taskmaster-ai": {
       "command": "npx",
-      "args": [
-        "-y",
-        "--package=task-master-ai",
-        "task-master-ai"
-      ],
+      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
       "env": {
         "ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY_HERE",
         "PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_KEY_HERE",
@@ -128,14 +93,8 @@
         "AZURE_OPENAI_API_KEY": "YOUR_AZURE_KEY_HERE",
         "OLLAMA_API_KEY": "YOUR_OLLAMA_API_KEY_HERE"
       },
-      "autoApprove": [
-        "initialize_project",
-        "parse_prd",
-        "models"
-      ],
-      "alwaysAllow": [
-        "get_tasks"
-      ]
+      "autoApprove": ["initialize_project", "parse_prd", "models"],
+      "alwaysAllow": ["get_tasks"]
     }
   }
 }

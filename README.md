@@ -5,59 +5,68 @@ SetterAI es una plataforma SaaS de última generación diseñada específicament
 ## 🚀 Características Principales
 
 ### **⚡ Rendimiento Ultrarrápido**
+
 - **Navegación instantánea** - Cambio entre pestañas en <50ms
 - **Caché inteligente** - Datos persisten entre sesiones sin recargas
 - **Actualizaciones en tiempo real** - Datos siempre sincronizados automáticamente
 - **Optimización de red** - 90% menos llamadas a la base de datos
 
 ### **🔐 Sistema de Autenticación Completo**
+
 - Login con Google OAuth y email/contraseña via Supabase
 - Gestión de sesiones persistentes y seguras
 - Protección avanzada de rutas privadas
 
 ### **📊 Dashboard Inteligente**
+
 - KPIs y métricas actualizadas en tiempo real
 - Cache persistente para carga instantánea
 - Widgets personalizables con datos en vivo
 
 ### **💬 Chat Unificado de Alto Rendimiento**
+
 - **Carga progresiva** - Solo carga conversaciones cuando las necesitas
 - **Tiempo real integrado** - Nuevos mensajes aparecen instantáneamente
 - **Interfaz modular** - Columnas redimensionables y optimizadas
 - **Notificaciones inteligentes** - Alertas no intrusivas con sonido
 
 ### **👥 Gestión Avanzada de Leads**
+
 - CRM completo con estados, etiquetas, notas y procedencia
 - **Búsqueda instantánea** con filtros avanzados
 - **Sincronización automática** - Cambios reflejados en tiempo real
 - Sistema de procedencia (Outbound, Inbound, CTA, Spam)
 
 ### **📝 Sistema de Plantillas Optimizado**
+
 - Mensajes reutilizables con variables y tracking
 - **Cache inteligente** - Carga instantánea desde memoria
 - Favoritos y categorías dinámicas
 - Analytics de conversión en tiempo real
 
 ### **🔔 Centro de Notificaciones**
+
 - **Notificaciones push** del navegador
 - **Toasts elegantes** para nuevos mensajes
 - **Historial completo** con estado leído/no leído
 - **Sonido personalizable** para alertas
 
 ### **🌓 Interfaz Adaptable**
+
 - Modo oscuro/claro con preferencias persistentes
 - Diseño responsive optimizado para todos los dispositivos
 - Transiciones suaves y animaciones fluidas
 
 ## 📋 Prerrequisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - NPM o Yarn
 - Cuenta de Supabase con proyecto configurado
 
 ## 🛠️ Instalación Rápida
 
 ### 1. Clonar e instalar
+
 ```bash
 git clone https://github.com/tu-usuario/setterai.git
 cd setterai
@@ -65,7 +74,9 @@ npm install
 ```
 
 ### 2. Configurar variables de entorno
+
 Crear archivo `.env.local`:
+
 ```env
 VITE_SUPABASE_URL=tu_url_de_supabase
 VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
@@ -74,6 +85,7 @@ VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
 ### 3. Configurar Supabase (Requerido para tiempo real)
 
 #### Habilitar Realtime
+
 ```sql
 -- Habilitar realtime en todas las tablas críticas
 ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
@@ -83,6 +95,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.message_templates;
 ```
 
 #### Configurar RLS y Políticas
+
 ```sql
 -- Habilitar RLS
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
@@ -99,6 +112,7 @@ CREATE POLICY "Users can read conversations" ON public.conversations
 ```
 
 ### 4. Iniciar servidor optimizado
+
 ```bash
 npm run dev
 ```
@@ -108,6 +122,7 @@ npm run dev
 ## 🏗️ Arquitectura de Alto Rendimiento
 
 ### Stack Tecnológico Optimizado
+
 - **Frontend**: React 19 + TypeScript + Vite 5
 - **Estilos**: Tailwind CSS 3 con optimizaciones CSS-in-JS
 - **Base de datos**: Supabase (PostgreSQL) con Realtime
@@ -145,17 +160,19 @@ src/
 ## ⚡ Optimizaciones de Rendimiento Implementadas
 
 ### **🏎️ Sistema de Caché Inteligente**
+
 ```typescript
 // Caché persistente automático
 const { leads, templates, dashboardStats } = useGlobalCache();
 
 // Solo recarga cuando expira (5 minutos por defecto)
-const needsUpdate = useCallback((dataType) => {
+const needsUpdate = useCallback(dataType => {
   return Date.now() - lastUpdate > CACHE_DURATION;
 }, []);
 ```
 
 ### **🔄 Actualizaciones en Tiempo Real**
+
 ```typescript
 // Suscripciones optimizadas a cambios específicos
 supabase
@@ -165,6 +182,7 @@ supabase
 ```
 
 ### **📱 Paginación Inteligente**
+
 ```typescript
 // Carga progresiva con prefetch automático
 const CONVERSATIONS_PER_PAGE = 20;
@@ -177,28 +195,29 @@ if (index === chats.length - 5) {
 ```
 
 ### **🔔 Notificaciones No Intrusivas**
+
 ```typescript
 // Solo para mensajes de leads nuevos
-filter: 'sender_type=eq.Lead'
+filter: 'sender_type=eq.Lead';
 
 // Notificación del navegador + toast + sonido
 if (Notification.permission === 'granted') {
   new Notification(`Nuevo mensaje de ${leadName}`, {
     body: messageText,
-    icon: '/favicon.ico'
+    icon: '/favicon.ico',
   });
 }
 ```
 
 ## 📊 Métricas de Rendimiento
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| **Cambio entre pestañas** | 2-5 segundos | <50ms | **99% más rápido** |
-| **Carga inicial** | 3-8 segundos | 1-2 segundos | **60% reducción** |
-| **Llamadas API** | ~50 por sesión | ~5 por sesión | **90% reducción** |
-| **Uso de ancho de banda** | Alto | Mínimo | **85% reducción** |
-| **Actualización de datos** | Manual | Automática | **Tiempo real** |
+| Métrica                    | Antes          | Después       | Mejora             |
+| -------------------------- | -------------- | ------------- | ------------------ |
+| **Cambio entre pestañas**  | 2-5 segundos   | <50ms         | **99% más rápido** |
+| **Carga inicial**          | 3-8 segundos   | 1-2 segundos  | **60% reducción**  |
+| **Llamadas API**           | ~50 por sesión | ~5 por sesión | **90% reducción**  |
+| **Uso de ancho de banda**  | Alto           | Mínimo        | **85% reducción**  |
+| **Actualización de datos** | Manual         | Automática    | **Tiempo real**    |
 
 ## 🚀 Comandos Disponibles
 
@@ -217,6 +236,7 @@ npm run lint         # TypeScript + ESLint con reglas estrictas
 ## 🔧 Configuración de Rendimiento
 
 ### Variables de Entorno Optimizadas
+
 ```env
 # Supabase con Realtime habilitado
 VITE_SUPABASE_URL=https://tuproyecto.supabase.co
@@ -229,11 +249,12 @@ VITE_MAX_NOTIFICATIONS=50       # Límite de notificaciones
 ```
 
 ### Configuración de Realtime en Supabase
+
 ```sql
 -- Asegurar que Realtime está habilitado para todas las tablas
-SELECT schemaname, tablename 
-FROM pg_tables 
-WHERE schemaname = 'public' 
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
   AND tablename IN ('leads', 'conversations', 'messages', 'message_templates');
 
 -- Verificar publicación de Realtime
@@ -243,24 +264,28 @@ SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
 ## 🎯 Funcionalidades de Alto Rendimiento
 
 ### **Dashboard Inteligente**
+
 - ⚡ Carga instantánea con datos cacheados
 - 📈 Métricas actualizadas en tiempo real
 - 🔄 Sincronización automática sin recargas
 - 💾 Persistencia entre sesiones
 
 ### **Chat Ultrarrápido**
+
 - 📝 Mensajes aparecen instantáneamente
 - 🔄 Paginación progresiva sin lag
 - 🔔 Notificaciones inmediatas
 - 💬 Plantillas con inserción rápida
 
 ### **Gestión de Leads Optimizada**
+
 - 🔍 Búsqueda instantánea con filtros
 - ✏️ Edición en tiempo real
 - 🏷️ Sistema de etiquetas dinámico
 - 📊 Procedencia con colores distintivos
 
 ### **Sistema de Plantillas Inteligente**
+
 - 💾 Cache local para acceso instantáneo
 - 📊 Analytics de uso en tiempo real
 - ⭐ Favoritos con sincronización automática
@@ -269,6 +294,7 @@ SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
 ## 🔔 Centro de Notificaciones Avanzado
 
 ### **Características**
+
 - 🔴 Contador de mensajes no leídos
 - 📱 Notificaciones push del navegador
 - 🎵 Sonido personalizable
@@ -276,16 +302,18 @@ SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
 - ✅ Gestión de estado leído/no leído
 
 ### **Configuración**
+
 ```typescript
 // Personalizar comportamiento de notificaciones
 const NOTIFICATION_DURATION = 5000; // 5 segundos
-const MAX_NOTIFICATIONS = 50;       // Límite de historial
-const ENABLE_SOUND = true;          // Sonido de alerta
+const MAX_NOTIFICATIONS = 50; // Límite de historial
+const ENABLE_SOUND = true; // Sonido de alerta
 ```
 
 ## 🐛 Solución de Problemas de Rendimiento
 
 ### **Problema: Datos no se actualizan en tiempo real**
+
 ```bash
 # Verificar realtime en Supabase
 SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
@@ -295,6 +323,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
 ```
 
 ### **Problema: Cache no funciona**
+
 ```bash
 # Limpiar localStorage si hay problemas
 localStorage.removeItem('setterai_cache');
@@ -304,6 +333,7 @@ console.log(localStorage.getItem('setterai_cache'));
 ```
 
 ### **Problema: Notificaciones no aparecen**
+
 ```javascript
 // Solicitar permisos manualmente
 Notification.requestPermission().then(permission => {
@@ -314,12 +344,14 @@ Notification.requestPermission().then(permission => {
 ## 📈 Futuras Optimizaciones Planificadas
 
 ### **V2.0 - Super Optimizaciones**
+
 - 🧠 **AI Predictivo** - Precarga datos basado en patrones de uso
 - 🌐 **Service Workers** - Cache offline para funcionalidad sin conexión
 - ⚡ **Virtual Scrolling** - Renderizado de listas infinitas optimizado
 - 🔄 **Sync Optimista** - Actualizaciones instantáneas con rollback automático
 
 ### **V2.1 - Analytics Avanzados**
+
 - 📊 **Métricas de rendimiento** - Tracking automático de velocidad
 - 🎯 **Optimización automática** - Ajustes dinámicos basados en uso
 - 📱 **PWA Completa** - Instalación nativa en dispositivos
@@ -328,6 +360,7 @@ Notification.requestPermission().then(permission => {
 ## 🤝 Contribución
 
 ### **Estándares de Alto Rendimiento**
+
 - ⚡ Mantener componentes bajo 500 líneas
 - 🧪 Probar rendimiento antes de PR
 - 💾 Considerar impacto en cache y memoria
@@ -335,6 +368,7 @@ Notification.requestPermission().then(permission => {
 - 📱 Probar en dispositivos móviles
 
 ### **Proceso de Contribución Optimizado**
+
 1. Fork con configuración de desarrollo
 2. Branch con convención: `performance/descripcion`
 3. Commits descriptivos con métricas de rendimiento
@@ -363,4 +397,4 @@ Este proyecto está bajo la Licencia MIT - ver archivo `LICENSE` para detalles.
 
 ---
 
-*Transformando la velocidad y eficiencia en la gestión de leads y conversaciones.* ⚡
+_Transformando la velocidad y eficiencia en la gestión de leads y conversaciones._ ⚡

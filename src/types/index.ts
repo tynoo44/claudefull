@@ -4,28 +4,43 @@ export interface Template {
   content: string;
   category: string;
   tone: string;
-  variables: string;
+  variables: string[];
   uses: number;
   conversionRate: number;
   isFavorite: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export type LeadStatus = 'Open' | 'Conectar y Cualificar' | 'Situación Actual' | 'Situación Deseada' | 'Obstáculo' | 'Compromiso' | 'Oferta' | 'Agenda' | 'Follow Up' | 'Freeze' | 'Lose';
+export type LeadStatus =
+  | 'Open'
+  | 'Conectar y Cualificar'
+  | 'Situación Actual'
+  | 'Situación Deseada'
+  | 'Obstáculo'
+  | 'Compromiso'
+  | 'Oferta'
+  | 'Agenda'
+  | 'Follow Up'
+  | 'Freeze'
+  | 'Lose';
 
 export type LeadProcedence = 'Outbound' | 'Inbound' | 'CTA' | 'Spam';
 
 export interface Lead {
-  id: number;
-  username: string;
-  fullName: string;
+  id: string;
+  instagram_id?: string;
+  username?: string;
+  full_name?: string;
   status: LeadStatus;
-  stage: LeadStatus;
-  lastUpdated: string;
-  avatar: string;
-  tags: string[];
+  procedence: LeadProcedence;
+  created_at: string;
+  updated_at?: string;
+  profile_pic?: string;
+  tags?: string[];
   bio?: string;
-  source?: string;
-  procedence?: LeadProcedence;
+  notes?: string;
+  followers_count?: number;
 }
 
 export interface Chat {
@@ -43,11 +58,13 @@ export interface Chat {
   tags?: string[];
   leadData?: {
     procedence?: LeadProcedence;
-    [key: string]: any;
+    tags?: string[];
+    [key: string]: string | number | boolean | null | undefined | string[];
   };
   unreadCount?: number;
   hasUnansweredMessages?: boolean;
   openedAt?: string;
+  messages?: any[]; // Messages loaded from the conversation
 }
 
 export interface Message {
@@ -70,23 +87,50 @@ export interface Appointment {
   type: string;
 }
 
-export type ModalType = 
-  | 'template' 
-  | 'importScript' 
-  | 'lead' 
-  | 'appointment' 
-  | 'profile' 
+export type ModalType =
+  | 'template'
+  | 'importScript'
+  | 'lead'
+  | 'appointment'
+  | 'profile'
   | 'settings'
   | null;
 
 export type ViewMode = 'list' | 'kanban';
 
-export type Page = 
-  | 'auth' 
-  | 'dashboard' 
-  | 'chats' 
-  | 'leads' 
-  | 'templates' 
-  | 'calendar' 
-  | 'analytics' 
+export type Page =
+  | 'auth'
+  | 'dashboard'
+  | 'chats'
+  | 'leads'
+  | 'templates'
+  | 'calendar'
+  | 'analytics'
   | 'profile';
+
+export interface ConversationWithLead {
+  id: string;
+  lead_id: string;
+  leads: Lead;
+  lastMessage: {
+    text: string;
+    created_at: string;
+  };
+  updated_at: string;
+  unreadCount: number;
+}
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  content: string;
+  category: string | null;
+  tone: string;
+  variables: string[];
+  uses: number;
+  conversion_rate: number;
+  is_favorite: boolean;
+  created_at: string;
+  updated_at: string;
+  last_used?: string;
+}
