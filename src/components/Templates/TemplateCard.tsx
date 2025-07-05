@@ -29,41 +29,44 @@ const PURPOSE_ICONS = {
   default: '💬',
 };
 
-export const TemplateCard: React.FC<TemplateCardProps> = ({ 
-  template, 
-  darkMode, 
-  onClick, 
-  onInsert, 
-  onCopy, 
-  onAdaptWithAI 
+export const TemplateCard: React.FC<TemplateCardProps> = ({
+  template,
+  darkMode,
+  onClick,
+  onCopy,
 }) => {
-  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+  const handleActionClick = (e: React.MouseEvent, action: (template: Template) => void) => {
     e.stopPropagation();
-    action();
+    action(template);
   };
 
   const getToneColorClass = (tone: string) => {
-    const normalizedTone = tone.charAt(0).toUpperCase() + tone.slice(1).toLowerCase();
-    const colors = TONE_COLORS[normalizedTone as keyof typeof TONE_COLORS];
-    return colors ? (darkMode ? colors.dark : colors.light) : 
-           (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700');
+    const colors = TONE_COLORS[tone as keyof typeof TONE_COLORS];
+    return colors
+      ? darkMode
+        ? colors.dark
+        : colors.light
+      : darkMode
+        ? 'bg-gray-700 text-gray-300'
+        : 'bg-gray-100 text-gray-700';
   };
 
   const getPurposeIcon = (purpose?: string) => {
-    if (!purpose) return PURPOSE_ICONS.default;
-    return PURPOSE_ICONS[purpose.toLowerCase() as keyof typeof PURPOSE_ICONS] || PURPOSE_ICONS.default;
+    return purpose && PURPOSE_ICONS[purpose.toLowerCase() as keyof typeof PURPOSE_ICONS]
+      ? PURPOSE_ICONS[purpose.toLowerCase() as keyof typeof PURPOSE_ICONS]
+      : PURPOSE_ICONS.default;
   };
 
   return (
     <div
-      className={`kanban-card p-4 rounded-lg border transition-all cursor-pointer group hover:shadow-lg hover:scale-[1.02] active:scale-95 ${
+      onClick={onClick}
+      className={`p-4 rounded-lg border transition-all cursor-pointer group hover:shadow-lg hover:scale-[1.02] active:scale-95 flex flex-col h-full ${
         darkMode
           ? 'bg-gray-800 border-gray-700 hover:border-gray-600'
           : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
     >
-      {/* Header with Icon and Name */}
-      <div className="flex items-start justify-between mb-3" onClick={onClick}>
+      <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
             className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 transition-all ${
@@ -88,28 +91,27 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
         )}
       </div>
 
-      {/* Tone Badge */}
       {template.tone && (
-        <div className="mb-3" onClick={onClick}>
+        <div className="mb-3">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getToneColorClass(template.tone)}`}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getToneColorClass(
+              template.tone,
+            )}`}
           >
-            <span>{getPurposeIcon(template.tone)}</span>
+            <span>{getPurposeIcon(template.category)}</span>
             {template.tone}
           </span>
         </div>
       )}
 
-      {/* Content Preview */}
-      <div onClick={onClick}>
-        <p className={`text-xs mb-3 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {template.content}
-        </p>
-      </div>
+      <p
+        className={`text-xs mb-3 line-clamp-2 flex-grow ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+      >
+        {template.content}
+      </p>
 
-      {/* Variables Tags */}
       {template.variables && template.variables.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3" onClick={onClick}>
+        <div className="flex flex-wrap gap-1 mb-3">
           {template.variables.slice(0, 2).map((variable, index) => (
             <span
               key={index}
@@ -133,11 +135,10 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
         </div>
       )}
 
-      {/* Stats Badge */}
-      <div className="mb-3" onClick={onClick}>
+      <div className="flex items-center justify-between text-xs mt-auto pt-2 border-t border-gray-200 dark:border-gray-700">
         <span
-          className={`text-xs px-2 py-1 rounded-full border flex items-center gap-1 w-fit ${
-            darkMode 
+          className={`px-2 py-1 rounded-full border flex items-center gap-1 ${
+            darkMode
               ? 'bg-gray-900/50 border-gray-600 text-gray-400'
               : 'bg-gray-50 border-gray-200 text-gray-600'
           }`}
@@ -145,52 +146,15 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
           <TrendingUp className="w-3 h-3" />
           {template.uses} usos • {template.conversionRate}% éxito
         </span>
-      </div>
-
-      {/* Quick Action Buttons */}
-      <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-        {onInsert && (
-          <button
-            onClick={(e) => handleActionClick(e, () => onInsert(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
-              darkMode
-                ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/30'
-                : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-            }`}
-            title="Insertar en chat"
-          >
-            <Plus className="w-3 h-3" />
-            Insertar
-          </button>
-        )}
-        
-        {onAdaptWithAI && (
-          <button
-            onClick={(e) => handleActionClick(e, () => onAdaptWithAI(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
-              darkMode
-                ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-600/30'
-                : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
-            }`}
-            title="Adaptar con IA"
-          >
-            <Sparkles className="w-3 h-3" />
-            Adaptar con IA
-          </button>
-        )}
-        
         {onCopy && (
           <button
-            onClick={(e) => handleActionClick(e, () => onCopy(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
-              darkMode
-                ? 'bg-gray-600/20 text-gray-400 hover:bg-gray-600/30 border border-gray-600/30'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
+            onClick={e => handleActionClick(e, onCopy)}
+            className={`p-1.5 rounded-lg transition-all ${
+              darkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
             }`}
             title="Copiar contenido"
           >
-            <Copy className="w-3 h-3" />
-            Copiar
+            <Copy className="w-4 h-4" />
           </button>
         )}
       </div>

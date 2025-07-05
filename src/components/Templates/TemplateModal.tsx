@@ -34,17 +34,34 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
   const [variableInput, setVariableInput] = useState('');
 
   useEffect(() => {
-    if (template) {
-      setEditedTemplate({ ...template });
+    if (isOpen) {
+      if (template) {
+        setEditedTemplate({ ...template });
+      } else {
+        setEditedTemplate({
+          id: '',
+          name: '',
+          content: '',
+          category: '',
+          tone: '',
+          variables: [],
+          uses: 0,
+          conversionRate: 0,
+          isFavorite: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } else {
+      setEditedTemplate(null);
     }
-  }, [template]);
+  }, [isOpen, template]);
 
-  if (!isOpen || !template || !editedTemplate) return null;
+  if (!isOpen || !editedTemplate) return null;
 
   const handleSave = () => {
     if (editedTemplate) {
       onSave(editedTemplate);
-      onClose();
     }
   };
 
@@ -60,10 +77,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
   };
 
   const handleDelete = () => {
-    if (template && onDelete) {
+    if (editedTemplate && onDelete) {
       if (window.confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) {
-        onDelete(template);
-        onClose();
+        onDelete(editedTemplate);
       }
     }
   };
@@ -85,20 +101,24 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div 
+      <div
         className={`relative w-full max-w-4xl max-h-[90vh] rounded-xl overflow-hidden ${
           darkMode ? 'bg-gray-800' : 'bg-white'
         }`}
       >
         {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div
+          className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+        >
           <div className="flex items-center gap-3">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center ring-2 ${
                 darkMode ? 'bg-gray-700 ring-gray-800' : 'bg-gray-200 ring-white'
               }`}
             >
-              <MessageSquare className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <MessageSquare
+                className={`w-6 h-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+              />
             </div>
             <div>
               <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -108,9 +128,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 {template.category || 'Sin categoría'}
               </p>
             </div>
-            {template.isFavorite && (
-              <Star className="w-5 h-5 text-yellow-500 fill-current" />
-            )}
+            {template.isFavorite && <Star className="w-5 h-5 text-yellow-500 fill-current" />}
           </div>
 
           <button
@@ -131,13 +149,15 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
             {/* Left Column - Edit Form */}
             <div className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                <label
+                  className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                >
                   Nombre de la plantilla
                 </label>
                 <input
                   type="text"
                   value={editedTemplate.name}
-                  onChange={(e) => setEditedTemplate({ ...editedTemplate, name: e.target.value })}
+                  onChange={e => setEditedTemplate({ ...editedTemplate, name: e.target.value })}
                   className={`w-full px-3 py-2 rounded-lg border ${
                     darkMode
                       ? 'bg-gray-700 border-gray-600 text-white'
@@ -147,12 +167,14 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                <label
+                  className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                >
                   Contenido
                 </label>
                 <textarea
                   value={editedTemplate.content}
-                  onChange={(e) => setEditedTemplate({ ...editedTemplate, content: e.target.value })}
+                  onChange={e => setEditedTemplate({ ...editedTemplate, content: e.target.value })}
                   rows={6}
                   className={`w-full px-3 py-2 rounded-lg border resize-none ${
                     darkMode
@@ -164,12 +186,16 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                  >
                     Categoría
                   </label>
                   <select
                     value={editedTemplate.category || ''}
-                    onChange={(e) => setEditedTemplate({ ...editedTemplate, category: e.target.value })}
+                    onChange={e =>
+                      setEditedTemplate({ ...editedTemplate, category: e.target.value })
+                    }
                     className={`w-full px-3 py-2 rounded-lg border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white'
@@ -178,18 +204,22 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   >
                     <option value="">Seleccionar...</option>
                     {CATEGORY_OPTIONS.map(category => (
-                      <option key={category} value={category}>{category}</option>
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                  <label
+                    className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                  >
                     Tono
                   </label>
                   <select
                     value={editedTemplate.tone || ''}
-                    onChange={(e) => setEditedTemplate({ ...editedTemplate, tone: e.target.value })}
+                    onChange={e => setEditedTemplate({ ...editedTemplate, tone: e.target.value })}
                     className={`w-full px-3 py-2 rounded-lg border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white'
@@ -198,28 +228,32 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   >
                     <option value="">Seleccionar...</option>
                     {TONE_OPTIONS.map(tone => (
-                      <option key={tone} value={tone}>{tone}</option>
+                      <option key={tone} value={tone}>
+                        {tone}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                <label
+                  className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                >
                   Variables
                 </label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
                     value={variableInput}
-                    onChange={(e) => setVariableInput(e.target.value)}
+                    onChange={e => setVariableInput(e.target.value)}
                     placeholder="Añadir variable..."
                     className={`flex-1 px-3 py-2 rounded-lg border ${
                       darkMode
                         ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    onKeyPress={(e) => e.key === 'Enter' && addVariable()}
+                    onKeyPress={e => e.key === 'Enter' && addVariable()}
                   />
                   <button
                     onClick={addVariable}
@@ -237,10 +271,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       }`}
                     >
                       {variable}
-                      <button
-                        onClick={() => removeVariable(index)}
-                        className="hover:text-red-500"
-                      >
+                      <button onClick={() => removeVariable(index)} className="hover:text-red-500">
                         <X className="w-3 h-3" />
                       </button>
                     </span>
@@ -252,18 +283,24 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
             {/* Right Column - Stats and Actions */}
             <div className="space-y-4">
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                <h3 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                <h3
+                  className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                >
                   Estadísticas
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <TrendingUp className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                      <TrendingUp
+                        className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                      />
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         Usos
                       </span>
                     </div>
-                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                    >
                       {template.uses}
                     </p>
                   </div>
@@ -273,7 +310,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                         Tasa de éxito
                       </span>
                     </div>
-                    <p className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                    >
                       {template.conversionRate}%
                     </p>
                   </div>
@@ -281,7 +320,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
               </div>
 
               <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                <h3 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}>
+                <h3
+                  className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-700'}`}
+                >
                   Acciones rápidas
                 </h3>
                 <div className="space-y-2">
@@ -297,7 +338,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       Insertar en chat
                     </button>
                   )}
-                  
+
                   {onAdaptWithAI && (
                     <button
                       onClick={() => {
@@ -310,7 +351,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                       Adaptar con IA
                     </button>
                   )}
-                  
+
                   <button
                     onClick={handleCopy}
                     className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
@@ -335,7 +376,9 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className={`flex items-center justify-between p-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div
+          className={`flex items-center justify-between p-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+        >
           <div className="flex items-center gap-2">
             {onToggleFavorite && (
               <button

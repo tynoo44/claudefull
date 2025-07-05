@@ -29,6 +29,8 @@ export const useTemplates = () => {
         await SupabaseService.createMessageTemplate({
           ...templateData,
           category: templateData.category || null,
+          is_favorite: templateData.is_favorite || false,
+          usage_count: templateData.usage_count || 0,
         } as any);
       }
       await fetchTemplates();

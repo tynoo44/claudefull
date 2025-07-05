@@ -29,7 +29,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-
       {/* Input Area */}
       <div className="flex space-x-2">
         <div className="flex-1 relative">

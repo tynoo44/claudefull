@@ -94,38 +94,38 @@ export const SCRIPT_TEMPLATES = {
     nuevoSeguidor: `Hola [NOMBRE]. Soy XXXX, del equipo de Quantum. He visto que has empezado a seguirnos y tu perfil sobre [tema específico de su negocio] me ha parecido muy interesante.
 Por curiosidad, ¿ya utilizas YouTube para tu negocio o es algo que estás considerando para potenciarlo?`,
     cta3x: `Muy buenas ! Por aquí Raúl, del equipo de Quantum🔮 Acabo de ver tu respuesta de 3X y al ver tu perfil creo que puedes encajar con nuestra metodología.
-Para entender cómo podríamos ayudarte, cuéntame, ¿a qué te dedicas actualmente? Ya tienes un negocio, vendes servicios, ofreces mentorías…`
+Para entender cómo podríamos ayudarte, cuéntame, ¿a qué te dedicas actualmente? Ya tienes un negocio, vendes servicios, ofreces mentorías…`,
   },
 
   // Diagnóstico
   diagnostico: {
     situacionActual: `Para entender mejor tu punto de partida, ¿qué estrategias estás utilizando ahora mismo para atraer leads cualificados a tu servicio/producto?`,
     conCanal: `¡Si me dejas por aquí tu canal le puedo echar un vistazo! ¿Cuántos leads generas aproximadamente con YouTube actualmente?`,
-    sinCanal: `Considerando el potencial de YouTube, ¿qué es lo que te ha frenado o dificultado más hasta ahora para implementarlo o hacerlo crecer de manera efectiva?`
+    sinCanal: `Considerando el potencial de YouTube, ¿qué es lo que te ha frenado o dificultado más hasta ahora para implementarlo o hacerlo crecer de manera efectiva?`,
   },
 
   // Objetivos
   objetivos: {
     principal: `Para comprenderte mejor, [NOMBRE], sabiendo que estamos [SITUACION ACTUAL/DOLOR], ¿cuál es el objetivo principal que tienes con tu negocio?`,
-    motivacion: `¿Cuál es tu motivación principal para alcanzar ese [OBJETIVO MENCIONADO]? ¿Qué es lo que realmente te mueve?`
+    motivacion: `¿Cuál es tu motivación principal para alcanzar ese [OBJETIVO MENCIONADO]? ¿Qué es lo que realmente te mueve?`,
   },
 
   // Compromiso
   compromiso: {
-    evaluacion: `Por nuestra experiencia, quienes realmente transforman sus negocios son aquellos que se comprometen al máximo. En tu caso, [NOMBRE], ¿qué tan importante es para ti lograr [REPETIR SU OBJETIVO PRINCIPAL]?`
+    evaluacion: `Por nuestra experiencia, quienes realmente transforman sus negocios son aquellos que se comprometen al máximo. En tu caso, [NOMBRE], ¿qué tan importante es para ti lograr [REPETIR SU OBJETIVO PRINCIPAL]?`,
   },
 
   // Cierre
   cierre: {
     invitacion: `Me gusta ese nivel de compromiso, [NOMBRE]. La verdad, por lo que me cuentas, veo un gran potencial en tu negocio. El siguiente paso lógico sería agendar una llamada con nuestro equipo. Así podrías conocer más sobre nuestra metodología y valorar juntos cómo ayudarte a conseguir [SU OBJETIVO]. ¿Qué te parece?`,
     calendario: `Genial NOMBRE, te dejo por aquí nuestra agenda para que puedas reservar un hueco el día que te vaya mejor: https://calendly.com/d/cr2k-vns-f9b/llamada-de-descubrimiento
-Me quedo por aquí para confirmarte que la agenda se realiza correctamente, ¡avísame cuando reserves!`
+Me quedo por aquí para confirmarte que la agenda se realiza correctamente, ¡avísame cuando reserves!`,
   },
 
   // Follow ups
   followUps: {
     inicial24h: `Buenas tardes NOMBRE, ¡espero que estés genial! ¿Pudiste leer mi mensaje? quedo pendiente de tu respuesta para saber cómo podemos ayudarte.`,
     recordatorio48h: `¡Hola, NOMBRE! Me paso por aquí a subirte el chat por si se te enterró y ver cómo podemos ayudarte!`,
-    calendarioSinAgendar: `Buenos días NOMBRE, he revisado el calendario pero no he visto tu nombre, ¿has tenido algún problema con los horarios para agendar? Estoy por aquí por si necesitas que lo revisemos juntos, ¡que tengas un buen día!!`
-  }
+    calendarioSinAgendar: `Buenos días NOMBRE, he revisado el calendario pero no he visto tu nombre, ¿has tenido algún problema con los horarios para agendar? Estoy por aquí por si necesitas que lo revisemos juntos, ¡que tengas un buen día!!`,
+  },
 };

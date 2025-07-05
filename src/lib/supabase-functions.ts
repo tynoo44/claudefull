@@ -106,31 +106,78 @@ export async function sendMessageToConversation(
   senderType: 'Lead' | 'Setter' = 'Setter',
 ) {
   try {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert([
-        {
-          conversation_id: conversationId,
-          text,
-          sender_type: senderType,
-          platform_message_id: null,
+    if (senderType === 'Setter') {
+      // For messages sent by you (Setter) - send to webhook
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('lead_id, leads(instagram_id)')
+        .eq('id', conversationId)
+        .single();
+
+      if (convError) {
+        console.error('Error getting conversation:', convError);
+        throw new Error(`Error al obtener conversación: ${convError.message}`);
+      }
+
+      // Send HTTP request to webhook
+      const webhookUrl =
+        'https://n8n.srv802330.hstgr.cloud/webhook/8217af76-a02c-4766-8396-a47cd0cd6f1a';
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ])
-      .select()
-      .single();
+        body: JSON.stringify({
+          instagram_id: conversation.leads.instagram_id,
+          message: text,
+        }),
+      });
 
-    if (error) {
-      console.error('Error sending message:', error);
-      throw new Error(`Error al enviar mensaje: ${error.message}`);
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Update conversation timestamp
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      return {
+        id: `webhook-${Date.now()}`,
+        conversation_id: conversationId,
+        text,
+        sender_type: senderType,
+        created_at: new Date().toISOString(),
+      };
+    } else {
+      // For Lead messages - save to Supabase as before
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([
+          {
+            conversation_id: conversationId,
+            text,
+            sender_type: senderType,
+            platform_message_id: null,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error sending message:', error);
+        throw new Error(`Error al enviar mensaje: ${error.message}`);
+      }
+
+      // Update conversation timestamp
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      return data;
     }
-
-    // Actualizar la fecha de la conversación
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
-
-    return data;
   } catch (error) {
     console.error('Error in sendMessageToConversation:', error);
     throw error;

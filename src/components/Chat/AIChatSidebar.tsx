@@ -1,6 +1,20 @@
 import React, { useState } from 'react';
-import { Bot, Send, Sparkles, RefreshCw, MessageSquare, TrendingUp, Lightbulb, ChevronDown } from 'lucide-react';
-import { generateAIResponse, generateQuickActions, GEMINI_MODELS, type GeminiModel } from '../../lib/gemini';
+import {
+  Bot,
+  Send,
+  Sparkles,
+  RefreshCw,
+  MessageSquare,
+  TrendingUp,
+  Lightbulb,
+  ChevronDown,
+} from 'lucide-react';
+import {
+  generateAIResponse,
+  generateQuickActions,
+  GEMINI_MODELS,
+  type GeminiModel,
+} from '../../lib/gemini';
 import { MessageContent } from './MessageContent';
 
 interface AIChatSidebarProps {
@@ -16,10 +30,10 @@ interface AIMessage {
   timestamp: Date;
 }
 
-export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({ 
-  darkMode, 
+export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
+  darkMode,
   conversationContext,
-  currentConversation 
+  currentConversation,
 }) => {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [conversationError, setConversationError] = useState<string | null>(null);
@@ -46,16 +60,19 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       // Build conversation context if available
       let fullContext = conversationContext || '';
       if (currentConversation?.messages && currentConversation.messages.length > 0) {
-        const conversationMessages = currentConversation.messages.map((msg: any) => 
-          `${msg.sender_type === 'Setter' ? 'Setter' : 'Lead'}: ${msg.text || msg.content || ''}`
-        ).join('\n');
+        const conversationMessages = currentConversation.messages
+          .map(
+            (msg: any) =>
+              `${msg.sender_type === 'Setter' ? 'Setter' : 'Lead'}: ${msg.text || msg.content || ''}`,
+          )
+          .join('\n');
         fullContext = `Conversación actual con ${currentConversation.leadName || currentConversation.full_name || currentConversation.username || 'lead'}:\n${conversationMessages}`;
       }
 
       const response = await generateAIResponse({
         messages: messages.concat(userMessage),
         model: selectedModel,
-        conversationContext: fullContext
+        conversationContext: fullContext,
       });
 
       const aiMessage: AIMessage = {
@@ -69,7 +86,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       const errorMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '❌ Error al procesar tu solicitud. Verifica tu conexión o intenta con otro modelo.',
+        content: 'Ups, algo salió mal. Revisa tu conexión o prueba con otro modelo.',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -80,19 +97,20 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
 
   const handleQuickAction = async (action: 'summarize' | 'phase' | 'suggest') => {
     setConversationError(null);
-    
+
     if (!currentConversation || !currentConversation.id) {
       setConversationError('No hay ninguna conversación abierta');
       return;
     }
 
     setIsTyping(true);
-    
+
     // Convert current conversation to AI messages format
-    const conversationMessages: AIMessage[] = currentConversation?.messages?.map((msg: any) => ({
-      role: msg.sender_type === 'Setter' ? 'assistant' : 'user',
-      content: msg.text || msg.content || ''
-    })) || [];
+    const conversationMessages: AIMessage[] =
+      currentConversation?.messages?.map((msg: any) => ({
+        role: msg.sender_type === 'Setter' ? 'assistant' : 'user',
+        content: msg.text || msg.content || '',
+      })) || [];
 
     if (!currentConversation.messages || conversationMessages.length === 0) {
       setConversationError('Esta conversación no tiene mensajes');
@@ -104,19 +122,29 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       setConversationError(null);
       let response = '';
       let actionMessage = '';
-      
+
       switch (action) {
         case 'summarize':
-          actionMessage = '📊 Analizando la conversación con ' + (currentConversation.leadName || 'el lead') + '...';
-          response = await generateQuickActions.summarizeConversation(conversationMessages, selectedModel);
+          actionMessage =
+            'Analizando la conversación con ' + (currentConversation.leadName || 'el lead') + '...';
+          response = await generateQuickActions.summarizeConversation(
+            conversationMessages,
+            selectedModel,
+          );
           break;
         case 'phase':
-          actionMessage = '📈 Identificando fase de venta actual...';
-          response = await generateQuickActions.analyzeSalesPhase(conversationMessages, selectedModel);
+          actionMessage = 'Identificando en qué fase de venta están...';
+          response = await generateQuickActions.analyzeSalesPhase(
+            conversationMessages,
+            selectedModel,
+          );
           break;
         case 'suggest':
-          actionMessage = '💡 Generando sugerencias basadas en el script...';
-          response = await generateQuickActions.suggestMessages(conversationMessages, selectedModel);
+          actionMessage = 'Generando sugerencias basadas en el script...';
+          response = await generateQuickActions.suggestMessages(
+            conversationMessages,
+            selectedModel,
+          );
           break;
       }
 
@@ -139,7 +167,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       const errorMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '❌ Error al analizar la conversación. Verifica tu conexión o intenta con otro modelo.',
+        content: 'No pude analizar la conversación. Revisa tu conexión o prueba con otro modelo.',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -201,11 +229,13 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             <span className="text-sm">{GEMINI_MODELS[selectedModel]}</span>
             <ChevronDown className="w-4 h-4" />
           </button>
-          
+
           {showModelDropdown && (
-            <div className={`absolute top-full left-0 right-0 mt-1 rounded-lg shadow-lg z-10 ${
-              darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-white border border-gray-200'
-            }`}>
+            <div
+              className={`absolute top-full left-0 right-0 mt-1 rounded-lg shadow-lg z-10 ${
+                darkMode ? 'bg-gray-700 border border-gray-600' : 'bg-white border border-gray-200'
+              }`}
+            >
               {Object.entries(GEMINI_MODELS).map(([key, label]) => (
                 <button
                   key={key}
@@ -263,16 +293,17 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             <span>Sugerir</span>
           </button>
         </div>
-        
+
         {/* Error Message */}
         {conversationError && (
-          <div className={`mt-3 p-3 rounded-lg border text-sm ${
-            darkMode 
-              ? 'bg-red-900/20 border-red-800 text-red-300' 
-              : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
+          <div
+            className={`mt-3 p-3 rounded-lg border text-sm ${
+              darkMode
+                ? 'bg-red-900/20 border-red-800 text-red-300'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <span className={darkMode ? 'text-red-400' : 'text-red-500'}>⚠️</span>
               <span>{conversationError}</span>
             </div>
           </div>
@@ -308,19 +339,17 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                   message.role === 'user'
                     ? 'bg-purple-600 text-white'
                     : message.role === 'system'
-                    ? darkMode
-                      ? 'bg-yellow-900/20 text-yellow-200 border border-yellow-800'
-                      : 'bg-yellow-50 text-yellow-900 border border-yellow-200'
-                    : darkMode
-                      ? 'bg-gray-700 text-white border border-gray-600'
-                      : 'bg-gray-50 text-gray-900 border border-gray-200'
+                      ? darkMode
+                        ? 'bg-yellow-900/20 text-yellow-200 border border-yellow-800'
+                        : 'bg-yellow-50 text-yellow-900 border border-yellow-200'
+                      : darkMode
+                        ? 'bg-gray-700 text-white border border-gray-600'
+                        : 'bg-gray-50 text-gray-900 border border-gray-200'
                 }`}
               >
-                <MessageContent 
-                  content={message.content} 
-                  className={`text-sm ${
-                    message.role === 'user' ? 'text-white' : ''
-                  }`}
+                <MessageContent
+                  content={message.content}
+                  className={`text-sm ${message.role === 'user' ? 'text-white' : ''}`}
                 />
               </div>
               <p

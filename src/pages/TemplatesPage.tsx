@@ -3,9 +3,8 @@ import { TemplatesHeader, SortOption } from '../components/Templates/TemplatesHe
 import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
 import { useTemplates } from '../hooks/useTemplates';
-import { useTemplateModal } from '../hooks/useTemplateModal';
-import { Template } from '../types';
 import { MessageTemplate } from '../lib/supabase';
+import { Template } from '../types';
 
 interface TemplatesPageProps {
   darkMode: boolean;
@@ -17,21 +16,18 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const [sortBy, setSortBy] = useState<SortOption>('mostUsed');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  const { templates, loading, saveTemplate, deleteTemplate, toggleFavorite } = useTemplates();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
+  const [isCreateMode, setIsCreateMode] = useState(false);
 
-  const {
-    showModal: createModalShow,
-    editingTemplate,
-    openCreateModal,
-    closeModal,
-  } = useTemplateModal();
+  const { templates, loading, saveTemplate, deleteTemplate, toggleFavorite } = useTemplates();
 
   const categories = [
     'all',
     ...new Set(templates.map(t => t.category).filter(Boolean) as string[]),
   ];
 
-  const sortTemplates = (templates: any[]) => {
+  const sortTemplates = (templates: MessageTemplate[]) => {
     return [...templates].sort((a, b) => {
       switch (sortBy) {
         case 'mostUsed':
@@ -58,13 +54,9 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
       const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
       const matchesFavorites = !showFavoritesOnly || template.is_favorite;
       return matchesSearch && matchesCategory && matchesFavorites;
-    })
+    }),
   );
 
-
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-
-  // Conversion function from MessageTemplate to Template
   const convertToTemplate = (msgTemplate: MessageTemplate): Template => ({
     id: msgTemplate.id,
     name: msgTemplate.name,
@@ -79,7 +71,6 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
     updated_at: msgTemplate.updated_at,
   });
 
-  // Conversion function from Template to MessageTemplate
   const convertToMessageTemplate = (template: Template): Partial<MessageTemplate> => ({
     id: template.id,
     name: template.name,
@@ -89,32 +80,48 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
     variables: template.variables,
     is_favorite: template.isFavorite,
   });
-  const [showModal, setShowModal] = useState(false);
+
+  const handleCreateNew = () => {
+    setSelectedTemplate(null);
+    setIsCreateMode(true);
+    setShowModal(true);
+  };
 
   const handleTemplateClick = (template: MessageTemplate) => {
-    setSelectedTemplate(convertToTemplate(template));
+    setSelectedTemplate(template);
+    setIsCreateMode(false);
     setShowModal(true);
   };
 
   const handleModalClose = () => {
     setShowModal(false);
     setSelectedTemplate(null);
+    setIsCreateMode(false);
   };
 
-  const handleTemplateUpdate = async (updatedTemplate: Template) => {
-    const messageTemplate = convertToMessageTemplate(updatedTemplate);
-    const success = await saveTemplate(messageTemplate as any, true, updatedTemplate.id);
+  const handleTemplateSave = async (template: Template) => {
+    const messageTemplate = convertToMessageTemplate(template);
+    const success = await saveTemplate(
+      messageTemplate as any,
+      !isCreateMode,
+      isCreateMode ? undefined : template.id,
+    );
+    if (success) {
+      handleModalClose();
+    }
     return success;
   };
 
-  const handleDeleteTemplate = async (template: Template) => {
-    await deleteTemplate(template.id);
+  const handleTemplateDelete = async (template: Template) => {
+    const success = await deleteTemplate(template.id);
+    if (success) {
+      handleModalClose();
+    }
   };
 
   const handleCopyTemplate = async (template: Template) => {
     try {
       await navigator.clipboard.writeText(template.content);
-      // Aquí podrías agregar una notificación de éxito
     } catch (error) {
       console.error('Error copying to clipboard:', error);
     }
@@ -138,7 +145,9 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   }
 
   return (
-    <div className={`min-h-screen pt-16 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`min-h-screen pt-16 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+    >
       <div className={`transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <TemplatesHeader
           darkMode={darkMode}
@@ -152,7 +161,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
           onCategoryChange={setSelectedCategory}
           onSortChange={setSortBy}
           onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          onCreateNew={openCreateModal}
+          onCreateNew={handleCreateNew}
         />
       </div>
 
@@ -165,7 +174,17 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
                 : 'No hay templates disponibles'}
             </p>
             <p className="text-sm">
-              {!searchTerm && selectedCategory === 'all' && 'Crea tu primer template para comenzar'}
+              {!searchTerm && selectedCategory === 'all' && (
+                <>
+                  Crea tu primer template para comenzar{' '}
+                  <button
+                    onClick={handleCreateNew}
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
+                    haciendo clic aquí
+                  </button>
+                </>
+              )}
             </p>
           </div>
         ) : (
@@ -184,23 +203,14 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
       </div>
 
       <TemplateModal
-        template={selectedTemplate}
+        template={selectedTemplate ? convertToTemplate(selectedTemplate) : null}
         isOpen={showModal}
         darkMode={darkMode}
         onClose={handleModalClose}
-        onSave={handleTemplateUpdate}
+        onSave={handleTemplateSave}
         onCopy={handleCopyTemplate}
         onToggleFavorite={handleToggleFavorite}
-        onDelete={handleDeleteTemplate}
-      />
-
-      <TemplateModal
-        darkMode={darkMode}
-        isOpen={createModalShow}
-        template={editingTemplate ? convertToTemplate(editingTemplate) : null}
-        onClose={closeModal}
-        onSave={(template) => saveTemplate(convertToMessageTemplate(template) as any, !!editingTemplate, editingTemplate?.id)}
-        onToggleFavorite={handleToggleFavorite}
+        onDelete={handleTemplateDelete}
       />
     </div>
   );

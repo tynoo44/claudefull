@@ -42,7 +42,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
   const location = useLocation();
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);
-  
+
   // Load messages for current conversation
   const { messages } = useConversationMessages(localSelectedChat?.id || selectedChat?.id || null);
 
@@ -70,7 +70,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
     }
   };
 
-
   const handleTemplateDelete = (template: Template) => {
     // TODO: Implement template deletion in chat context
     console.log('Delete template:', template);
@@ -79,7 +78,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   const handleToggleFavorite = async (template: Template) => {
     try {
       await SupabaseService.updateMessageTemplate(template.id, {
-        is_favorite: !template.isFavorite
+        is_favorite: !template.isFavorite,
       });
       // Refetch data to update UI
       fetchAllData();
@@ -150,11 +149,17 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
           {/* AI Chat */}
           <AIChatSidebar
             darkMode={darkMode}
-            conversationContext={selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined}
-            currentConversation={localSelectedChat || selectedChat ? {
-              ...(localSelectedChat || selectedChat),
-              messages: messages
-            } : null}
+            conversationContext={
+              selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined
+            }
+            currentConversation={
+              localSelectedChat || selectedChat
+                ? {
+                    ...(localSelectedChat || selectedChat),
+                    messages: messages,
+                  }
+                : null
+            }
           />
         </ResizableLayout>
       </div>

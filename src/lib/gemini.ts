@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 // Available models
 export const GEMINI_MODELS = {
   'gemini-2.5-flash': 'Gemini 2.5 Flash',
-  'gemini-2.5-pro': 'Gemini 2.5 Pro'
+  'gemini-2.5-pro': 'Gemini 2.5 Pro',
 } as const;
 
 export type GeminiModel = keyof typeof GEMINI_MODELS;
@@ -26,11 +26,11 @@ interface GenerateResponseOptions {
 export const generateAIResponse = async ({
   messages,
   model,
-  conversationContext
+  conversationContext,
 }: GenerateResponseOptions): Promise<string> => {
   try {
     const geminiModel = genAI.getGenerativeModel({ model });
-    
+
     // Build the full prompt
     const fullPrompt = `
 Eres un asistente IA general, capaz de ayudar con cualquier pregunta o tarea.
@@ -49,7 +49,16 @@ INSTRUCCIONES IMPORTANTES:
 - NO asumas que el usuario quiere hablar de appointment setting a menos que lo mencione
 - Si la pregunta ES sobre appointment setting, entonces usa tu conocimiento especializado
 - Si el usuario comparte una conversación con un lead, analízala como su asistente
-- Usa un tono amigable, profesional y conversacional
+- ESTILO DE ESCRITURA CRUCIAL:
+  * Habla de forma cercana y natural, como un amigo profesional
+  * NO uses signos de interrogación al inicio (evita "¿")
+  * NO uses signos de exclamación al inicio (evita "¡")
+  * NO uses comillas innecesarias ni caracteres especiales
+  * Mantén las respuestas concisas - comunica solo lo esencial
+  * Evita párrafos largos sin valor - sé directo
+  * Escribe como si fueras una persona real, no un robot
+  * Usa un lenguaje simple y claro
+  * Evita frases formulaicas o repetitivas
 - Recuerda: el usuario es una PERSONA real hablando contigo, NO un lead`;
 
     const result = await geminiModel.generateContent(fullPrompt);
@@ -78,6 +87,13 @@ Proporciona:
 4. **Fase actual**: En qué fase de las 5 se encuentra
 5. **Próximos pasos recomendados**: Qué debería hacer el setter ahora
 
+ESTILO DE ESCRITURA:
+- Habla de forma natural y cercana
+- NO uses signos de interrogación ni exclamación al inicio
+- Sé directo y conciso
+- Escribe como una persona real, no un robot
+- Evita párrafos largos sin valor
+
 Recuerda: Te diriges al setter para ayudarle, NO al lead.`;
 
     const geminiModel = genAI.getGenerativeModel({ model });
@@ -104,11 +120,18 @@ Proporciona un análisis detallado:
 - Fase 4 (Obstáculo): [Barreras identificadas]
 - Fase 5 (Oferta): [Si se presentó la llamada]
 
-❗ **LO QUE FALTA**:
+**LO QUE FALTA**:
 - [Lista de información pendiente por obtener]
 
 💡 **RECOMENDACIÓN**:
 [Qué deberías hacer ahora como setter para avanzar]
+
+ESTILO DE ESCRITURA:
+- Habla de forma natural como un compañero de trabajo
+- NO uses signos de interrogación ni exclamación al inicio
+- Sé directo, no des rodeos
+- Escribe como una persona real ayudando a otra
+- Mantén el mensaje conciso y útil
 
 Recuerda: Este análisis es para TI como setter, para ayudarte a entender el progreso.`;
 
@@ -127,7 +150,7 @@ ${messages.map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content
 
 **ANÁLISIS RÁPIDO**:
 - **Fase actual**: [Especifica en qué fase están]
-- **Último mensaje del lead**: "[Cita el mensaje]"
+- **Último mensaje del lead**: [Cita el mensaje]
 - **Qué necesitas obtener**: [Objetivo específico para avanzar]
 
 ---
@@ -154,10 +177,18 @@ ${messages.map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content
 - **Opción 2**: [Estrategia de esta opción]
 - **Opción 3**: [Estrategia de esta opción]
 
+ESTILO DE ESCRITURA:
+- Escribe de forma natural y fluida
+- NO uses signos de interrogación ni exclamación al inicio
+- Los mensajes sugeridos deben sonar humanos, no robóticos
+- Sé conciso pero cálido
+- Evita frases hechas o demasiado formales
+- Cada opción debe ser práctica y fácil de copiar
+
 Recuerda: Estas son sugerencias para TI como setter. Copia y pega la que prefieras.`;
 
     const geminiModel = genAI.getGenerativeModel({ model });
     const result = await geminiModel.generateContent(prompt);
     return result.response.text();
-  }
+  },
 };

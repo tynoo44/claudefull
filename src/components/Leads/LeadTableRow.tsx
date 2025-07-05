@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, MessageCircle, Trash2, Clock, Hash, User, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Lead, LeadStatus, LeadProcedence, SupabaseService } from '../../lib/supabase';
@@ -39,7 +39,23 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showProcedenceDropdown, setShowProcedenceDropdown] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const procedenceRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setShowStatusDropdown(false);
+      }
+      if (procedenceRef.current && !procedenceRef.current.contains(event.target as Node)) {
+        setShowProcedenceDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     setIsUpdating(true);
@@ -70,8 +86,8 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
   const handleChatClick = async () => {
     try {
       const conversation = await createConversationForLead(lead.id);
-      navigate('/chats', { 
-        state: { selectedChatId: conversation.id }
+      navigate('/chats', {
+        state: { selectedChatId: conversation.id },
       });
     } catch (error) {
       console.error('Error navigating to chat:', error);
@@ -168,9 +184,12 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
       </td>
 
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="relative">
+        <div className="relative" ref={statusRef}>
           <button
-            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+            onClick={() => {
+              setShowStatusDropdown(!showStatusDropdown);
+              setShowProcedenceDropdown(false);
+            }}
             disabled={isUpdating}
             className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full border transition-all ${getStatusClasses(
               lead.status || 'Open',
@@ -183,7 +202,7 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
 
           {showStatusDropdown && (
             <div
-              className={`absolute top-full left-0 mt-1 w-48 rounded-lg border shadow-lg z-50 ${
+              className={`absolute top-full left-0 mt-1 w-48 rounded-lg border shadow-lg z-50 flex flex-col ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               }`}
             >
@@ -215,9 +234,12 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
       </td>
 
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="relative">
+        <div className="relative" ref={procedenceRef}>
           <button
-            onClick={() => setShowProcedenceDropdown(!showProcedenceDropdown)}
+            onClick={() => {
+              setShowProcedenceDropdown(!showProcedenceDropdown);
+              setShowStatusDropdown(false);
+            }}
             disabled={isUpdating}
             className={`inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full border transition-all ${getProcedenceColor(
               lead.procedence || 'Inbound',
@@ -229,7 +251,7 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
 
           {showProcedenceDropdown && (
             <div
-              className={`absolute top-full left-0 mt-1 w-36 rounded-lg border shadow-lg z-50 ${
+              className={`absolute top-full left-0 mt-1 w-36 rounded-lg border shadow-lg z-50 flex flex-col ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               }`}
             >

@@ -75,7 +75,6 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
     handleModalClose();
   };
 
-
   const handleModalDelete = (template: Template) => {
     onTemplateDelete(template);
     handleModalClose();
@@ -105,12 +104,12 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
       const matchesSearch =
         template.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
         template.content.toLowerCase().includes(templateSearch.toLowerCase());
-      const matchesCategory = selectedCategory === 'Todas' || template.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === 'Todas' || template.category === selectedCategory;
       const matchesFavorites = !showFavoritesOnly || template.isFavorite;
       return matchesSearch && matchesCategory && matchesFavorites;
-    })
+    }),
   );
-
 
   return (
     <div className={`h-full flex flex-col ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>

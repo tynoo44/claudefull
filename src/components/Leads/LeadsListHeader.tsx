@@ -28,7 +28,7 @@ export const LeadsListHeader: React.FC<LeadsListHeaderProps> = ({
     );
   };
 
-  const headerClasses = `px-6 py-4 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-opacity-50 transition-colors flex items-center gap-2 ${
+  const headerClasses = `px-6 py-4 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-opacity-50 transition-colors ${
     darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'
   }`;
 
@@ -36,24 +36,34 @@ export const LeadsListHeader: React.FC<LeadsListHeaderProps> = ({
     <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
       <tr>
         <th className={headerClasses} onClick={() => onSort('name')}>
-          Lead
-          {getSortIcon('name')}
+          <div className="flex items-center gap-2">
+            Lead
+            {getSortIcon('name')}
+          </div>
         </th>
         <th className={headerClasses} onClick={() => onSort('status')}>
-          Estado
-          {getSortIcon('status')}
+          <div className="flex items-center gap-2">
+            Estado
+            {getSortIcon('status')}
+          </div>
         </th>
         <th className={headerClasses} onClick={() => onSort('procedence')}>
-          Procedencia
-          {getSortIcon('procedence')}
+          <div className="flex items-center gap-2">
+            Procedencia
+            {getSortIcon('procedence')}
+          </div>
         </th>
         <th className={headerClasses} onClick={() => onSort('created_at')}>
-          Creado
-          {getSortIcon('created_at')}
+          <div className="flex items-center gap-2">
+            Creado
+            {getSortIcon('created_at')}
+          </div>
         </th>
         <th className={headerClasses} onClick={() => onSort('updated_at')}>
-          Actualizado
-          {getSortIcon('updated_at')}
+          <div className="flex items-center gap-2">
+            Actualizado
+            {getSortIcon('updated_at')}
+          </div>
         </th>
         <th
           className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${

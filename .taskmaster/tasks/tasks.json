@@ -9,7 +9,7 @@
         "testStrategy": "Verificar que los scripts `lint` y `format` se ejecutan sin errores. Confirmar en una Pull Request que el código ha sido formateado correctamente y que el linter no reporta nuevos errores. El pre-commit hook debe bloquear commits con código mal formateado.",
         "priority": "high",
         "dependencies": [],
-        "status": "done",
+        "status": "pending",
         "subtasks": [
           {
             "id": 1,
@@ -87,7 +87,7 @@
         "testStrategy": "Después de la actualización, ejecutar la suite de tests completa (si existe). Realizar pruebas de regresión manuales en las funcionalidades clave de la aplicación para asegurar que la actualización no introdujo errores. El build de producción debe completarse con éxito.",
         "priority": "medium",
         "dependencies": [],
-        "status": "done",
+        "status": "pending",
         "subtasks": [
           {
             "id": 1,
@@ -166,7 +166,7 @@
         "dependencies": [
           1
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": [
           {
             "id": 1,
@@ -335,7 +335,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-05T03:17:53.868Z",
+      "updated": "2025-07-05T10:04:19.206Z",
       "description": "Tasks for master context"
     }
   }

@@ -37,8 +37,8 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ darkMode, lead, onClick 
     e.stopPropagation();
     try {
       const conversation = await createConversationForLead(lead.id);
-      navigate('/chats', { 
-        state: { selectedChatId: conversation.id }
+      navigate('/chats', {
+        state: { selectedChatId: conversation.id },
       });
     } catch (error) {
       console.error('Error navigating to chat:', error);
@@ -176,20 +176,24 @@ export const KanbanCard: React.FC<KanbanCardProps> = ({ darkMode, lead, onClick 
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <div
+            className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+          >
             <Calendar className="w-3 h-3" />
             <span title={`Creado: ${formatDateTime(lead.created_at)}`}>
               {formatDate(lead.created_at)}
             </span>
           </div>
-          <div className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <div
+            className={`flex items-center gap-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+          >
             <Clock className="w-3 h-3" />
             <span title={`Última actualización: ${formatDateTime(lead.updated_at)}`}>
               {formatDate(lead.updated_at)}
             </span>
           </div>
         </div>
-        
+
         <button
           onClick={handleChatClick}
           className={`p-1.5 rounded-lg transition-colors ${
