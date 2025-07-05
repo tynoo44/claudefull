@@ -29,38 +29,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-      {/* AI Suggestion */}
-      {showAISuggestion && (
-        <div
-          className={`mb-3 p-3 rounded-lg border-l-4 border-purple-500 ${
-            darkMode ? 'bg-purple-900/20' : 'bg-purple-50'
-          }`}
-        >
-          <div className="flex items-center space-x-2 mb-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
-            <span
-              className={`text-sm font-medium ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}
-            >
-              Sugerencia de IA
-            </span>
-          </div>
-          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Perfecto! Me parece genial que estés interesado. ¿Te parece si agendamos una llamada
-            rápida para explicarte mejor los detalles?
-          </p>
-          <button
-            onClick={() => {
-              onMessageChange(
-                'Perfecto! Me parece genial que estés interesado. ¿Te parece si agendamos una llamada rápida para explicarte mejor los detalles?',
-              );
-              onToggleAISuggestion();
-            }}
-            className="mt-2 text-xs text-purple-600 hover:text-purple-700 font-medium"
-          >
-            Usar esta respuesta
-          </button>
-        </div>
-      )}
 
       {/* Input Area */}
       <div className="flex space-x-2">

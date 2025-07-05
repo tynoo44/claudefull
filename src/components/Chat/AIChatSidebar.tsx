@@ -21,15 +21,8 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   conversationContext,
   currentConversation 
 }) => {
-  const [messages, setMessages] = useState<AIMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content:
-        '¡Hola! Soy tu asistente personal IA. Puedo ayudarte con cualquier pregunta o tarea.\n\nMi especialidad es el **appointment setting**, por lo que puedo:\n\n📊 **Analizar** conversaciones con leads\n💡 **Sugerir** mensajes basados en scripts\n📈 **Identificar** fases de venta\n🎯 **Asesorar** en estrategias\n\nPero también puedo ayudarte con cualquier otra consulta. ¿En qué puedo asistirte hoy?',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [conversationError, setConversationError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
@@ -86,18 +79,10 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   };
 
   const handleQuickAction = async (action: 'summarize' | 'phase' | 'suggest') => {
-    // Debug logging
-    console.log('Current conversation:', currentConversation);
-    console.log('Messages in conversation:', currentConversation?.messages);
+    setConversationError(null);
     
     if (!currentConversation || !currentConversation.id) {
-      const noConversationMessage: AIMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: '⚠️ No hay ninguna conversación abierta. Abre un chat con un lead para que pueda analizarlo.',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, noConversationMessage]);
+      setConversationError('No hay ninguna conversación abierta');
       return;
     }
 
@@ -110,18 +95,13 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     })) || [];
 
     if (!currentConversation.messages || conversationMessages.length === 0) {
-      const emptyConversationMessage: AIMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: '📭 Esta conversación no tiene mensajes aún. Empieza a chatear con el lead para que pueda ayudarte.',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, emptyConversationMessage]);
+      setConversationError('Esta conversación no tiene mensajes');
       setIsTyping(false);
       return;
     }
 
     try {
+      setConversationError(null);
       let response = '';
       let actionMessage = '';
       
@@ -198,7 +178,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             </div>
           </div>
           <button
-            onClick={() => setMessages([messages[0]])}
+            onClick={() => setMessages([])}
             className={`p-2 rounded-lg transition-colors ${
               darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
             }`}
@@ -249,10 +229,10 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           <button
             onClick={() => handleQuickAction('summarize')}
             disabled={isTyping}
-            className={`p-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
+            className={`p-3 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
               darkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -261,10 +241,10 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           <button
             onClick={() => handleQuickAction('phase')}
             disabled={isTyping}
-            className={`p-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
+            className={`p-3 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
               darkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -273,20 +253,34 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           <button
             onClick={() => handleQuickAction('suggest')}
             disabled={isTyping}
-            className={`p-2 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
+            className={`p-3 rounded-lg text-xs font-medium transition-colors flex flex-col items-center gap-1 ${
               darkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600'
+                : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <Lightbulb className="w-4 h-4" />
             <span>Sugerir</span>
           </button>
         </div>
+        
+        {/* Error Message */}
+        {conversationError && (
+          <div className={`mt-3 p-3 rounded-lg border text-sm ${
+            darkMode 
+              ? 'bg-red-900/20 border-red-800 text-red-300' 
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            <div className="flex items-center gap-2">
+              <span className={darkMode ? 'text-red-400' : 'text-red-500'}>⚠️</span>
+              <span>{conversationError}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {messages.map(message => (
           <div
             key={message.id}
@@ -310,7 +304,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                 </div>
               )}
               <div
-                className={`px-4 py-3 rounded-lg ${
+                className={`px-4 py-3 rounded-lg shadow-sm ${
                   message.role === 'user'
                     ? 'bg-purple-600 text-white'
                     : message.role === 'system'
@@ -319,7 +313,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                       : 'bg-yellow-50 text-yellow-900 border border-yellow-200'
                     : darkMode
                       ? 'bg-gray-700 text-white border border-gray-600'
-                      : 'bg-gray-100 text-gray-900 border border-gray-200'
+                      : 'bg-gray-50 text-gray-900 border border-gray-200'
                 }`}
               >
                 <MessageContent 
@@ -342,16 +336,6 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             </div>
           </div>
         ))}
-        {currentConversation && messages.length === 1 && (
-          <div className={`px-4 py-3 rounded-lg mx-4 mb-4 ${
-            darkMode ? 'bg-blue-900/20 border border-blue-700' : 'bg-blue-50 border border-blue-200'
-          }`}>
-            <p className="text-sm">
-              💬 <strong>Tip:</strong> Tengo acceso a la conversación con {currentConversation.leadName || currentConversation.username || 'el lead'}. 
-              Usa los botones rápidos arriba para analizar la conversación.
-            </p>
-          </div>
-        )}
         {isTyping && (
           <div className="flex items-center gap-2">
             <Bot className="w-4 h-4 text-purple-500" />
