@@ -66,7 +66,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
       <div className="flex items-start justify-between mb-3" onClick={onClick}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 transition-all ${
               darkMode ? 'bg-gray-700 ring-gray-800' : 'bg-gray-200 ring-white'
             }`}
           >
@@ -152,10 +152,10 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
         {onInsert && (
           <button
             onClick={(e) => handleActionClick(e, () => onInsert(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
               darkMode
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/30'
+                : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
             }`}
             title="Insertar en chat"
           >
@@ -167,25 +167,25 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
         {onAdaptWithAI && (
           <button
             onClick={(e) => handleActionClick(e, () => onAdaptWithAI(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
               darkMode
-                ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-600/30'
+                : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
             }`}
             title="Adaptar con IA"
           >
             <Sparkles className="w-3 h-3" />
-            Adaptar
+            Adaptar con IA
           </button>
         )}
         
         {onCopy && (
           <button
             onClick={(e) => handleActionClick(e, () => onCopy(template))}
-            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
               darkMode
-                ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                ? 'bg-gray-600/20 text-gray-400 hover:bg-gray-600/30 border border-gray-600/30'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-300'
             }`}
             title="Copiar contenido"
           >

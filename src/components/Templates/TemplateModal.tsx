@@ -287,7 +287,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 <div className="space-y-2">
                   {onInsert && (
                     <button
-                      onClick={() => onInsert(template)}
+                      onClick={() => {
+                        onInsert(editedTemplate);
+                        onClose();
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -297,7 +300,10 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                   
                   {onAdaptWithAI && (
                     <button
-                      onClick={() => onAdaptWithAI(template)}
+                      onClick={() => {
+                        onAdaptWithAI(editedTemplate);
+                        onClose();
+                      }}
                       className="w-full flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                     >
                       <Sparkles className="w-4 h-4" />
@@ -333,18 +339,22 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
           <div className="flex items-center gap-2">
             {onToggleFavorite && (
               <button
-                onClick={() => onToggleFavorite(template)}
+                onClick={async () => {
+                  await onToggleFavorite(editedTemplate);
+                  // Update local state to reflect the change
+                  setEditedTemplate({ ...editedTemplate, isFavorite: !editedTemplate.isFavorite });
+                }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  template.isFavorite
+                  editedTemplate.isFavorite
                     ? 'text-yellow-500 hover:bg-yellow-500/10'
                     : darkMode
                       ? 'text-gray-400 hover:text-yellow-500 hover:bg-gray-700'
                       : 'text-gray-500 hover:text-yellow-500 hover:bg-gray-100'
                 }`}
               >
-                <Star className={`w-4 h-4 ${template.isFavorite ? 'fill-current' : ''}`} />
+                <Star className={`w-4 h-4 ${editedTemplate.isFavorite ? 'fill-current' : ''}`} />
                 <span className="text-sm">
-                  {template.isFavorite ? 'Favorito' : 'Añadir a favoritos'}
+                  {editedTemplate.isFavorite ? 'Favorito' : 'Añadir a favoritos'}
                 </span>
               </button>
             )}
