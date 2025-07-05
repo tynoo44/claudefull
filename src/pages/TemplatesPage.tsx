@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TemplatesHeader } from '../components/Templates/TemplatesHeader';
+import { TemplatesHeader, SortOption } from '../components/Templates/TemplatesHeader';
 import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
 import { useTemplates } from '../hooks/useTemplates';
@@ -12,6 +12,8 @@ interface TemplatesPageProps {
 export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('mostUsed');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const { templates, loading, saveTemplate, deleteTemplate, toggleFavorite } = useTemplates();
 
@@ -34,13 +36,35 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
     ...new Set(templates.map(t => t.category).filter(Boolean) as string[]),
   ];
 
-  const filteredTemplates = templates.filter(template => {
-    const matchesSearch =
-      template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      template.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const sortTemplates = (templates: any[]) => {
+    return [...templates].sort((a, b) => {
+      switch (sortBy) {
+        case 'mostUsed':
+          return (b.usage_count || 0) - (a.usage_count || 0);
+        case 'leastUsed':
+          return (a.usage_count || 0) - (b.usage_count || 0);
+        case 'successRate':
+          return (b.conversion_rate || 0) - (a.conversion_rate || 0);
+        case 'alphabetical':
+          return a.name.localeCompare(b.name);
+        case 'recent':
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const filteredTemplates = sortTemplates(
+    templates.filter(template => {
+      const matchesSearch =
+        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.content.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
+      const matchesFavorites = !showFavoritesOnly || template.is_favorite;
+      return matchesSearch && matchesCategory && matchesFavorites;
+    })
+  );
 
   const handleSaveTemplate = async () => {
     const success = await saveTemplate(newTemplate, !!editingTemplate, editingTemplate?.id);
@@ -78,7 +102,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   }
 
   return (
-    <div className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen pt-16 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className={`transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <TemplatesHeader
           darkMode={darkMode}
@@ -86,8 +110,12 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
           selectedCategory={selectedCategory}
           categories={categories}
           templatesCount={filteredTemplates.length}
+          sortBy={sortBy}
+          showFavoritesOnly={showFavoritesOnly}
           onSearchChange={setSearchTerm}
           onCategoryChange={setSelectedCategory}
+          onSortChange={setSortBy}
+          onToggleFavorites={() => setShowFavoritesOnly(!showFavoritesOnly)}
           onCreateNew={openCreateModal}
         />
       </div>

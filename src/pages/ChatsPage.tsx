@@ -6,7 +6,7 @@ import { useSupabaseData } from '../hooks/useSupabaseData';
 import { useConversationMessages } from '../hooks/useConversationMessages';
 import { ChatSidebar } from '../components/Chat/ChatSidebar';
 import { ChatInterface } from '../components/Chat/ChatInterface';
-import { TemplatesSidebar } from '../components/Chat/TemplatesSidebar';
+import { ChatTemplatesView } from '../components/Chat/ChatTemplatesView';
 import { AIChatSidebar } from '../components/Chat/AIChatSidebar';
 import { ResizableLayout } from '../components/Chat/ResizableLayout';
 import { ErrorState } from '../components/Chat/ErrorState';
@@ -30,7 +30,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
   chats: _propsChats,
   templates: _propsTemplates,
   selectedChat,
-  selectedTemplate,
   message,
   showAISuggestion,
   selectChat,
@@ -69,6 +68,21 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
     } catch (error) {
       console.error('Error incrementing template usage:', error);
     }
+  };
+
+  const handleTemplateEdit = (template: Template) => {
+    // TODO: Implement template editing in chat context
+    console.log('Edit template:', template);
+  };
+
+  const handleTemplateDelete = (template: Template) => {
+    // TODO: Implement template deletion in chat context
+    console.log('Delete template:', template);
+  };
+
+  const handleToggleFavorite = (template: Template) => {
+    // TODO: Implement toggle favorite in chat context
+    console.log('Toggle favorite:', template);
   };
 
   const handleChatSelect = (chat: Chat) => {
@@ -122,17 +136,19 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
           />
 
           {/* Templates */}
-          <TemplatesSidebar
+          <ChatTemplatesView
             darkMode={darkMode}
             templates={templatesFormatted}
-            selectedTemplate={selectedTemplate}
             onTemplateInsert={insertTemplate}
+            onTemplateEdit={handleTemplateEdit}
+            onTemplateDelete={handleTemplateDelete}
+            onToggleFavorite={handleToggleFavorite}
           />
 
           {/* AI Chat */}
           <AIChatSidebar
             darkMode={darkMode}
-            conversationContext={selectedChat ? `Chat con ${selectedChat.leadName || selectedChat.username || 'lead'}` : undefined}
+            conversationContext={selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined}
             currentConversation={localSelectedChat || selectedChat ? {
               ...(localSelectedChat || selectedChat),
               messages: messages

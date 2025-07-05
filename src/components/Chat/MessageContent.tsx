@@ -11,7 +11,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({ content, classNa
     let formatted = text;
     
     // Handle special message suggestion format
-    formatted = formatted.replace(/📝 \*\*Opción (\d+).*?\*\*:(.*?)```([\s\S]*?)```/g, (match, num, desc, message) => {
+    formatted = formatted.replace(/📝 \*\*Opción (\d+).*?\*\*:(.*?)```([\s\S]*?)```/g, (_, num, desc, message) => {
       const descClean = desc.trim().replace(/[()]/g, '');
       const messageClean = message.trim();
       return `

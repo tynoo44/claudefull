@@ -1,5 +1,7 @@
 import React from 'react';
-import { MessageSquare, Search, Plus } from 'lucide-react';
+import { MessageSquare, Search, Plus, Star } from 'lucide-react';
+
+export type SortOption = 'mostUsed' | 'leastUsed' | 'successRate' | 'alphabetical' | 'recent';
 
 interface TemplatesHeaderProps {
   darkMode: boolean;
@@ -7,8 +9,12 @@ interface TemplatesHeaderProps {
   selectedCategory: string;
   categories: string[];
   templatesCount: number;
+  sortBy?: SortOption;
+  showFavoritesOnly?: boolean;
   onSearchChange: (value: string) => void;
   onCategoryChange: (category: string) => void;
+  onSortChange?: (sort: SortOption) => void;
+  onToggleFavorites?: () => void;
   onCreateNew: () => void;
 }
 
@@ -18,8 +24,12 @@ export const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
   selectedCategory,
   categories,
   templatesCount,
+  sortBy = 'mostUsed',
+  showFavoritesOnly = false,
   onSearchChange,
   onCategoryChange,
+  onSortChange,
+  onToggleFavorites,
   onCreateNew,
 }) => {
   return (
@@ -87,6 +97,39 @@ export const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({
             </option>
           ))}
         </select>
+
+        {onSortChange && (
+          <select
+            value={sortBy}
+            onChange={e => onSortChange(e.target.value as SortOption)}
+            className={`px-4 py-3 rounded-xl border transition-all min-w-[160px] ${
+              darkMode
+                ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500'
+                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
+            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+          >
+            <option value="mostUsed">Más usado</option>
+            <option value="leastUsed">Menos usado</option>
+            <option value="successRate">Tasa de éxito</option>
+            <option value="alphabetical">Alfabético</option>
+            <option value="recent">Más reciente</option>
+          </select>
+        )}
+
+        {onToggleFavorites && (
+          <button
+            onClick={onToggleFavorites}
+            className={`px-4 py-3 rounded-xl border transition-all ${
+              showFavoritesOnly
+                ? 'bg-yellow-500 border-yellow-500 text-white'
+                : darkMode
+                  ? 'bg-gray-800 border-gray-700 text-gray-400 hover:text-yellow-500 hover:border-yellow-500'
+                  : 'bg-white border-gray-300 text-gray-500 hover:text-yellow-500 hover:border-yellow-500'
+            } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+          >
+            <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+          </button>
+        )}
       </div>
     </div>
   );
