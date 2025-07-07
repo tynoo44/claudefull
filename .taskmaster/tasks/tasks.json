@@ -521,7 +521,7 @@
             "title": "Implementar lógica de cálculo de qualification_score",
             "description": "Desarrollar algoritmo para calcular el score de cualificación basado en el progreso del lead a través de las fases",
             "details": "Implementar calculateQualificationScore() que considere:\n- Fase actual alcanzada (peso 40%)\n- Información obtenida en cada fase (peso 30%)\n- Calidad de respuestas del lead (peso 20%)\n- Indicadores de interés/urgencia (peso 10%)\n- Score de 0.0 a 1.0\n- Umbrales: <0.3 bajo, 0.3-0.7 medio, >0.7 alto",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [
               "18.3"
             ],
@@ -532,7 +532,7 @@
             "title": "Integrar tracking en generateAIResponse",
             "description": "Modificar la función generateAIResponse para que automáticamente actualice el estado de la conversación después de cada respuesta",
             "details": "Actualizar src/lib/gemini.ts para:\n- Importar ConversationStateManager\n- Después de generar respuesta, llamar updateConversationState\n- Pasar conversation_id, user_message, ai_response\n- Incluir current_phase detectada\n- Manejar errores sin interrumpir el flujo principal\n- Logear métricas de tracking",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "18.4"
             ],
@@ -558,6 +558,15 @@
             "dependencies": [
               "18.6"
             ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 8,
+            "title": "Fix Critical TypeScript Build Errors",
+            "description": "Fix multiple TypeScript build errors that are blocking development progress, including type mismatches in gemini.ts, null safety violations in TemplateModal.tsx, and property access errors in supabase-functions.ts",
+            "details": "",
+            "status": "in-progress",
+            "dependencies": [],
             "parentTaskId": 18
           }
         ]
@@ -684,7 +693,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-07T10:01:05.247Z",
+      "updated": "2025-07-07T10:19:27.736Z",
       "description": "Tasks for master context"
     }
   }

@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { APPOINTMENT_SETTING_CONTEXT } from './appointment-setting-context';
 import { promptManager, PromptComponents } from './prompt-manager';
 import { responseValidator, ValidationConfig } from './response-validator';
+import { ConversationStateManager } from './conversation-state-manager';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -25,6 +26,8 @@ interface GenerateResponseOptions {
   conversationContext?: string;
   currentPhase?: number;
   leadType?: string;
+  conversationId?: string;
+  enableTracking?: boolean;
 }
 
 // Build hierarchical prompt from components
@@ -95,6 +98,8 @@ export const generateAIResponse = async ({
   conversationContext,
   currentPhase,
   leadType,
+  conversationId,
+  enableTracking = true,
 }: GenerateResponseOptions): Promise<string> => {
   try {
     const geminiModel = genAI.getGenerativeModel({ model });
@@ -195,12 +200,122 @@ export const generateAIResponse = async ({
     
     // Return best response found
     console.log(`Returning best response with score: ${bestScore}`);
+    
+    // Update conversation state tracking if enabled
+    if (enableTracking && conversationId && messages.length > 0) {
+      try {
+        const userMessage = messages[messages.length - 1]?.content || '';
+        const detectedPhase = currentPhase || await promptManager.detectCurrentPhase(messages.map(m => m.content).join('\n'));
+        
+        // Extract phase-specific information from the conversation
+        const phaseInfo = extractPhaseInfo(messages, detectedPhase);
+        
+        const trackingResult = await ConversationStateManager.updateConversationState({
+          conversation_id: conversationId,
+          user_message: userMessage,
+          ai_response: bestResponse,
+          current_phase: detectedPhase,
+          phase_info: phaseInfo,
+          detected_intent: extractIntent(userMessage)
+        });
+        
+        if (trackingResult.success) {
+          console.log('Conversation state updated:', {
+            conversation_id: conversationId,
+            phase: trackingResult.current_phase,
+            score: trackingResult.qualification_score,
+            phase_changed: trackingResult.phase_changed
+          });
+        } else {
+          console.warn('Failed to update conversation state:', trackingResult.error);
+        }
+      } catch (trackingError) {
+        console.error('Error updating conversation tracking:', trackingError);
+        // Don't throw - tracking failure shouldn't break response generation
+      }
+    }
+    
     return bestResponse;
     
   } catch (error) {
     console.error('Error generating AI response:', error);
     throw new Error('Failed to generate AI response');
   }
+};
+
+// Helper functions for conversation analysis
+const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): any => {
+  const phaseInfo: any = {};
+  
+  // Extract information based on current phase
+  const conversationText = messages.map(m => m.content).join(' ').toLowerCase();
+  
+  switch (currentPhase) {
+    case 1: // Situación Actual
+      if (conversationText.includes('negocio') || conversationText.includes('empresa')) {
+        phaseInfo.business_type = 'mentioned';
+      }
+      if (conversationText.includes('años') || conversationText.includes('tiempo')) {
+        phaseInfo.business_age = 'mentioned';
+      }
+      break;
+      
+    case 2: // Dolor
+      const painKeywords = ['problema', 'dificultad', 'dolor', 'frustra', 'difícil'];
+      if (painKeywords.some(keyword => conversationText.includes(keyword))) {
+        phaseInfo.pain_identified = true;
+      }
+      break;
+      
+    case 3: // Situación Deseada
+      const goalKeywords = ['quiero', 'objetivo', 'meta', 'lograr', 'ideal'];
+      if (goalKeywords.some(keyword => conversationText.includes(keyword))) {
+        phaseInfo.goals_defined = true;
+      }
+      break;
+      
+    case 4: // Obstáculo
+      const obstacleKeywords = ['obstáculo', 'impedimento', 'barrera', 'pero', 'however'];
+      if (obstacleKeywords.some(keyword => conversationText.includes(keyword))) {
+        phaseInfo.obstacles_identified = true;
+      }
+      break;
+      
+    case 5: // Oferta
+      const offerKeywords = ['llamada', 'reunión', 'cita', 'agenda', 'cuando'];
+      if (offerKeywords.some(keyword => conversationText.includes(keyword))) {
+        phaseInfo.offer_discussed = true;
+      }
+      break;
+  }
+  
+  return phaseInfo;
+};
+
+const extractIntent = (message: string): string => {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('sí') || lowerMessage.includes('si') || lowerMessage.includes('yes')) {
+    return 'positive_response';
+  }
+  
+  if (lowerMessage.includes('no') || lowerMessage.includes('not')) {
+    return 'negative_response';
+  }
+  
+  if (lowerMessage.includes('?') || lowerMessage.includes('cuándo') || lowerMessage.includes('cómo')) {
+    return 'question';
+  }
+  
+  if (lowerMessage.includes('precio') || lowerMessage.includes('cost') || lowerMessage.includes('cuanto')) {
+    return 'price_inquiry';
+  }
+  
+  if (lowerMessage.includes('interesa') || lowerMessage.includes('interesante')) {
+    return 'interest_expression';
+  }
+  
+  return 'general_response';
 };
 
 // Quick action functions with hierarchical prompts
