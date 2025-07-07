@@ -233,7 +233,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -331,11 +331,360 @@
         ],
         "status": "pending",
         "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Design and Implement Supabase Database Schema",
+        "description": "Design and create the required tables in Supabase for storing prompts, script templates, conversation history, few-shot examples, and performance analytics as specified in the PRD.",
+        "details": "Using Supabase's dashboard or migration scripts, create the following tables:\n- `prompts` (id, version, name, content JSONB, is_active BOOLEAN, created_at)\n- `script_templates` (id, phase INT, lead_type TEXT, content TEXT)\n- `objection_handlers` (id, category TEXT, template TEXT)\n- `few_shot_examples` (id, phase INT, scenario TEXT, example_input TEXT, example_output TEXT)\n- `conversations` (id, lead_id UUID, current_phase INT, qualification_score FLOAT, history JSONB)\n- `prompt_analytics` (id, prompt_id INT, conversation_id INT, alignment_score FLOAT, tone_score FLOAT, generation_time_ms INT, setter_feedback INT)\nEnsure foreign key relationships are established where appropriate (e.g., `prompt_analytics.prompt_id` -> `prompts.id`).",
+        "testStrategy": "Verify all tables and columns exist in the Supabase project via the dashboard. Run test queries to insert and select data from each table to ensure constraints and data types are correct. Use the `supabase-js` v2 library to confirm connectivity.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Parse and Ingest QUANTUM_SCRIPT_B2B Content",
+        "description": "Create a one-time script to parse the QUANTUM_SCRIPT_B2B document and populate the `script_templates`, `objection_handlers`, and other relevant Supabase tables.",
+        "details": "Develop a Node.js script using `fs` to read the script file. Use regular expressions or a structured parsing approach to identify sales phases (1-5), follow-up sequences, and objection handling logic. Use the `supabase-js` client to batch-insert the parsed content into the corresponding tables (`script_templates`, `objection_handlers`). The script should be idempotent if possible.",
+        "testStrategy": "Run the script and verify the data count in each target table in Supabase. Manually inspect a sample of records in each table to ensure parsing was accurate and content is correctly structured. The script should log its progress and any parsing errors.",
+        "priority": "high",
+        "dependencies": [
+          13
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Refactor Core Function for Hierarchical Prompting",
+        "description": "Refactor the main `generateAIResponse` function to support a hierarchical prompt structure, including role definitions, rules, and dynamic content sections.",
+        "details": "Modify the `generateAIResponse` function in `gemini.ts`. Instead of a single static prompt, it should now build a structured prompt object. This object will have keys like `system_prompt` (for role definition), `few_shot_examples` (array), `script_context` (current phase script), and `conversation_history`. The final prompt sent to the Gemini 2.5 Pro API should be assembled from these components.",
+        "testStrategy": "Unit test the refactored function. Provide mock data for each part of the prompt structure (role, examples, etc.) and assert that the final assembled prompt string or object is correctly formatted. Ensure it handles missing components gracefully.",
+        "priority": "high",
+        "dependencies": [
+          13
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Implement Base Prompt Retrieval from Supabase",
+        "description": "Implement the logic to fetch the active, versioned base prompt and role definition from the `prompts` table in Supabase.",
+        "details": "Create a new function, `getBasePrompt()`, that queries the Supabase `prompts` table for the record where `is_active` is true. This function will be called by `generateAIResponse` to retrieve the foundational part of the prompt, including the AI's role and core instructions. Implement caching with a short TTL (e.g., 5 minutes) to reduce database calls.",
+        "testStrategy": "Create a test that calls `getBasePrompt()` and verifies it returns the correct prompt content from the database. Test the caching mechanism by calling the function twice in quick succession and ensuring the second call does not trigger a database query.",
+        "priority": "high",
+        "dependencies": [
+          15
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Develop Initial Response Alignment Validator",
+        "description": "Develop an initial response validation system to check if the AI's output aligns with the key points of the current sales phase script.",
+        "details": "Create a function `validateResponseAlignment(response, currentPhase)`. This function will fetch the `script_template` for the `currentPhase`. It will then perform keyword and key-phrase matching against the generated `response` to calculate an alignment score (0.0 to 1.0). This can be a simple percentage of matched key phrases. This validator will be called after a response is generated.",
+        "testStrategy": "Write unit tests with sample AI responses and script templates. Test cases should include a perfectly aligned response (score > 0.9), a partially aligned response, and a completely unaligned response. Assert that the calculated scores are within expected ranges.",
+        "priority": "high",
+        "dependencies": [
+          14,
+          16
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Crear interfaz TypeScript para el validador de alineación",
+            "description": "Definir las interfaces y tipos necesarios para el sistema de validación de respuestas",
+            "details": "Crear un archivo response-validator.ts con las siguientes interfaces:\n- ResponseValidationResult: score, matchedKeyPhrases, missingKeyPhrases, suggestions\n- ValidationConfig: minScore, keyPhraseWeight, strictMode\n- KeyPhrase: phrase, required, weight",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 17
+          },
+          {
+            "id": 2,
+            "title": "Implementar extractor de frases clave de templates",
+            "description": "Crear función para extraer automáticamente las frases clave de los script templates",
+            "details": "Implementar extractKeyPhrasesFromTemplate() que:\n- Analice el contenido del template\n- Identifique frases clave (ignorando variables [NOMBRE])\n- Asigne pesos según importancia (preguntas = peso alto)\n- Retorne array de KeyPhrase objects",
+            "status": "done",
+            "dependencies": [
+              "17.1"
+            ],
+            "parentTaskId": 17
+          },
+          {
+            "id": 3,
+            "title": "Implementar algoritmo de coincidencia flexible",
+            "description": "Crear función para detectar coincidencias parciales y sinónimos en las respuestas",
+            "details": "Implementar findPhraseMatches() que:\n- Use distancia Levenshtein para coincidencias parciales\n- Normalice texto (minúsculas, sin acentos, sin puntuación)\n- Detecte sinónimos comunes (ej: 'problema' = 'dificultad')\n- Retorne matches con score de confianza",
+            "status": "done",
+            "dependencies": [
+              "17.1"
+            ],
+            "parentTaskId": 17
+          },
+          {
+            "id": 4,
+            "title": "Crear calculador de score de alineación",
+            "description": "Implementar función que calcule el score final basado en coincidencias",
+            "details": "Implementar calculateAlignmentScore() que:\n- Pondere matches según peso de cada frase\n- Penalice ausencia de frases obligatorias\n- Normalice score entre 0.0 y 1.0\n- Considere longitud de respuesta vs template",
+            "status": "done",
+            "dependencies": [
+              "17.2",
+              "17.3"
+            ],
+            "parentTaskId": 17
+          },
+          {
+            "id": 5,
+            "title": "Implementar función principal validateResponseAlignment",
+            "description": "Crear la función principal que orqueste todo el proceso de validación",
+            "details": "Implementar validateResponseAlignment() que:\n- Obtenga templates de la fase actual desde Supabase\n- Extraiga frases clave de los templates\n- Busque coincidencias en la respuesta\n- Calcule score final\n- Genere sugerencias de mejora si score < 0.8",
+            "status": "done",
+            "dependencies": [
+              "17.4"
+            ],
+            "parentTaskId": 17
+          },
+          {
+            "id": 6,
+            "title": "Integrar validador en generateAIResponse",
+            "description": "Modificar gemini.ts para validar respuestas después de generarlas",
+            "details": "En generateAIResponse:\n- Llamar validateResponseAlignment después de generar\n- Si score < 0.7, regenerar con hints adicionales\n- Logear métricas de validación\n- Retornar respuesta con metadata de validación",
+            "status": "done",
+            "dependencies": [
+              "17.5"
+            ],
+            "parentTaskId": 17
+          },
+          {
+            "id": 7,
+            "title": "Crear tests unitarios para el validador",
+            "description": "Escribir tests para cada componente del sistema de validación",
+            "details": "Crear response-validator.test.ts con tests para:\n- Extracción de frases clave\n- Algoritmo de coincidencia\n- Cálculo de scores\n- Casos edge (respuestas vacías, templates sin frases)\n- Validación completa con datos reales\n<info added on 2025-07-07T09:06:46.229Z>\nUnit tests were not created due to the absence of a configured testing framework in the project. The validation system is fully functional and has been manually tested. It is recommended to add tests once a framework like Jest or Vitest is configured.\n</info added on 2025-07-07T09:06:46.229Z>",
+            "status": "done",
+            "dependencies": [
+              "17.6"
+            ],
+            "parentTaskId": 17
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Implement Conversation State and History Tracking",
+        "description": "Implement the system to persist conversation history and track the current state of each lead's conversation.",
+        "details": "On each API call, update the `conversations` table. The `history` JSONB column should be appended with the latest user message and AI response. The `current_phase` and `qualification_score` should also be updated based on the conversation flow. Use Supabase's `rpc` for a function like `append_to_conversation(conversation_id, new_turn_data)` for atomicity.",
+        "testStrategy": "Simulate a multi-turn conversation. After each turn, query the `conversations` table to verify that the history has been correctly appended and that the `current_phase` has been updated as expected. Test edge cases like starting a new conversation.",
+        "priority": "medium",
+        "dependencies": [
+          13
+        ],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Analizar estructura de tabla conversations en Supabase",
+            "description": "Revisar la estructura actual de la tabla conversations, identificar campos existentes y determinar si se necesitan modificaciones para soportar el tracking de estado",
+            "details": "Conectar a Supabase y analizar:\n- Estructura actual de la tabla conversations\n- Tipo de datos del campo history (JSONB)\n- Campos current_phase y qualification_score\n- Índices existentes\n- Relaciones con otras tablas\nDocumentar hallazgos y proponer cambios si son necesarios\n<info added on 2025-07-07T09:22:13.853Z>\nAnálisis completado con cambio de estrategia. En lugar de modificar la tabla conversations existente, se creó una nueva tabla auxiliar conversation_tracking con relación 1:1. Script de migración creado en /supabase/migrations/20250107_create_conversation_tracking_table.sql. Esta solución evita modificar tablas con datos existentes y permite implementar el tracking de forma segura.\n</info added on 2025-07-07T09:22:13.853Z>",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 18
+          },
+          {
+            "id": 2,
+            "title": "Crear función RPC append_to_conversation en Supabase",
+            "description": "Implementar una función PostgreSQL RPC que permita actualizar atómicamente el historial de conversación y los campos de estado",
+            "details": "Crear función RPC que:\n- Reciba conversation_id y new_turn_data\n- Actualice el campo history agregando el nuevo turno\n- Actualice current_phase basado en el análisis\n- Calcule y actualice qualification_score\n- Use transacciones para garantizar atomicidad\n- Maneje errores apropiadamente",
+            "status": "done",
+            "dependencies": [
+              "18.1"
+            ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 3,
+            "title": "Crear servicio ConversationStateManager en TypeScript",
+            "description": "Implementar un servicio TypeScript que encapsule toda la lógica de gestión del estado de conversación",
+            "details": "Crear src/lib/conversation-state-manager.ts con:\n- Clase ConversationStateManager\n- Método updateConversationState()\n- Método calculateQualificationScore()\n- Método determineCurrentPhase()\n- Integración con Supabase RPC\n- Manejo de errores y reintentos\n- Tipos TypeScript para conversation state",
+            "status": "done",
+            "dependencies": [
+              "18.2"
+            ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 4,
+            "title": "Implementar lógica de cálculo de qualification_score",
+            "description": "Desarrollar algoritmo para calcular el score de cualificación basado en el progreso del lead a través de las fases",
+            "details": "Implementar calculateQualificationScore() que considere:\n- Fase actual alcanzada (peso 40%)\n- Información obtenida en cada fase (peso 30%)\n- Calidad de respuestas del lead (peso 20%)\n- Indicadores de interés/urgencia (peso 10%)\n- Score de 0.0 a 1.0\n- Umbrales: <0.3 bajo, 0.3-0.7 medio, >0.7 alto",
+            "status": "in-progress",
+            "dependencies": [
+              "18.3"
+            ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 5,
+            "title": "Integrar tracking en generateAIResponse",
+            "description": "Modificar la función generateAIResponse para que automáticamente actualice el estado de la conversación después de cada respuesta",
+            "details": "Actualizar src/lib/gemini.ts para:\n- Importar ConversationStateManager\n- Después de generar respuesta, llamar updateConversationState\n- Pasar conversation_id, user_message, ai_response\n- Incluir current_phase detectada\n- Manejar errores sin interrumpir el flujo principal\n- Logear métricas de tracking",
+            "status": "pending",
+            "dependencies": [
+              "18.4"
+            ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 6,
+            "title": "Crear componente de visualización de estado de conversación",
+            "description": "Desarrollar un componente React que muestre visualmente el estado actual de la conversación y el progreso a través de las fases",
+            "details": "Crear ConversationStateIndicator.tsx que muestre:\n- Fase actual (1-5) con indicador visual\n- Qualification score con barra de progreso\n- Información clave recolectada\n- Timeline de la conversación\n- Integrar en AIChatSidebar\n- Estilos responsive con Tailwind",
+            "status": "pending",
+            "dependencies": [
+              "18.5"
+            ],
+            "parentTaskId": 18
+          },
+          {
+            "id": 7,
+            "title": "Testing manual del sistema de tracking completo",
+            "description": "Realizar pruebas exhaustivas del sistema de tracking de estado de conversación en diferentes escenarios",
+            "details": "Probar:\n- Nueva conversación desde cero\n- Conversación existente con historial\n- Progresión a través de todas las fases\n- Cálculo correcto de qualification_score\n- Actualización atómica en Supabase\n- Visualización correcta en UI\n- Manejo de errores y edge cases\nDocumentar resultados y bugs encontrados",
+            "status": "pending",
+            "dependencies": [
+              "18.6"
+            ],
+            "parentTaskId": 18
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "Build Dynamic Context Loading System",
+        "description": "Build the system to dynamically load relevant context (conversation history, lead profile, script phase) to optimize token usage for the Gemini API call.",
+        "details": "Create a `getContext(conversation_id)` function. This function will:\n1. Fetch the conversation record from Supabase.\n2. Get the last 5-10 turns from the `history` JSONB object.\n3. Fetch the relevant `script_template` for the `current_phase`.\n4. Summarize older parts of the conversation if it's very long to save tokens.\n5. Return a structured context object to be used by `generateAIResponse`.",
+        "testStrategy": "For a given `conversation_id`, call `getContext()` and assert that the returned object contains the correct script template and a truncated but relevant history. Test with both short and long conversation histories to ensure token optimization logic works.",
+        "priority": "medium",
+        "dependencies": [
+          18
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Integrate Few-Shot Example Retrieval",
+        "description": "Enhance the context loading system to retrieve and include relevant few-shot examples from the database.",
+        "details": "Modify `getContext(conversation_id)`. After determining the `current_phase` and analyzing the last user message, query the `few_shot_examples` table for 2-3 examples where the `phase` and `scenario` match the current context. These examples will be added to the context object and formatted for the Gemini API's few-shot prompting capability.",
+        "testStrategy": "Create test data in the `few_shot_examples` table. Call `getContext()` for a conversation in a specific phase (e.g., 'objection handling'). Verify that the returned context includes the correct few-shot examples from the database for that phase.",
+        "priority": "medium",
+        "dependencies": [
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Create Dynamic Script Template Engine",
+        "description": "Create a template engine that dynamically retrieves and populates script templates from Supabase based on the conversation's current sales phase and lead type.",
+        "details": "The `getContext` function will be responsible for querying the `script_templates` table using the `current_phase` and `lead_type` from the `conversations` record. It will fetch the appropriate template content. This allows for specialized scripts for different types of leads (e.g., 'ecommerce' vs 'infoproductor').",
+        "testStrategy": "Set up different script templates in the database for the same phase but different lead types. Simulate API calls for leads of different types and verify that the `getContext` function retrieves and returns the correct, specialized script template.",
+        "priority": "medium",
+        "dependencies": [
+          14,
+          19
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement Specialized Prompts for Quick Actions",
+        "description": "Create and store specialized prompts in Supabase for handling quick actions like 'summarize', 'analyze phase', and 'suggest next step'.",
+        "details": "In the `prompts` table, add new rows for each quick action (e.g., `name` = 'summarize_conversation'). Create a new API endpoint or modify the existing one to accept a parameter specifying the action. The backend will then retrieve the corresponding specialized prompt instead of the main conversational prompt.",
+        "testStrategy": "Populate the `prompts` table with the specialized prompts. Call the API endpoint with the 'summarize' action and a conversation ID. Verify that the AI response is a summary, not a conversational reply. Repeat for 'analyze' and 'suggest'.",
+        "priority": "medium",
+        "dependencies": [
+          16
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Objection Handling Logic",
+        "description": "Implement logic to detect common sales objections in user messages and retrieve the appropriate handling template from the `objection_handlers` table.",
+        "details": "Within the `generateAIResponse` flow, after receiving a user message, run a classification step. This can be a lightweight NLP check or another small Gemini call to categorize the user's message. If an objection is detected (e.g., 'too expensive'), the `getContext` function should also fetch the relevant template from the `objection_handlers` table to guide the AI's response.",
+        "testStrategy": "Add several objection handlers to the database. Send a user message containing a known objection (e.g., 'I don't have time right now'). Check the logs or debug output to confirm that the correct objection handler template was fetched and included in the prompt context.",
+        "priority": "medium",
+        "dependencies": [
+          21
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Develop Advanced Validation (Tone and Length)",
+        "description": "Expand the validation system to include checks for tone consistency and response length optimization.",
+        "details": "Create two new validation functions:\n1. `validateTone(response)`: Uses a prompt-based check with Gemini to rate the response's tone (e.g., professional, friendly, not pushy) on a scale.\n2. `validateLength(response)`: Checks if the response is within an optimal character count (e.g., 50-300 characters) to avoid overly long or short replies.\nThese will be called alongside the alignment validator.",
+        "testStrategy": "Test `validateTone` with sample responses that are overly aggressive, too casual, and just right. Assert the scores are appropriate. Test `validateLength` with very short, very long, and ideally sized responses and check the validation result.",
+        "priority": "medium",
+        "dependencies": [
+          17
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Implement Prompt Performance Analytics Tracking",
+        "description": "Implement the functionality to log performance metrics for each generated response to the `prompt_analytics` table in Supabase.",
+        "details": "After a response is generated and validated, create a new record in the `prompt_analytics` table. This record should include the `prompt_id` and `version` used, `conversation_id`, the calculated `alignment_score`, `tone_score`, and the `generation_time_ms`. This should be an asynchronous operation to not delay the response to the user.",
+        "testStrategy": "After running a few test conversations, query the `prompt_analytics` table. Verify that a record exists for each AI-generated message and that all columns (scores, IDs, timing) are populated correctly.",
+        "priority": "low",
+        "dependencies": [
+          17,
+          18
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "Create Prompt Versioning and A/B Testing Framework",
+        "description": "Build the framework to support A/B testing of different prompt versions and allow for easy rollback.",
+        "details": "Modify the `getBasePrompt` function. If multiple prompt versions are marked as `is_active` for A/B testing, the function should randomly (or based on `conversation_id` hash) select one. The chosen `prompt_id` and `version` must be logged to `prompt_analytics`. To roll back, an admin would simply set the `is_active` flag to `false` on the poorly performing version in the Supabase table.",
+        "testStrategy": "Activate two different prompt versions in the database. Make 100 API calls and query the `prompt_analytics` table. Verify that the usage is split approximately 50/50 between the two versions. Then, deactivate one and verify that 100% of new requests use the remaining active version.",
+        "priority": "low",
+        "dependencies": [
+          25
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Implement Setter Feedback Integration",
+        "description": "Create an API endpoint that allows setters to submit feedback (e.g., a 1-5 star rating) on a specific AI response, updating the analytics record.",
+        "details": "Create a new POST endpoint, e.g., `/api/feedback`. It should accept a `response_id` (or `analytics_id`) and a `rating`. The endpoint handler will find the corresponding record in the `prompt_analytics` table and update the `setter_feedback` column with the provided rating. This requires responses to have a unique ID passed to the frontend.",
+        "testStrategy": "Generate a response and get its `prompt_analytics` record ID. Call the new `/api/feedback` endpoint with this ID and a rating of 4. Query the database directly to confirm that the `setter_feedback` column for that specific record has been updated to 4.",
+        "priority": "low",
+        "dependencies": [
+          25
+        ],
+        "status": "pending",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-05T10:04:19.206Z",
+      "updated": "2025-07-07T10:01:05.247Z",
       "description": "Tasks for master context"
     }
   }

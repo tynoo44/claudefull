@@ -1,400 +1,285 @@
-# SetterAI - CRM de Alto Rendimiento para Appointment Setters
+# Setter AI - Professional Appointment Setting Platform
 
-SetterAI es una plataforma SaaS de última generación diseñada específicamente para appointment setters profesionales que trabajan con coaches, consultores y agencias de alto ticket. Combina gestión de leads, mensajería unificada, herramientas de productividad y **rendimiento ultrarrápido** en una sola interfaz optimizada.
+> Advanced AI-powered CRM for professional appointment setters using Quantum Creators B2B methodology
 
-## 🚀 Características Principales
+## 🚀 Features
 
-### **⚡ Rendimiento Ultrarrápido**
+### **AI-Powered Intelligence**
+- **Gemini 2.5 Pro Integration** - Advanced prompt engineering with script validation
+- **Real-time Script Adherence** - 0.0-1.0 scoring system for message quality
+- **Hierarchical Prompts** - Phase-specific templates and few-shot learning
+- **Smart Suggestions** - Context-aware message recommendations
 
-- **Navegación instantánea** - Cambio entre pestañas en <50ms
-- **Caché inteligente** - Datos persisten entre sesiones sin recargas
-- **Actualizaciones en tiempo real** - Datos siempre sincronizados automáticamente
-- **Optimización de red** - 90% menos llamadas a la base de datos
+### **Lead Management CRM**
+- **5-Phase Sales Pipeline** - Quantum Creators methodology tracking
+- **Real-time Updates** - Instant synchronization across all users
+- **Advanced Filtering** - Search by status, tags, procedence
+- **Lead Scoring** - Automatic qualification based on conversations
 
-### **🔐 Sistema de Autenticación Completo**
+### **Unified Messaging**
+- **Multi-Platform Support** - Instagram, WhatsApp, Facebook
+- **Template System** - Dynamic scripts with variables and analytics
+- **Conversation History** - Complete tracking with AI analysis
+- **Real-time Notifications** - Browser push + in-app alerts
 
-- Login con Google OAuth y email/contraseña via Supabase
-- Gestión de sesiones persistentes y seguras
-- Protección avanzada de rutas privadas
+### **Performance Optimized**
+- **Instant Navigation** - <50ms tab switching
+- **Smart Caching** - Persistent data between sessions
+- **Progressive Loading** - On-demand conversation fetching
+- **Minimal API Calls** - 90% reduction in database queries
 
-### **📊 Dashboard Inteligente**
+## 📋 Tech Stack
 
-- KPIs y métricas actualizadas en tiempo real
-- Cache persistente para carga instantánea
-- Widgets personalizables con datos en vivo
+- **Frontend**: React 19.1.0 + TypeScript + Vite 5
+- **AI**: Google Gemini 2.5 Pro API
+- **Database**: Supabase (PostgreSQL + Realtime)
+- **Auth**: Supabase Auth with OAuth
+- **Styling**: Tailwind CSS 3.4.17
+- **Dev Tools**: ESLint + Prettier + Husky
 
-### **💬 Chat Unificado de Alto Rendimiento**
+## 🛠️ Quick Start
 
-- **Carga progresiva** - Solo carga conversaciones cuando las necesitas
-- **Tiempo real integrado** - Nuevos mensajes aparecen instantáneamente
-- **Interfaz modular** - Columnas redimensionables y optimizadas
-- **Notificaciones inteligentes** - Alertas no intrusivas con sonido
-
-### **👥 Gestión Avanzada de Leads**
-
-- CRM completo con estados, etiquetas, notas y procedencia
-- **Búsqueda instantánea** con filtros avanzados
-- **Sincronización automática** - Cambios reflejados en tiempo real
-- Sistema de procedencia (Outbound, Inbound, CTA, Spam)
-
-### **📝 Sistema de Plantillas Optimizado**
-
-- Mensajes reutilizables con variables y tracking
-- **Cache inteligente** - Carga instantánea desde memoria
-- Favoritos y categorías dinámicas
-- Analytics de conversión en tiempo real
-
-### **🔔 Centro de Notificaciones**
-
-- **Notificaciones push** del navegador
-- **Toasts elegantes** para nuevos mensajes
-- **Historial completo** con estado leído/no leído
-- **Sonido personalizable** para alertas
-
-### **🌓 Interfaz Adaptable**
-
-- Modo oscuro/claro con preferencias persistentes
-- Diseño responsive optimizado para todos los dispositivos
-- Transiciones suaves y animaciones fluidas
-
-## 📋 Prerrequisitos
-
+### Prerequisites
 - Node.js 18+
-- NPM o Yarn
-- Cuenta de Supabase con proyecto configurado
+- Supabase account
+- Gemini API key
 
-## 🛠️ Instalación Rápida
-
-### 1. Clonar e instalar
+### Installation
 
 ```bash
-git clone https://github.com/tu-usuario/setterai.git
-cd setterai
+# Clone repository
+git clone https://github.com/your-user/setter-ai.git
+cd setter-ai
+
+# Install dependencies
 npm install
+
+# Configure environment
+cp .env.example .env
 ```
 
-### 2. Configurar variables de entorno
-
-Crear archivo `.env.local`:
+### Environment Setup
 
 ```env
-VITE_SUPABASE_URL=tu_url_de_supabase
-VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
+# Required
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# Optional
+VITE_USER_ID=your_authorized_user_id
 ```
 
-### 3. Configurar Supabase (Requerido para tiempo real)
+### Database Setup
 
-#### Habilitar Realtime
+Run these SQL commands in Supabase:
 
 ```sql
--- Habilitar realtime en todas las tablas críticas
+-- Enable Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.message_templates;
-```
+ALTER PUBLICATION supabase_realtime ADD TABLE public.prompts;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.script_templates;
 
-#### Configurar RLS y Políticas
-
-```sql
--- Habilitar RLS
+-- Enable RLS
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.message_templates ENABLE ROW LEVEL SECURITY;
 
--- Políticas básicas
-CREATE POLICY "Users can read leads" ON public.leads
-  FOR SELECT USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Users can read conversations" ON public.conversations
-  FOR SELECT USING (auth.role() = 'authenticated');
+-- Basic policies
+CREATE POLICY "Authenticated users can read all data" 
+ON public.leads FOR SELECT 
+USING (auth.role() = 'authenticated');
 ```
 
-### 4. Iniciar servidor optimizado
+### Start Development
 
 ```bash
 npm run dev
 ```
 
-🎉 **¡Listo!** La aplicación estará disponible en `http://localhost:5173` con **rendimiento ultrarrápido**.
+Visit `http://localhost:5173` 🎉
 
-## 🏗️ Arquitectura de Alto Rendimiento
-
-### Stack Tecnológico Optimizado
-
-- **Frontend**: React 19 + TypeScript + Vite 5
-- **Estilos**: Tailwind CSS 3 con optimizaciones CSS-in-JS
-- **Base de datos**: Supabase (PostgreSQL) con Realtime
-- **Caché**: localStorage + memoria + invalidación inteligente
-- **Tiempo real**: Supabase Realtime con suscripciones optimizadas
-- **Routing**: React Router DOM con lazy loading
-
-### Estructura del Proyecto Optimizada
+## 🏗️ Project Structure
 
 ```
 src/
-├── components/           # Componentes reutilizables optimizados
-│   ├── Layout/          # GlobalNavbar con NotificationCenter
-│   ├── Chat/            # Componentes modulares de alto rendimiento
-│   │   ├── ChatSidebar.tsx    # Paginación progresiva integrada
-│   │   ├── ChatInterface.tsx  # Tiempo real optimizado
-│   │   └── ResizableLayout.tsx # Layout adaptable
-│   ├── Notifications/   # 🆕 Sistema de notificaciones
-│   │   └── NotificationCenter.tsx # Centro de notificaciones
-│   └── Leads/           # Gestión de leads con cache
-├── hooks/               # Custom hooks de alto rendimiento
-│   ├── useGlobalCache.ts         # 🆕 Caché persistente global
-│   ├── useConversationPagination.ts # 🆕 Paginación con tiempo real
-│   ├── useRealtimeNotifications.ts  # 🆕 Notificaciones en tiempo real
-│   ├── useAppState.ts            # Estado global optimizado
-│   └── useSupabaseData.ts        # 🔄 Integración con caché
-├── lib/                 # Servicios optimizados
-│   ├── supabase.ts      # Cliente con configuración realtime
-│   ├── supabase-functions.ts # Funciones optimizadas
-│   └── auth.ts          # Autenticación con persistencia
-├── types/               # Definiciones TypeScript completas
-└── styles/              # Estilos globales optimizados
+├── lib/
+│   ├── gemini.ts              # AI response generation
+│   ├── prompt-manager.ts      # Hierarchical prompt system
+│   ├── response-validator.ts  # Script validation engine
+│   └── supabase.ts           # Database client
+├── components/
+│   ├── Chat/
+│   │   ├── AIChatSidebar.tsx  # AI assistant interface
+│   │   └── ChatInterface.tsx  # Conversation view
+│   ├── Leads/                 # Lead management
+│   └── Templates/             # Message templates
+├── hooks/                     # Custom React hooks
+├── types/                     # TypeScript definitions
+└── pages/                     # Route components
 ```
 
-## ⚡ Optimizaciones de Rendimiento Implementadas
+## 🤖 AI System
 
-### **🏎️ Sistema de Caché Inteligente**
+### Prompt Engineering Architecture
 
-```typescript
-// Caché persistente automático
-const { leads, templates, dashboardStats } = useGlobalCache();
+1. **Base Prompts** - Role definitions and system instructions
+2. **Script Templates** - Phase-specific message patterns
+3. **Few-Shot Examples** - Learning from successful conversations
+4. **Dynamic Context** - Real-time adaptation to conversation flow
 
-// Solo recarga cuando expira (5 minutos por defecto)
-const needsUpdate = useCallback(dataType => {
-  return Date.now() - lastUpdate > CACHE_DURATION;
-}, []);
-```
+### Script Validation
 
-### **🔄 Actualizaciones en Tiempo Real**
+- **Key Phrase Matching** - Detects required elements
+- **Synonym Recognition** - Flexible language understanding
+- **Alignment Scoring** - 0.0-1.0 quality measurement
+- **Auto-Regeneration** - Improves responses below threshold
 
-```typescript
-// Suscripciones optimizadas a cambios específicos
-supabase
-  .channel('leads-realtime')
-  .on('postgres_changes', { event: '*', table: 'leads' }, updateLeads)
-  .subscribe();
-```
+## 📊 Development Workflow
 
-### **📱 Paginación Inteligente**
-
-```typescript
-// Carga progresiva con prefetch automático
-const CONVERSATIONS_PER_PAGE = 20;
-const PREFETCH_THRESHOLD = 5; // Anticipa la carga
-
-// Detecta scroll y carga más datos automáticamente
-if (index === chats.length - 5) {
-  checkAndLoadMore(index);
-}
-```
-
-### **🔔 Notificaciones No Intrusivas**
-
-```typescript
-// Solo para mensajes de leads nuevos
-filter: 'sender_type=eq.Lead';
-
-// Notificación del navegador + toast + sonido
-if (Notification.permission === 'granted') {
-  new Notification(`Nuevo mensaje de ${leadName}`, {
-    body: messageText,
-    icon: '/favicon.ico',
-  });
-}
-```
-
-## 📊 Métricas de Rendimiento
-
-| Métrica                    | Antes          | Después       | Mejora             |
-| -------------------------- | -------------- | ------------- | ------------------ |
-| **Cambio entre pestañas**  | 2-5 segundos   | <50ms         | **99% más rápido** |
-| **Carga inicial**          | 3-8 segundos   | 1-2 segundos  | **60% reducción**  |
-| **Llamadas API**           | ~50 por sesión | ~5 por sesión | **90% reducción**  |
-| **Uso de ancho de banda**  | Alto           | Mínimo        | **85% reducción**  |
-| **Actualización de datos** | Manual         | Automática    | **Tiempo real**    |
-
-## 🚀 Comandos Disponibles
+### Commands
 
 ```bash
-# Desarrollo con hot reload optimizado
-npm run dev          # Servidor ultra-rápido con HMR
+# Development
+npm run dev                    # Start dev server
+npm run build                 # Production build
+npm run preview              # Preview production
 
-# Producción optimizada
-npm run build        # Build con tree-shaking y compresión
-npm run preview      # Preview con optimizaciones de producción
+# Code Quality
+npm run lint                  # ESLint check
+npm run lint:fix             # Fix linting issues
+npm run format               # Format with Prettier
+npm run type-check          # TypeScript validation
 
-# Calidad de código
-npm run lint         # TypeScript + ESLint con reglas estrictas
+# Scripts
+npm run parse-script         # Parse Quantum scripts
 ```
 
-## 🔧 Configuración de Rendimiento
+### TaskMaster Integration
 
-### Variables de Entorno Optimizadas
+```bash
+# Task Management
+task-master next             # Get next task
+task-master show <id>        # View task details
+task-master set-status --id=<id> --status=done
 
-```env
-# Supabase con Realtime habilitado
-VITE_SUPABASE_URL=https://tuproyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu_anon_key
-
-# Configuraciones de rendimiento (opcionales)
-VITE_CACHE_DURATION=300000      # 5 minutos en ms
-VITE_PREFETCH_THRESHOLD=5       # Elementos antes de cargar más
-VITE_MAX_NOTIFICATIONS=50       # Límite de notificaciones
+# Current Progress: 17/27 tasks completed
+# Next: Task 18 - Conversation State Management
 ```
 
-### Configuración de Realtime en Supabase
+## 🔧 Configuration
+
+### Model Configuration (.taskmaster/config.json)
+
+```json
+{
+  "models": {
+    "main": {
+      "provider": "google",
+      "modelId": "gemini-2.5-pro-preview-05-06",
+      "temperature": 0.2
+    }
+  }
+}
+```
+
+### Database Schema
 
 ```sql
--- Asegurar que Realtime está habilitado para todas las tablas
-SELECT schemaname, tablename
-FROM pg_tables
-WHERE schemaname = 'public'
-  AND tablename IN ('leads', 'conversations', 'messages', 'message_templates');
+-- AI System Tables
+prompts (prompt_type, role_definition, content, active)
+script_templates (phase, lead_type, content, variables)
+few_shot_examples (phase, example_input, example_output)
+conversations (lead_id, current_phase, qualification_score)
 
--- Verificar publicación de Realtime
-SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
+-- Business Tables
+leads (instagram_id, username, status, procedence)
+message_templates (name, content, conversion_rate)
 ```
 
-## 🎯 Funcionalidades de Alto Rendimiento
+## 🐛 Troubleshooting
 
-### **Dashboard Inteligente**
+### Realtime not working?
 
-- ⚡ Carga instantánea con datos cacheados
-- 📈 Métricas actualizadas en tiempo real
-- 🔄 Sincronización automática sin recargas
-- 💾 Persistencia entre sesiones
+```sql
+-- Check publication
+SELECT * FROM pg_publication_tables 
+WHERE pubname = 'supabase_realtime';
 
-### **Chat Ultrarrápido**
-
-- 📝 Mensajes aparecen instantáneamente
-- 🔄 Paginación progresiva sin lag
-- 🔔 Notificaciones inmediatas
-- 💬 Plantillas con inserción rápida
-
-### **Gestión de Leads Optimizada**
-
-- 🔍 Búsqueda instantánea con filtros
-- ✏️ Edición en tiempo real
-- 🏷️ Sistema de etiquetas dinámico
-- 📊 Procedencia con colores distintivos
-
-### **Sistema de Plantillas Inteligente**
-
-- 💾 Cache local para acceso instantáneo
-- 📊 Analytics de uso en tiempo real
-- ⭐ Favoritos con sincronización automática
-- 🔄 Actualización sin recargas
-
-## 🔔 Centro de Notificaciones Avanzado
-
-### **Características**
-
-- 🔴 Contador de mensajes no leídos
-- 📱 Notificaciones push del navegador
-- 🎵 Sonido personalizable
-- 📜 Historial completo con timestamps
-- ✅ Gestión de estado leído/no leído
-
-### **Configuración**
-
-```typescript
-// Personalizar comportamiento de notificaciones
-const NOTIFICATION_DURATION = 5000; // 5 segundos
-const MAX_NOTIFICATIONS = 50; // Límite de historial
-const ENABLE_SOUND = true; // Sonido de alerta
+-- Re-add tables if needed
+ALTER PUBLICATION supabase_realtime 
+ADD TABLE public.your_table;
 ```
 
-## 🐛 Solución de Problemas de Rendimiento
+### Cache issues?
 
-### **Problema: Datos no se actualizan en tiempo real**
-
-```bash
-# Verificar realtime en Supabase
-SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
-
-# Asegurar que las tablas están publicadas
-ALTER PUBLICATION supabase_realtime ADD TABLE public.leads;
-```
-
-### **Problema: Cache no funciona**
-
-```bash
-# Limpiar localStorage si hay problemas
+```javascript
+// Clear cache
 localStorage.removeItem('setterai_cache');
 
-# Verificar permisos de localStorage
+// Verify localStorage
 console.log(localStorage.getItem('setterai_cache'));
 ```
 
-### **Problema: Notificaciones no aparecen**
+## 🤝 Contributing
 
-```javascript
-// Solicitar permisos manualmente
-Notification.requestPermission().then(permission => {
-  console.log('Notification permission:', permission);
-});
-```
+1. **Follow development protocols** (see CLAUDE.md)
+2. **Use English** for all technical work
+3. **Plan before coding** - Create task breakdowns
+4. **Log everything** in `.taskmaster/logs/`
+5. **Test performance** before PRs
 
-## 📈 Futuras Optimizaciones Planificadas
+### Code Standards
 
-### **V2.0 - Super Optimizaciones**
+- Components under 500 lines
+- TypeScript strict mode
+- ESLint + Prettier compliance
+- Performance-first approach
 
-- 🧠 **AI Predictivo** - Precarga datos basado en patrones de uso
-- 🌐 **Service Workers** - Cache offline para funcionalidad sin conexión
-- ⚡ **Virtual Scrolling** - Renderizado de listas infinitas optimizado
-- 🔄 **Sync Optimista** - Actualizaciones instantáneas con rollback automático
+## 📈 Roadmap
 
-### **V2.1 - Analytics Avanzados**
+### Phase 1: Core Features ✅
+- Lead management
+- Chat interface
+- Template system
+- Basic AI integration
 
-- 📊 **Métricas de rendimiento** - Tracking automático de velocidad
-- 🎯 **Optimización automática** - Ajustes dinámicos basados en uso
-- 📱 **PWA Completa** - Instalación nativa en dispositivos
-- 🔋 **Optimización de batería** - Reducción de uso energético
+### Phase 2: AI Enhancement (Current)
+- Advanced prompt engineering ✅
+- Script validation ✅
+- Conversation state tracking 🚧
+- Performance analytics 📋
 
-## 🤝 Contribución
+### Phase 3: Advanced Features
+- Dynamic context optimization
+- A/B testing framework
+- Setter feedback loop
+- Multi-language support
 
-### **Estándares de Alto Rendimiento**
+## 📄 License
 
-- ⚡ Mantener componentes bajo 500 líneas
-- 🧪 Probar rendimiento antes de PR
-- 💾 Considerar impacto en cache y memoria
-- 🔄 Verificar compatibilidad con tiempo real
-- 📱 Probar en dispositivos móviles
+MIT License - see LICENSE file for details
 
-### **Proceso de Contribución Optimizado**
+## 🙏 Acknowledgments
 
-1. Fork con configuración de desarrollo
-2. Branch con convención: `performance/descripcion`
-3. Commits descriptivos con métricas de rendimiento
-4. PR con benchmarks incluidos
-5. Review con foco en optimización
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver archivo `LICENSE` para detalles.
-
-## 🙏 Agradecimientos Especiales
-
-- **Supabase Team** - Por la excelente plataforma realtime
-- **React Team** - Por las optimizaciones de React 19
-- **Vite Team** - Por el bundling ultrarrápido
-- **Tailwind Team** - Por el CSS optimizado
-- **Appointment Setters Community** - Por inspirar esta herramienta
+- **Quantum Creators** - For the B2B methodology
+- **Supabase Team** - For excellent realtime infrastructure
+- **Google AI** - For Gemini API access
+- **React Team** - For React 19 innovations
 
 ---
 
-## ⚡ **SetterAI - Rendimiento Sin Compromisos**
+## ⚡ **Performance Metrics**
 
-**La plataforma más rápida del mercado para appointment setters profesionales.**
-
-🚀 **Navegación instantánea** • 🔄 **Tiempo real nativo** • 💾 **Cache inteligente** • 🔔 **Notificaciones elegantes**
+| Feature | Performance | Notes |
+|---------|------------|-------|
+| Tab Switch | <50ms | Instant navigation |
+| Initial Load | 1-2s | With full cache |
+| API Calls | -90% | Smart caching |
+| Realtime Lag | <100ms | Native WebSockets |
 
 ---
 
-_Transformando la velocidad y eficiencia en la gestión de leads y conversaciones._ ⚡
+**Built for appointment setters who demand speed, intelligence, and results.** 🚀

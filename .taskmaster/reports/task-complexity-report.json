@@ -1,0 +1,133 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-07T08:08:42.824Z",
+		"tasksAnalyzed": 15,
+		"totalTasks": 27,
+		"analysisCount": 15,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 13,
+			"taskTitle": "Design and Implement Supabase Database Schema",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task 'Design and Implement Supabase Database Schema' into subtasks for creating the tables with specified columns, establishing all foreign key relationships and indexes, and writing the initial SQL migration script.",
+			"reasoning": "The task is well-defined with a clear list of tables and columns. Complexity is low as it's primarily configuration and schema definition, not complex application logic. It can be broken down into creating tables, setting up relationships, and scripting the migration."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Parse and Ingest QUANTUM_SCRIPT_B2B Content",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Parse and Ingest QUANTUM_SCRIPT_B2B Content' into subtasks covering the file parsing logic using regular expressions, mapping the parsed data to the Supabase table structures, and implementing the batch insertion script with idempotency checks.",
+			"reasoning": "Parsing semi-structured text is moderately complex and can be error-prone. The task involves file I/O, data transformation, and batch database operations. Subtasks can separate the parsing logic from the database insertion and error handling."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Refactor Core Function for Hierarchical Prompting",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Decompose the task 'Refactor Core Function for Hierarchical Prompting' into subtasks for defining the new structured prompt object, modifying the main function to assemble the prompt from components, creating helper functions to fetch each prompt part, and updating all relevant unit tests.",
+			"reasoning": "This is a core architectural refactor, changing how the primary AI interaction is constructed. It has a high impact and requires careful design to manage multiple data sources. Subtasks should isolate the data structure definition, the main assembly logic, and the individual component builders."
+		},
+		{
+			"taskId": 16,
+			"taskTitle": "Implement Base Prompt Retrieval from Supabase",
+			"complexityScore": 3,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break down the task 'Implement Base Prompt Retrieval from Supabase' into two subtasks: one for creating the function to query the active prompt from the `prompts` table, and another for implementing a caching layer with a 5-minute TTL.",
+			"reasoning": "A straightforward data retrieval task with a simple query. The addition of caching is a common pattern and adds minimal complexity. It can be cleanly split into the core data fetching logic and the caching implementation."
+		},
+		{
+			"taskId": 17,
+			"taskTitle": "Develop Initial Response Alignment Validator",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Develop Initial Response Alignment Validator' into subtasks for fetching the relevant script template, implementing the keyword/key-phrase matching algorithm, and calculating the final 0.0-1.0 alignment score.",
+			"reasoning": "This task involves creating a new piece of business logic for validation. It requires data retrieval, text processing, and a scoring algorithm. Subtasks can separate fetching the source material from the core validation and scoring logic."
+		},
+		{
+			"taskId": 18,
+			"taskTitle": "Implement Conversation State and History Tracking",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Decompose the task 'Implement Conversation State and History Tracking' into subtasks for creating a Supabase RPC function for atomic history appends, integrating this function call into the API response lifecycle, and handling the logic for new vs. existing conversations.",
+			"reasoning": "This task is critical for state management and involves database writes in the hot path of the API. Using an RPC for atomicity and ensuring performance adds moderate complexity. Subtasks can cover the database function, API integration, and edge case handling."
+		},
+		{
+			"taskId": 19,
+			"taskTitle": "Build Dynamic Context Loading System",
+			"complexityScore": 8,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the complex task 'Build Dynamic Context Loading System' into subtasks: fetching conversation and script data, implementing history truncation (last N turns), developing a summarization strategy for long conversations, and assembling the final structured context object.",
+			"reasoning": "High complexity due to aggregating data from multiple sources, processing JSON, and implementing advanced logic like summarization for token optimization. This is a core orchestrator function that requires breaking down into fetching, processing, summarizing, and assembling steps."
+		},
+		{
+			"taskId": 20,
+			"taskTitle": "Integrate Few-Shot Example Retrieval",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Integrate Few-Shot Example Retrieval' into subtasks for designing the database query to find relevant examples based on phase/scenario, integrating the retrieval logic into the `getContext` function, and formatting the examples correctly within the final prompt context.",
+			"reasoning": "This task adds a new data retrieval and integration step into an existing complex function. The complexity lies in designing the relevance query and correctly merging the data. It can be broken down into query design, integration, and data formatting."
+		},
+		{
+			"taskId": 21,
+			"taskTitle": "Create Dynamic Script Template Engine",
+			"complexityScore": 3,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break down the task 'Create Dynamic Script Template Engine' into subtasks for modifying the script retrieval query to filter by lead type and implementing a fallback mechanism to a default template if a specialized one is not found.",
+			"reasoning": "This is a relatively simple enhancement to an existing data retrieval query. The main complexity is ensuring a graceful fallback if a specialized template for a given lead type doesn't exist. It's a low-complexity modification."
+		},
+		{
+			"taskId": 22,
+			"taskTitle": "Implement Specialized Prompts for Quick Actions",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Decompose the task 'Implement Specialized Prompts for Quick Actions' into subtasks for populating the database with new prompts (summarize, analyze), modifying the API to handle an 'action' parameter, and implementing the server-side logic to select the correct prompt.",
+			"reasoning": "This involves API modification and conditional logic. While not deeply complex algorithmically, it touches the API layer, data retrieval, and business logic, justifying a moderate complexity score and breakdown."
+		},
+		{
+			"taskId": 23,
+			"taskTitle": "Implement Objection Handling Logic",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Implement Objection Handling Logic' into subtasks for designing and implementing the objection classification model (e.g., keyword-based or LLM-based), integrating the classifier into the request lifecycle, modifying context retrieval to include objection handlers, and creating a test suite for various objections.",
+			"reasoning": "The complexity is high due to the classification requirement, which is an open-ended problem (keyword vs. ML/LLM). This introduces a major new logical branch and data dependency into the core prompt generation flow."
+		},
+		{
+			"taskId": 24,
+			"taskTitle": "Develop Advanced Validation (Tone and Length)",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Decompose the task 'Develop Advanced Validation' into subtasks for implementing the simple character count validation, designing and implementing the tone validation using a separate LLM call, and integrating both new validators into the main workflow.",
+			"reasoning": "The complexity is driven by the tone validation, which requires a separate LLM call, introducing latency, cost, and prompt engineering. This is a significant addition to the validation pipeline and is best broken down by validator type."
+		},
+		{
+			"taskId": 25,
+			"taskTitle": "Implement Prompt Performance Analytics Tracking",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Prompt Performance Analytics Tracking' into subtasks for aggregating all required metrics (IDs, scores, timing) into a single object, creating an asynchronous function to insert the data into Supabase, and adding robust error logging for the background job.",
+			"reasoning": "The task is a standard analytics tracking implementation. The moderate complexity comes from the need to aggregate data from multiple sources and perform the database write asynchronously to avoid impacting user-perceived latency."
+		},
+		{
+			"taskId": 26,
+			"taskTitle": "Create Prompt Versioning and A/B Testing Framework",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Decompose the task 'Create Prompt Versioning and A/B Testing Framework' into subtasks for modifying prompt retrieval to handle multiple active versions, implementing the A/B selection logic (e.g., hash-based), propagating the chosen version information through the request, and ensuring analytics logs the correct version.",
+			"reasoning": "High complexity due to the architectural impact on prompt retrieval and the critical dependency on the analytics system for measurement. This requires careful implementation to ensure tests are run and measured correctly; it is a framework, not just a feature."
+		},
+		{
+			"taskId": 27,
+			"taskTitle": "Implement Setter Feedback Integration",
+			"complexityScore": 2,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task 'Implement Setter Feedback Integration' into subtasks for creating the new POST /api/feedback endpoint, writing the database update logic in the handler, and securing the endpoint to ensure only authorized users can submit feedback.",
+			"reasoning": "This is a straightforward task involving a single, simple API endpoint and a basic database update. The complexity is very low. Subtasks cover the standard components of any new endpoint: the route, the logic, and security."
+		}
+	]
+}

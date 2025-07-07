@@ -16,6 +16,7 @@ import {
   type GeminiModel,
 } from '../../lib/gemini';
 import { MessageContent } from './MessageContent';
+import { promptManager } from '../../lib/prompt-manager';
 
 interface AIChatSidebarProps {
   darkMode: boolean;
@@ -69,10 +70,14 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         fullContext = `Conversación actual con ${currentConversation.leadName || currentConversation.full_name || currentConversation.username || 'lead'}:\n${conversationMessages}`;
       }
 
+      // Detect current phase from conversation
+      const currentPhase = promptManager.detectCurrentPhase(messages.concat(userMessage));
+      
       const response = await generateAIResponse({
         messages: messages.concat(userMessage),
         model: selectedModel,
         conversationContext: fullContext,
+        currentPhase,
       });
 
       const aiMessage: AIMessage = {
@@ -141,9 +146,14 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           break;
         case 'suggest':
           actionMessage = 'Generando sugerencias basadas en el script...';
+          // Detect current phase for better suggestions
+          const currentPhase = promptManager.detectCurrentPhase(conversationMessages);
+          
           response = await generateQuickActions.suggestMessages(
             conversationMessages,
             selectedModel,
+            currentPhase,
+            undefined, // leadType - TODO: Extract from conversation context
           );
           break;
       }
