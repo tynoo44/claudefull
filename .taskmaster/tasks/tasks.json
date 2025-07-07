@@ -2,690 +2,468 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
-        "title": "Configurar y Aplicar ESLint y Prettier",
-        "description": "Instalar, configurar y ejecutar ESLint y Prettier en todo el código base para garantizar un estilo de código consistente, estandarizar convenciones de nomenclatura y detectar problemas comunes.",
-        "details": "1. Instalar dependencias: `npm install eslint prettier eslint-config-prettier eslint-plugin-prettier husky lint-staged --save-dev`. 2. Crear archivos de configuración `.eslintrc.json` y `.prettierrc.json` con las reglas del proyecto. 3. Añadir scripts a `package.json`: `\"lint\": \"eslint . --ext .ts,.tsx\"`, `\"format\": \"prettier --write .\"`. 4. Configurar un pre-commit hook con Husky y lint-staged para formatear y linterizar automáticamente los archivos antes de cada commit. 5. Ejecutar una pasada inicial con `npm run format` y `npm run lint -- --fix` para aplicar los cambios a todo el código base.",
-        "testStrategy": "Verificar que los scripts `lint` y `format` se ejecutan sin errores. Confirmar en una Pull Request que el código ha sido formateado correctamente y que el linter no reporta nuevos errores. El pre-commit hook debe bloquear commits con código mal formateado.",
+        "id": 28,
+        "title": "Fix 1/3: Pass `conversationId` and `leadId` to AIChatSidebar",
+        "description": "Fix the disconnection between the UI and the conversation tracking system by adding the missing `conversationId` and `leadId` props to the AIChatSidebar component in ChatsPage.tsx.",
+        "details": "In `src/pages/ChatsPage.tsx`, locate the `<AIChatSidebar />` component around lines 150-163. Add the `conversationId` and `leadId` props. \n\n```typescript\n// src/pages/ChatsPage.tsx (Lines 150-163)\n<AIChatSidebar\n  darkMode={darkMode}\n  conversationContext={...}\n  currentConversation={...}\n  conversationId={selectedChat?.id}  // ADD THIS\n  leadId={selectedChat?.lead_id || selectedChat?.leads?.id}  // ADD THIS\n/>\n```",
+        "testStrategy": "Manually verify that the props are passed correctly using React Developer Tools. Check that the application does not crash and the sidebar still renders.",
         "priority": "high",
         "dependencies": [],
         "status": "pending",
         "subtasks": [
           {
             "id": 1,
-            "title": "Instalar Dependencias de ESLint, Prettier y Husky",
-            "description": "Instalar todas las dependencias de desarrollo necesarias para la configuración de ESLint, Prettier, Husky y lint-staged, que son fundamentales para el formateo y análisis estático del código.",
+            "title": "Add `conversationId` Prop to AIChatSidebar Component",
+            "description": "Locate the `AIChatSidebar` component instantiation in `ChatsPage.tsx` and pass the `conversationId` from the `selectedChat` object as a prop.",
             "dependencies": [],
-            "details": "Ejecutar el comando `npm install eslint prettier eslint-config-prettier eslint-plugin-prettier husky lint-staged --save-dev` en la raíz del proyecto. Verificar que las dependencias se hayan añadido correctamente a la sección `devDependencies` del archivo `package.json`.",
-            "status": "done",
-            "testStrategy": "Confirmar que el comando `npm install` se completa sin errores y que las dependencias listadas aparecen con sus versiones correspondientes en el archivo `package.json`."
+            "details": "In `src/pages/ChatsPage.tsx`, find the `<AIChatSidebar ... />` component invocation around lines 150-163. Add the prop `conversationId` and assign it the value `selectedChat?.id`. This will pass the ID of the currently selected chat to the sidebar.",
+            "status": "pending",
+            "testStrategy": "After making the code change, run the application and open the React DevTools. Select the `AIChatSidebar` component and verify that the `conversationId` prop is present and holds the correct ID when a chat is selected in the UI."
           },
           {
             "id": 2,
-            "title": "Crear y Configurar Archivo de Prettier (.prettierrc.json)",
-            "description": "Establecer las reglas de formato de código para Prettier. Esto asegura que todo el código formateado siga un estilo unificado y consistente, independientemente del desarrollador.",
-            "dependencies": [
-              1
-            ],
-            "details": "Crear un archivo `.prettierrc.json` en la raíz del proyecto. Añadir las reglas de formato deseadas, por ejemplo: `{ \"semi\": true, \"singleQuote\": true, \"trailingComma\": \"all\", \"printWidth\": 100 }`. Adicionalmente, crear un archivo `.prettierignore` para excluir directorios como `node_modules` y `dist`.",
-            "status": "done",
-            "testStrategy": "Crear un archivo de prueba con código mal formateado y ejecutar `npx prettier --write <test-file>` para verificar que se aplican las reglas definidas en `.prettierrc.json`."
+            "title": "Add `leadId` Prop to AIChatSidebar Component",
+            "description": "In the same component instantiation, pass the `leadId` as a prop. This requires handling two possible locations for the lead ID within the `selectedChat` object.",
+            "dependencies": [],
+            "details": "In `src/pages/ChatsPage.tsx`, at the same `<AIChatSidebar />` component, add the `leadId` prop. Set its value to `selectedChat?.lead_id || selectedChat?.leads?.id`. This expression ensures that the ID is correctly retrieved whether it's a direct property or nested within a `leads` object.",
+            "status": "pending",
+            "testStrategy": "Using React DevTools, inspect the `AIChatSidebar` component's props. Select different chats and confirm that the `leadId` prop is correctly populated based on the structure of the `selectedChat` data. Check both scenarios where `lead_id` is present and where `leads.id` is present."
           },
           {
             "id": 3,
-            "title": "Crear y Configurar Archivo de ESLint (.eslintrc.json)",
-            "description": "Configurar ESLint para detectar problemas de código, errores y malas prácticas. Se integrará con Prettier para evitar conflictos de reglas de estilo.",
-            "dependencies": [
-              1,
-              2
-            ],
-            "details": "Crear un archivo `.eslintrc.json` en la raíz del proyecto. Configurar las reglas extendiendo las configuraciones recomendadas y la de Prettier. Ejemplo: `{ \"extends\": [\"eslint:recommended\", \"plugin:prettier/recommended\"], \"plugins\": [\"prettier\"], \"rules\": { \"prettier/prettier\": \"error\" } }`.",
-            "status": "done",
-            "testStrategy": "Ejecutar `npx eslint <test-file>` en un archivo con errores de linting conocidos (p. ej., variables no usadas) para confirmar que ESLint reporta los errores correctamente según la configuración."
-          },
-          {
-            "id": 4,
-            "title": "Añadir Scripts de Linting y Formateo a package.json",
-            "description": "Agregar scripts personalizados al archivo `package.json` para facilitar la ejecución de ESLint y Prettier en todo el proyecto desde la línea de comandos.",
-            "dependencies": [
-              3
-            ],
-            "details": "Editar la sección `scripts` en `package.json` para añadir: `\"lint\": \"eslint . --ext .ts,.tsx\"`, `\"lint:fix\": \"eslint . --ext .ts,.tsx --fix\"`, y `\"format\": \"prettier --write .\"`.",
-            "status": "done",
-            "testStrategy": "Ejecutar `npm run lint` y `npm run format` desde la terminal. Verificar que los comandos se ejecutan sin errores de configuración y que intentan analizar/formatear los archivos del proyecto."
-          },
-          {
-            "id": 5,
-            "title": "Configurar Pre-commit Hooks con Husky y lint-staged",
-            "description": "Automatizar la ejecución de ESLint y Prettier en los archivos modificados antes de cada commit. Esto garantiza que solo el código que cumple con los estándares sea subido al repositorio.",
-            "dependencies": [
-              1,
-              4
-            ],
-            "details": "Ejecutar `npx husky install` para inicializar Husky. Luego, crear el hook con `npx husky add .husky/pre-commit \"npx lint-staged\"`. Finalmente, añadir la configuración de `lint-staged` al `package.json`, por ejemplo: `\"lint-staged\": { \"*.{js,jsx,ts,tsx}\": [\"eslint --fix\", \"prettier --write\"] }`.",
-            "status": "done",
-            "testStrategy": "Modificar un archivo de código, añadirlo al stage (`git add .`) y intentar hacer un commit (`git commit -m 'test hook'`). Verificar que los formateadores se ejecutan automáticamente antes de que el commit se complete."
-          },
-          {
-            "id": 6,
-            "title": "Ejecutar Formateo y Linting Inicial en Todo el Código Base",
-            "description": "Realizar una pasada inicial de formateo y corrección de linting en todo el código base existente para asegurar que todo el proyecto cumpla con las nuevas reglas desde el principio.",
-            "dependencies": [
-              4
-            ],
-            "details": "Ejecutar secuencialmente los scripts creados. Primero, `npm run format` para aplicar el estilo de Prettier. Luego, `npm run lint:fix` para corregir automáticamente los problemas que ESLint pueda solucionar. Revisar y corregir manualmente cualquier error restante que reporte `npm run lint`.\n<info added on 2025-07-05T01:38:50.917Z>\nSe detectaron 193 problemas de ESLint (161 errores, 32 advertencias). Las causas principales son la falta de globales del DOM (document, window, console), importaciones no utilizadas y el uso de tipos `any` explícitos. Se necesita actualizar la configuración de ESLint para incluir el entorno de navegador y corregir estos problemas de manera sistemática.\n</info added on 2025-07-05T01:38:50.917Z>\n<info added on 2025-07-05T01:51:22.271Z>\nLa limpieza de ESLint se completó, reduciendo los problemas de 193 a 37 (5 errores, 32 advertencias). Se eliminaron todas las importaciones no utilizadas y se configuraron los globales del navegador. Los problemas restantes son en su mayoría tipos `any` de TypeScript y algunos problemas estructurales. El pipeline de linting y formateo ahora es completamente funcional.\n</info added on 2025-07-05T01:51:22.271Z>",
-            "status": "done",
-            "testStrategy": "Después de ejecutar los comandos, ejecutar `npm run lint` nuevamente. El comando no debería reportar ningún error corregible. Revisar los cambios en el control de versiones para confirmar que el formato se ha aplicado de manera global y consistente."
+            "title": "Update AIChatSidebar Prop-Types and Verify Data Reception",
+            "description": "Update the TypeScript interface for `AIChatSidebar`'s props to include the new `conversationId` and `leadId`, and then verify that the component receives these values at runtime.",
+            "dependencies": [],
+            "details": "Navigate to the file where the `AIChatSidebar` component is defined. Find its props interface (e.g., `AIChatSidebarProps`) and add `conversationId?: string;` and `leadId?: string;`. This will resolve any TypeScript errors. As a temporary verification step, add `console.log({ conversationId, leadId })` inside the `AIChatSidebar` component's body to confirm in the browser console that the props are being received correctly when a chat is selected.",
+            "status": "pending",
+            "testStrategy": "Run the TypeScript compiler or check your IDE for any type errors to ensure the prop types are correct. Then, run the application, open the developer console, navigate to the chats page, and select a conversation. Verify that the console log shows the expected `conversationId` and `leadId`."
           }
         ]
       },
       {
-        "id": 2,
-        "title": "Actualizar y Limpiar Dependencias del Proyecto",
-        "description": "Actualizar todas las dependencias a sus últimas versiones estables y eliminar las que no se utilizan para reducir vulnerabilidades, mejorar el rendimiento y disminuir el tamaño del bundle.",
-        "details": "1. Ejecutar `npm outdated` para listar dependencias obsoletas. 2. Utilizar `npm-check-updates` para facilitar el proceso: `npx ncu -u`. 3. Ejecutar `npm install` para aplicar las actualizaciones. 4. Usar `depcheck` (`npx depcheck`) para identificar dependencias no utilizadas en `package.json`. 5. Desinstalar las dependencias innecesarias con `npm uninstall <package-name>`. 6. Documentar cualquier cambio importante (breaking change) de las librerías actualizadas.",
-        "testStrategy": "Después de la actualización, ejecutar la suite de tests completa (si existe). Realizar pruebas de regresión manuales en las funcionalidades clave de la aplicación para asegurar que la actualización no introdujo errores. El build de producción debe completarse con éxito.",
+        "id": 29,
+        "title": "Fix 2/3: Pass Tracking IDs to `generateAIResponse`",
+        "description": "Ensure the `conversationId` and `leadId` are passed down to the AI response generation function to enable conversation tracking.",
+        "details": "In `src/components/AIChatSidebar.tsx`, modify the call to `generateAIResponse` around lines 81-86 to include the newly available props and set `enableTracking` to true.\n\n```typescript\n// src/components/AIChatSidebar.tsx (Lines 81-86)\nconst response = await generateAIResponse({\n  messages: messages.concat(userMessage),\n  model: selectedModel,\n  conversationContext: fullContext,\n  currentPhase,\n  conversationId,  // ADD THIS\n  leadId,         // ADD THIS\n  enableTracking: true  // ADD THIS\n});\n```",
+        "testStrategy": "Set a breakpoint in the `generateAIResponse` function to confirm that `conversationId`, `leadId`, and `enableTracking` are received with the correct values when a message is sent.",
+        "priority": "high",
+        "dependencies": [
+          28
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update `AIChatSidebar` Props Interface and Destructure IDs",
+            "description": "Modify the props interface for the `AIChatSidebar` component to formally accept `conversationId` and `leadId`. Then, destructure these new props within the component's function signature to make them available in the component's scope.",
+            "dependencies": [],
+            "details": "In `src/components/AIChatSidebar.tsx`, locate the props type definition (e.g., `AIChatSidebarProps`). Add `conversationId: string;` and `leadId: string;` to this type. Then, update the component's function definition to destructure `conversationId` and `leadId` from the props object.",
+            "status": "pending",
+            "testStrategy": "After making the changes, ensure the application compiles without any TypeScript errors. The component should still render correctly, although the new props won't be used yet."
+          },
+          {
+            "id": 2,
+            "title": "Modify `generateAIResponse` Function Call",
+            "description": "Update the arguments passed to the `generateAIResponse` function to include the tracking identifiers and enable the tracking flag.",
+            "dependencies": [],
+            "details": "In `src/components/AIChatSidebar.tsx`, locate the `generateAIResponse` call around lines 81-86. Modify the object passed to this function to include the `conversationId` and `leadId` variables destructured in the previous step. Also, add the property `enableTracking: true` to the object.",
+            "status": "pending",
+            "testStrategy": "The code should compile successfully. The primary verification for this change will be performed in the next subtask by inspecting the network request."
+          },
+          {
+            "id": 3,
+            "title": "Verify Network Request Payload for Tracking IDs",
+            "description": "Run the application and use browser developer tools to confirm that the `conversationId` and `leadId` are correctly included in the payload of the network request initiated by `generateAIResponse`.",
+            "dependencies": [],
+            "details": "1. Run the application locally.\n2. Open the browser's developer tools and navigate to the 'Network' tab.\n3. In the application, interact with the AI Chat Sidebar to trigger a message generation.\n4. Filter the network requests to find the API call made by `generateAIResponse` (e.g., a POST request to an endpoint like `/api/ai/response`).\n5. Inspect the 'Payload' or 'Body' of this request to verify that `conversationId` and `leadId` are present and contain the expected values.",
+            "status": "pending",
+            "testStrategy": "The test is successful if the network request payload contains the `conversationId` and `leadId` keys with non-empty string values, confirming they are being passed correctly to the backend."
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "title": "Fix 3/3: Use Dynamic `leadId` in `gemini.ts`",
+        "description": "Correct the backend AI logic to use the passed `leadId` instead of a hardcoded empty string, completing the conversation tracking flow.",
+        "details": "In `src/lib/gemini.ts`, find the `conversation_memory` insertion logic around line 216 and update the `leadId` field.\n\n```typescript\n// src/lib/gemini.ts (Line 216)\n// from\nleadId: ''\n\n// to\nleadId: leadId || '',\n```",
+        "testStrategy": "After sending a message in the UI, query the `conversation_memory` table in Supabase. Verify that a new record is created and the `lead_id` column is populated correctly.",
+        "priority": "high",
+        "dependencies": [
+          29
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "1/3: Update the `generateContent` function signature to accept `leadId`",
+            "description": "Modify the function signature in `src/lib/gemini.ts` that handles content generation to accept an optional `leadId` string parameter. This is a prerequisite for passing the dynamic ID down to the database logic.",
+            "dependencies": [],
+            "details": "Locate the function that contains the `conversation_memory` insertion logic (likely named `generateContent` or similar). Add `leadId?: string` to its list of parameters. This will cause TypeScript errors at the call sites, which will be fixed in a later subtask.",
+            "status": "pending",
+            "testStrategy": "After modifying the function signature, run the TypeScript compiler (`tsc` or through the IDE). Confirm that type errors appear where the function is called, as it now expects a new argument. This validates that the correct function was identified."
+          },
+          {
+            "id": 2,
+            "title": "2/3: Replace hardcoded `leadId` with the dynamic parameter",
+            "description": "With the `leadId` now available within the function scope, replace the hardcoded empty string with the value from the new parameter when inserting a record into the `conversation_memory` table.",
+            "dependencies": [],
+            "details": "Inside the modified function in `src/lib/gemini.ts`, find the database insertion call for `conversation_memory` (around line 216). Change the line `leadId: ''` to `leadId: leadId || ''`. This uses the passed `leadId` if it exists, otherwise defaulting to an empty string to prevent errors.",
+            "status": "pending",
+            "testStrategy": "Perform a code review to ensure the change from `''` to `leadId || ''` is correctly implemented. If unit tests exist for this function, update them to pass a mock `leadId` and assert that the database insertion logic is called with the correct dynamic value."
+          },
+          {
+            "id": 3,
+            "title": "3/3: Update API route handler to pass `leadId` to `generateContent`",
+            "description": "Complete the data flow by finding where the `generateContent` function is called (likely in an API route) and passing the `leadId` from the incoming request. This resolves the type errors from the first subtask.",
+            "dependencies": [],
+            "details": "Navigate to the API route file that calls the function modified in `gemini.ts` (e.g., `src/app/api/chat/route.ts`). In the request handler (e.g., `POST`), extract the `leadId` from the request body. Then, pass this `leadId` as an argument when you call the `generateContent` function.",
+            "status": "pending",
+            "testStrategy": "Conduct an end-to-end test. Use an API client like Postman to send a request to the chat API endpoint, including a `leadId` in the JSON body. After the request completes, query your database to verify that the new entry in the `conversation_memory` table contains the `leadId` you sent."
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "title": "Install TanStack Virtual for Chat Virtualization",
+        "description": "Install and configure TanStack Virtual to prepare for implementing virtual scrolling in the chat interface, preventing browser crashes with long conversations.",
+        "details": "Install the necessary package using npm or your preferred package manager.\n\n```bash\nnpm install @tanstack/react-virtual\n```\nNo code changes are required in this step, only installation. This sets the stage for the implementation task.",
+        "testStrategy": "Verify that the package `@tanstack/react-virtual` is listed in `package.json` and the `node_modules` directory. Ensure the application still builds and runs without errors.",
+        "priority": "high",
+        "dependencies": [
+          30
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Implement Chat Message Virtualization",
+        "description": "Implement virtual scrolling in the chat message list using TanStack Virtual to ensure high performance even with thousands of messages.",
+        "details": "In `src/components/Chat/ChatInterface.tsx`, refactor the message list rendering. Use the `useVirtualizer` hook from `@tanstack/react-virtual`. The implementation should wrap the messages in a scrollable container, use the virtualizer to get the list of virtual items, and render only those items, applying the correct styles for positioning.",
+        "testStrategy": "Load a conversation with over 1000 messages. Confirm that the UI remains responsive and scrolling is smooth. Use browser developer tools to inspect the DOM and verify that only a small subset of message elements are rendered at any time.",
+        "priority": "high",
+        "dependencies": [
+          31
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 33,
+        "title": "Implement Database-Level Pagination for Leads & Templates",
+        "description": "Refactor the `useLeads` and `useTemplates` hooks to fetch data in pages instead of all at once, improving initial load time and reducing memory usage.",
+        "details": "Modify `src/hooks/useLeads.ts` and `src/hooks/useTemplates.ts`. Change the Supabase query to use `.range(from, to)` to fetch a limited number of records (e.g., 50). Implement a `loadMore` function that fetches the next page of data and appends it to the existing state. Use cursor-based pagination for optimal performance by tracking the last fetched item's ID or timestamp.",
+        "testStrategy": "Use the browser's network tab to verify that the initial fetch only requests a limited number of items. Click the 'Load More' button and confirm a new network request is made for the next page. The UI should update to show the new items.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "DB Schema 1/3: Add Foreign Key Constraints",
+        "description": "Create a new Supabase migration file to add foreign key constraints to the database, ensuring data integrity between leads, conversations, and messages.",
+        "details": "Create a new SQL migration file in your Supabase project. Add the following SQL statements to enforce relationships:\n\n```sql\n-- Add foreign key constraints\nALTER TABLE conversations ADD CONSTRAINT fk_lead FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE;\nALTER TABLE messages ADD CONSTRAINT fk_conversation FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;\n```\nAdding `ON DELETE CASCADE` is a good practice to clean up related data automatically.",
+        "testStrategy": "Apply the migration. Attempt to insert a `message` with a non-existent `conversation_id`. The database should reject the insertion with a foreign key violation error. Verify that deleting a `lead` also deletes its associated `conversations`.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "DB Schema 2/3: Add Performance Indexes",
+        "description": "Add indexes to frequently queried columns in the database to significantly improve query performance for fetching messages, conversations, and leads.",
+        "details": "Add the following index creation statements to the same Supabase migration file from the previous task:\n\n```sql\n-- Add performance indexes\nCREATE INDEX idx_messages_conversation_id ON messages(conversation_id);\nCREATE INDEX idx_messages_created_at ON messages(created_at DESC);\nCREATE INDEX idx_conversations_lead_id ON conversations(lead_id);\nCREATE INDEX idx_leads_status ON leads(status);\n```",
+        "testStrategy": "Before and after applying the migration, run an `EXPLAIN ANALYZE` on a query fetching messages for a conversation (e.g., `SELECT * FROM messages WHERE conversation_id = 'some-id'`). The 'after' query plan should show the use of the new index and have a lower execution cost.",
+        "priority": "high",
+        "dependencies": [
+          34
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 36,
+        "title": "DB Schema 3/3: Enable Basic Row Level Security",
+        "description": "Enable Row Level Security (RLS) on key tables and create basic policies. As this is a personal tool, the policies will be permissive but establish the security foundation.",
+        "details": "Add the following RLS statements to the migration file:\n\n```sql\n-- Basic RLS policies\nALTER TABLE leads ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with their own leads\" ON leads FOR ALL USING (true) WITH CHECK (true);\n\nALTER TABLE conversations ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with conversations\" ON conversations FOR ALL USING (true) WITH CHECK (true);\n\nALTER TABLE messages ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with messages\" ON messages FOR ALL USING (true) WITH CHECK (true);\n```\nUsing `(true)` is for permissive access in this personal MVP context.",
+        "testStrategy": "After applying the migration, verify that all data fetching and modification operations in the application continue to work as expected. The permissive `USING (true)` clause should not block any legitimate operations.",
+        "priority": "high",
+        "dependencies": [
+          34
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 37,
+        "title": "Setup Testing Framework (Vitest + RTL)",
+        "description": "Install and configure Vitest and React Testing Library to establish a modern, fast, and effective unit and component testing environment.",
+        "details": "Run the following command to install the development dependencies:\n\n```bash\nnpm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @vitejs/plugin-react\n```\nCreate a `vitest.config.ts` file at the project root to configure the testing environment, including setting up `jsdom` and global imports.",
+        "testStrategy": "Create a simple test file (e.g., `src/components/ui/Button.test.tsx`) with a basic test that renders a component and asserts its content. Run `npm test` (or `npx vitest`) and confirm that the test passes.",
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Corregir Errores de TypeScript para Habilitar el Build",
-            "description": "Identificar y solucionar todos los errores de TypeScript que actualmente impiden que el proyecto se compile correctamente. Este es un paso bloqueante y necesario antes de poder verificar el estado de las dependencias.",
-            "dependencies": [],
-            "details": "Ejecutar el comando de build del proyecto (ej. `npm run build` o `tsc`) para obtener la lista completa de errores de TypeScript. Analizar cada error y aplicar las correcciones necesarias en el código fuente. Los errores pueden estar relacionados con tipos incorrectos, incompatibilidades de librerías o configuraciones en `tsconfig.json`.",
-            "status": "done",
-            "testStrategy": "Verificar que el comando de build (`npm run build`) se ejecuta hasta el final sin reportar errores de TypeScript. El objetivo es lograr una compilación limpia."
-          },
-          {
-            "id": 2,
-            "title": "Verificar la Integridad del Proyecto con Pruebas Automatizadas",
-            "description": "Una vez que el proyecto compila, ejecutar la suite completa de pruebas automatizadas (unitarias, de integración, etc.) para asegurar que las correcciones de TypeScript no han introducido regresiones funcionales.",
-            "dependencies": [],
-            "details": "Ejecutar el comando de pruebas del proyecto, típicamente `npm test`. Asegurarse de que todas las pruebas existentes pasen exitosamente. Si alguna prueba falla, debe ser investigada y corregida antes de continuar.\n<info added on 2025-07-05T03:15:15.857Z>\nNo se encontró una suite de pruebas automatizadas en el package.json. El proyecto actualmente no tiene pruebas unitarias ni de integración configuradas. El build se completa con éxito, lo que valida la sintaxis del código y el tipado.\n</info added on 2025-07-05T03:15:15.857Z>",
-            "status": "done",
-            "testStrategy": "Revisar el reporte de la consola de pruebas para confirmar que todos los tests pasan. El objetivo es un 100% de pruebas pasadas para validar la estabilidad de la base de código."
-          },
-          {
-            "id": 3,
-            "title": "Analizar Dependencias No Utilizadas con `depcheck`",
-            "description": "Con el proyecto en un estado estable (compila y pasa pruebas), ejecutar la herramienta `depcheck` para generar un informe detallado de las dependencias listadas en `package.json` que no se están utilizando en el código.",
-            "dependencies": [],
-            "details": "Ejecutar el comando `npx depcheck` en la raíz del proyecto. Analizar cuidadosamente la salida, prestando atención a las secciones 'Unused dependencies' y 'Unused devDependencies'. Crear una lista de candidatos para eliminación.\n<info added on 2025-07-05T03:16:22.512Z>\nAnálisis con `depcheck` completado. La única dependencia marcada como no utilizada fue `tailwindcss`. Sin embargo, la verificación manual confirma que se utiliza activamente a través de las directivas `@tailwind` en `src/styles/globals.css`, por lo que es un falso positivo. No se necesita eliminar ninguna dependencia.\n</info added on 2025-07-05T03:16:22.512Z>",
-            "status": "done",
-            "testStrategy": "Revisar el informe generado por `depcheck`. Validar que la lista de dependencias no utilizadas es coherente y no incluye paquetes que se usan de forma indirecta (ej. a través de scripts o configuraciones de build)."
-          },
-          {
-            "id": 4,
-            "title": "Investigar y Validar el Uso de `tailwindcss`",
-            "description": "Según el contexto, la dependencia de desarrollo `tailwindcss` fue marcada como no utilizada, pero podría ser necesaria para el proceso de build. Se debe investigar su uso real antes de decidir eliminarla.",
-            "dependencies": [],
-            "details": "Buscar referencias a `tailwindcss` en archivos de configuración como `postcss.config.js`, `webpack.config.js`, o scripts dentro de `package.json`. Revisar si los archivos CSS globales importan utilidades de Tailwind. Si no se encuentran referencias activas, se puede considerar como no utilizada.",
-            "status": "done",
-            "testStrategy": "Documentar los hallazgos. Si se decide eliminar, ejecutar `npm uninstall tailwindcss` y luego correr el build (`npm run build`) para confirmar que la interfaz de usuario y los estilos se siguen generando correctamente."
-          },
-          {
-            "id": 5,
-            "title": "Eliminar Dependencias No Utilizadas Confirmadas",
-            "description": "Proceder con la desinstalación de todas las dependencias que fueron confirmadas como no utilizadas en los pasos anteriores, excluyendo `tailwindcss` si ya fue manejada.",
-            "dependencies": [],
-            "details": "Para cada dependencia en la lista generada por `depcheck` (y verificada manualmente), ejecutar `npm uninstall <package-name>`. Realizar esto para todas las dependencias innecesarias. Tras las desinstalaciones, ejecutar `npm install` para asegurar que el `package-lock.json` y `node_modules` estén limpios y consistentes.",
-            "status": "done",
-            "testStrategy": "Después de eliminar cada dependencia o un grupo de ellas, es recomendable ejecutar el build y las pruebas para detectar rápidamente si una dependencia eliminada era necesaria."
-          },
-          {
-            "id": 6,
-            "title": "Verificación Final del Build y Pruebas",
-            "description": "Realizar una última y completa verificación del proyecto para asegurar que la eliminación de dependencias no ha afectado negativamente la funcionalidad, el build o las pruebas.",
-            "dependencies": [],
-            "details": "Ejecutar una vez más la secuencia completa de validación: `npm run build` para asegurar que compila sin errores, y `npm test` para confirmar que toda la suite de pruebas pasa. Este es el paso final de confirmación antes de dar la tarea por completada.\n<info added on 2025-07-05T03:17:43.902Z>\nVerificación final completada. La compilación se realizó exitosamente sin errores. El proceso de linting muestra 19 advertencias relacionadas con tipos 'any' y aserciones no nulas, pero sin errores. Se confirma que toda la funcionalidad se ha preservado, las dependencias están limpias y el proyecto se encuentra estable.\n</info added on 2025-07-05T03:17:43.902Z>",
-            "status": "done",
-            "testStrategy": "El build debe completarse exitosamente y todas las pruebas deben pasar. Adicionalmente, se puede ejecutar la aplicación localmente y realizar una breve prueba de humo manual en las funcionalidades clave."
-          }
-        ]
+        "subtasks": []
       },
       {
-        "id": 3,
-        "title": "Auditar y Aplicar Políticas de Seguridad en Supabase (RLS)",
-        "description": "Revisar y aplicar políticas de Row Level Security (RLS) en todas las tablas de Supabase y asegurar que no se expongan claves de servicio (`service_role`) en el código del cliente.",
-        "details": "1. Para cada tabla en la base de datos de Supabase, verificar que RLS esté habilitado. 2. Definir políticas SQL (`POLICY`) para operaciones `SELECT`, `INSERT`, `UPDATE`, `DELETE` basadas en el `auth.uid()` del usuario autenticado. Ejemplo: `CREATE POLICY \"Allow read access to own data\" ON public.profiles FOR SELECT USING (auth.uid() = user_id);`. 3. Realizar una búsqueda global en el código del frontend para encontrar y eliminar cualquier clave de `service_role` o secreta. Asegurar que solo se utiliza la `anon_key` pública.",
-        "testStrategy": "Crear tests de integración (o manuales) que intenten acceder/modificar datos sin autenticación o para un usuario no autorizado. Estos intentos deben ser bloqueados por RLS. Verificar manualmente que un usuario A no puede ver ni modificar los datos del usuario B a través de la UI o peticiones directas.",
-        "priority": "high",
+        "id": 38,
+        "title": "Write Unit Tests for Core AI Functions",
+        "description": "Write unit tests for the core AI logic in `gemini.ts` to ensure its functions behave as expected and to prevent regressions.",
+        "details": "Create a test file `src/lib/gemini.test.ts`. Mock the external Gemini API dependency. Write test cases for the `generateAIResponse` function. Test different scenarios: with and without tracking enabled, with different contexts, and ensure it formats the request payload correctly.",
+        "testStrategy": "Run the tests via Vitest. The test suite should achieve high coverage for `gemini.ts`. All tests should pass, confirming the logic for payload construction and function invocation is correct under various conditions.",
+        "priority": "medium",
+        "dependencies": [
+          37,
+          30
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 39,
+        "title": "Write Integration Tests for Data Hooks",
+        "description": "Write integration tests for the custom data fetching hooks (`useLeads`, `useTemplates`) to validate their interaction with the Supabase backend.",
+        "details": "Create test files like `src/hooks/useLeads.test.ts`. Use Vitest to test the hooks. You may need to mock the Supabase client to simulate API responses for pagination. Test the initial fetch, the `loadMore` functionality, and loading/error states.",
+        "testStrategy": "Run the tests. Verify that the hooks correctly manage state (data, loading, error) based on the mocked Supabase responses. Ensure the pagination logic correctly appends data.",
+        "priority": "medium",
+        "dependencies": [
+          37,
+          33
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 40,
+        "title": "Setup E2E Testing with Playwright",
+        "description": "Install and configure Playwright to enable end-to-end testing for critical user workflows, ensuring the application works as a whole.",
+        "details": "Initialize Playwright in the project by running:\n\n```bash\nnpm init playwright@latest\n```\nFollow the prompts to configure the project. This will create a `playwright.config.ts` file, an example test, and a `tests` directory. Adjust the config's `webServer` command to start your local development server before tests run.",
+        "testStrategy": "Run the example test provided by the Playwright installer (`npx playwright test`). It should launch a browser, navigate to the specified URL, and pass successfully.",
+        "priority": "medium",
         "dependencies": [],
-        "status": "deferred",
+        "status": "pending",
         "subtasks": []
       },
       {
-        "id": 4,
-        "title": "Unificar Componentes Duplicados y Limpiar Assets",
-        "description": "Identificar componentes con el sufijo \"New\" (ej. `LeadsListNew.tsx`), unificar su funcionalidad en una única versión, eliminar los archivos obsoletos y limpiar la carpeta `public` de assets no utilizados.",
-        "details": "1. Comparar los componentes duplicados (ej. `LeadsList.tsx` vs `LeadsListNew.tsx`) para identificar las diferencias. 2. Fusionar la lógica y el JSX en el componente principal (sin el sufijo \"New\"), conservando la mejor implementación. 3. Refactorizar todas las importaciones para que apunten al componente unificado. 4. Eliminar los archivos de componentes \"New\". 5. Utilizar una herramienta como `find-unused-assets` o realizar una búsqueda manual para identificar y eliminar imágenes, fuentes y otros archivos en `/public` que no estén referenciados en el código.",
-        "testStrategy": "Realizar pruebas de regresión visual y funcional en las vistas donde se usaban los componentes duplicados para asegurar que la funcionalidad unificada es correcta. Verificar que la aplicación se compila y funciona correctamente después de eliminar los assets y componentes obsoletos.",
-        "priority": "high",
-        "dependencies": [
-          1
-        ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Identificar y Analizar Componentes Duplicados",
-            "description": "Realizar una búsqueda exhaustiva en el codebase para localizar todos los componentes con el sufijo \"New\" y sus contrapartes originales. Documentar las diferencias clave entre cada par.",
-            "dependencies": [],
-            "details": "Utilizar la función de búsqueda del IDE o comandos de terminal (ej. `find . -name \"*New.tsx\"`) para listar todos los componentes duplicados. Para cada par (ej. `LeadsList.tsx` y `LeadsListNew.tsx`), usar una herramienta de comparación de archivos (diff) para analizar las diferencias en props, estado, lógica de hooks y estructura JSX. Crear un documento o checklist con los hallazgos para guiar la fusión.\n<info added on 2025-07-05T02:12:04.871Z>\nComponentes duplicados identificados:\n1. LeadsHeaderNew.tsx vs LeadsHeader.tsx (New: 15475 bytes, Original: 4214 bytes). La versión New es mucho más grande y probablemente incluye filtros integrados.\n2. LeadsKanbanNew.tsx vs LeadsKanban.tsx (New: 7889 bytes, Original: 5324 bytes). La versión New tiene funcionalidad adicional.\n3. LeadsFiltersNew.tsx vs LeadsFilters.tsx (New: 9769 bytes, Original: 7897 bytes). La versión New presenta mejoras en los filtros.\n4. LeadsListNew.tsx vs LeadsList.tsx (New: 3571 bytes, Original: 2686 bytes). La versión New tiene funcionalidad expandida.\n\nAnálisis clave: La página LeadsPage.tsx utiliza exclusivamente las versiones \"New\" de los componentes (LeadsHeaderNew, LeadsKanbanNew, LeadsListNew), lo que indica que los componentes originales están obsoletos.\n</info added on 2025-07-05T02:12:04.871Z>",
-            "status": "done",
-            "testStrategy": "Verificar que la lista de componentes a unificar esté completa. La revisión por pares del análisis de diferencias confirmará que se han identificado todos los cambios relevantes para la fusión."
-          },
-          {
-            "id": 2,
-            "title": "Fusionar Funcionalidad en Componentes Únicos",
-            "description": "Para cada par identificado, migrar la lógica y el JSX mejorados del componente \"New\" al componente principal (sin sufijo), creando una única versión definitiva.",
-            "dependencies": [
-              1
-            ],
-            "details": "Trabajando con los archivos lado a lado, transferir selectivamente las mejoras del componente \"New\" al original. Esto puede incluir nuevos hooks, lógica de manejo de estado, props adicionales y una estructura JSX más limpia o funcional. Asegurarse de que la versión final sea compatible con todos los casos de uso de ambas versiones anteriores.\n<info added on 2025-07-05T02:16:53.697Z>\nFusión completada exitosamente:\n\nLeadsHeaderNew → LeadsHeader\n   - Reemplazada interfaz LeadsHeaderNewProps → LeadsHeaderProps\n   - Reemplazado export LeadsHeaderNew → LeadsHeader\n   - Componente original eliminado y reemplazado\n\nLeadsKanbanNew → LeadsKanban\n   - Reemplazada interfaz LeadsKanbanNewProps → LeadsKanbanProps\n   - Reemplazado export LeadsKanbanNew → LeadsKanban\n   - Componente original eliminado y reemplazado\n\nLeadsListNew → LeadsList\n   - Reemplazada interfaz LeadsListNewProps → LeadsListProps\n   - Reemplazado export LeadsListNew → LeadsList\n   - Componente original eliminado y reemplazado\n\nLeadsFiltersNew → LeadsFilters\n   - Reemplazada interfaz LeadsFiltersNewProps → LeadsFiltersProps\n   - Reemplazado export LeadsFiltersNew → LeadsFilters\n   - Componente original eliminado y reemplazado\n\nLos componentes \"New\" contenían todas las funcionalidades actuales y han sido promovidos a los nombres principales. Los componentes originales obsoletos fueron eliminados.\n</info added on 2025-07-05T02:16:53.697Z>",
-            "status": "done",
-            "testStrategy": "Ejecutar pruebas unitarias existentes para el componente original y crear nuevas si es necesario para cubrir la nueva funcionalidad. Realizar pruebas manuales en un entorno de desarrollo (ej. Storybook o la app en ejecución) para confirmar que el componente unificado se renderiza y funciona correctamente, sin regresiones visuales o de comportamiento."
-          },
-          {
-            "id": 3,
-            "title": "Refactorizar Importaciones y Eliminar Archivos Obsoletos",
-            "description": "Buscar en todo el proyecto las importaciones que apunten a los componentes \"New\" y redirigirlas al componente unificado. Una vez que no queden referencias, eliminar los archivos \"New\".",
-            "dependencies": [
-              2
-            ],
-            "details": "Utilizar la función de búsqueda y reemplazo global del IDE para cambiar todas las rutas de importación (ej. de `from '../components/LeadsListNew'` a `from '../components/LeadsList'`). Después de aplicar los cambios, verificar que la aplicación compile sin errores. Una vez confirmado, eliminar los archivos `*New.tsx` del proyecto y del control de versiones.\n<info added on 2025-07-05T02:18:23.588Z>\nLeadsPage.tsx ha sido actualizado, cambiando las importaciones y el uso de los componentes *New (LeadsHeaderNew, LeadsKanbanNew, LeadsListNew) a sus versiones unificadas. Los archivos obsoletos *New.tsx han sido eliminados. Nota: El build muestra errores de TypeScript pre-existentes en otros archivos del codebase (auth, hooks, templates) que no están relacionados con esta refactorización. Los componentes refactorizados funcionan correctamente.\n</info added on 2025-07-05T02:18:23.588Z>",
-            "status": "done",
-            "testStrategy": "Ejecutar el conjunto completo de pruebas de la aplicación (unitarias, de integración y E2E si existen) para asegurar que la refactorización no haya introducido errores. Realizar una compilación de producción (`build`) para confirmar que no hay problemas de resolución de módulos."
-          },
-          {
-            "id": 4,
-            "title": "Auditar la Carpeta `public` para Identificar Assets No Utilizados",
-            "description": "Analizar el código base para encontrar imágenes, fuentes y otros archivos en la carpeta `/public` que ya no están referenciados en ninguna parte de la aplicación.",
-            "dependencies": [
-              3
-            ],
-            "details": "Instalar y ejecutar una herramienta de análisis estático como `find-unused-assets` o `unimported`. Alternativamente, para cada archivo en `/public`, realizar una búsqueda de su nombre en todo el proyecto. Generar una lista de archivos candidatos para eliminación, prestando especial atención a los assets que podrían ser cargados dinámicamente.\n<info added on 2025-07-05T02:20:01.381Z>\nAuditoría de la carpeta `/public` completada. La carpeta solo contiene `index.html` y no tiene assets. Se encontraron dos referencias a assets faltantes: `/favicon.ico` en `useRealtimeNotifications.ts` (línea 135) y `/vite.svg` en `index.html` (línea 5). No hay assets no utilizados para eliminar. La acción requerida es crear los assets faltantes o eliminar las referencias.\n</info added on 2025-07-05T02:20:01.381Z>",
-            "status": "done",
-            "testStrategy": "Revisar manualmente la lista de assets marcados como no utilizados para identificar posibles falsos positivos. Un segundo desarrollador debe revisar la lista para confirmar que los assets no son necesarios, evitando la eliminación accidental de recursos críticos."
-          },
-          {
-            "id": 5,
-            "title": "Eliminar Assets No Utilizados y Verificar Integridad",
-            "description": "Eliminar los archivos de la carpeta `public` identificados como no utilizados y realizar una verificación completa de la aplicación para asegurar que no haya referencias rotas.",
-            "dependencies": [
-              4
-            ],
-            "details": "Basándose en la lista auditada de la tarea anterior, eliminar los archivos correspondientes del directorio `/public`. Realizar este cambio en un commit separado para facilitar la reversión en caso de problemas. Limpiar la caché del navegador y del servidor de desarrollo antes de verificar.\n<info added on 2025-07-05T02:23:50.934Z>\nSe completó la verificación de integridad. Se determinó que la carpeta `public` ya estaba vacía, por lo que no fue necesario eliminar assets. En su lugar, se resolvieron referencias rotas: se creó `/public/vite.svg` con el logo oficial, se actualizó la referencia en `useRealtimeNotifications.ts` de `/favicon.ico` a `/vite.svg`, y se agregó un `shortcut icon` adicional en `index.html`. La verificación del servidor confirmó que el nuevo asset es accesible (HTTP 200, Content-Type: image/svg+xml) y la integridad de la aplicación se mantiene sin pérdida de funcionalidad.\n</info added on 2025-07-05T02:23:50.934Z>",
-            "status": "done",
-            "testStrategy": "Navegar exhaustivamente por todas las páginas y funcionalidades de la aplicación en un entorno de desarrollo. Revisar la consola del navegador en busca de errores 404 (Not Found). Si se dispone de pruebas de regresión visual, ejecutarlas para detectar imágenes o iconos faltantes."
-          }
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Mejorar Tipado de TypeScript y Eliminar `any`",
-        "description": "Refinar los tipos en `src/types/index.ts` para que sean más precisos y realizar una pasada por todo el código para reemplazar el uso de `any` con tipos específicos o `unknown`.",
-        "details": "1. Revisar `src/types/index.ts` y comparar los tipos con la estructura de datos real de la API de Supabase y del estado de la aplicación. 2. Habilitar la regla de ESLint `@typescript-eslint/no-explicit-any` para localizar todos los usos de `any`. 3. Reemplazar cada `any` con un tipo adecuado. Si el tipo es genuinamente desconocido, usar `unknown` y realizar una comprobación de tipo antes de usar la variable. 4. Generar tipos directamente desde el esquema de Supabase si es posible para asegurar la sincronización.",
-        "testStrategy": "El compilador de TypeScript (`tsc --noEmit`) es el principal validador. El build debe completarse sin errores de tipo. Revisar las props de los componentes refactorizados en el IDE para confirmar que tienen tipos estrictos y autocompletado.",
+        "id": 41,
+        "title": "Create E2E Test for Core Conversation Workflow",
+        "description": "Create an E2E test script that simulates a user creating a lead, starting a conversation, and receiving an AI-assisted response.",
+        "details": "Create a new test file in the Playwright `tests` directory. The script should:\n1. Navigate to the leads page.\n2. Click a 'Create Lead' button and fill out the form.\n3. Navigate to the new lead's chat page.\n4. Type and send a message.\n5. Wait for the AI response to appear and assert its presence.",
+        "testStrategy": "Run the new E2E test. The test should pass, visually confirming in the test runner's browser that the entire workflow from lead creation to AI response is functioning correctly.",
         "priority": "medium",
         "dependencies": [
-          1
+          40,
+          30
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
-        "id": 6,
-        "title": "Centralizar Lógica Duplicada (DRY) en Utils y Hooks",
-        "description": "Identificar lógica de negocio y funciones de utilidad duplicadas (formateo de fechas, cálculos, validaciones) y centralizarlas en un directorio `src/utils` o en hooks reutilizables para seguir el principio DRY.",
-        "details": "1. Buscar patrones de código repetidos en diferentes componentes. 2. Crear archivos de utilidad por dominio, ej. `src/utils/date.ts`, `src/utils/string.ts`. 3. Mover la lógica duplicada a funciones puras y exportables. 4. Para lógica con estado o efectos secundarios, abstraerla en un custom hook reutilizable (ej. `useApiData`). 5. Reemplazar el código duplicado en los componentes con llamadas a las nuevas funciones de utilidad o hooks.",
-        "testStrategy": "Crear tests unitarios (con Jest o Vitest) para las nuevas funciones de utilidad y hooks para asegurar que funcionan correctamente con diferentes entradas. Realizar pruebas de regresión en los componentes que ahora usan esta lógica centralizada.",
+        "id": 42,
+        "title": "Split AppContext 1/4: Create UIContext",
+        "description": "Create a new, dedicated `UIContext` to manage UI-specific state like theme (dark/light mode), sidebar visibility, etc., to begin splitting the monolithic `AppContext`.",
+        "details": "Create a new file `src/contexts/UIContext.tsx`. Define the context shape, create the provider component, and a custom hook `useUI` for easy consumption. Move any UI-related state and functions from `AppContext.tsx` into this new context.",
+        "testStrategy": "Wrap the application with the new `UIProvider`. Refactor a component that uses UI state (e.g., a theme toggle button) to use the `useUI` hook. Verify that the functionality (e.g., toggling dark mode) still works correctly.",
         "priority": "medium",
-        "dependencies": [
-          1,
-          4,
-          5
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 7,
-        "title": "Refactorizar Componentes Monolíticos",
-        "description": "Identificar componentes de React grandes y complejos (monolíticos) y refactorizarlos en componentes más pequeños, enfocados y reutilizables para mejorar la mantenibilidad y el rendimiento.",
-        "details": "1. Usar herramientas de análisis de código o inspección manual para encontrar componentes con muchas líneas de código (>200 LOC) o múltiples responsabilidades. 2. Dividir el JSX en subcomponentes lógicos (ej. `UserProfile` se divide en `Avatar`, `UserInfo`, `UserStats`). 3. Cada nuevo componente debe tener una única responsabilidad y recibir solo las props que necesita. 4. Colocar los nuevos subcomponentes en un directorio junto al componente padre o en un directorio de componentes comunes si son reutilizables.",
-        "testStrategy": "Para cada componente refactorizado, comparar la UI renderizada antes y después para asegurar que no hay cambios visuales. Probar todas las interacciones del usuario (clics, inputs) en el componente refactorizado para verificar que la funcionalidad sigue intacta. Usar Storybook para probar los nuevos subcomponentes de forma aislada.",
-        "priority": "high",
-        "dependencies": [
-          1,
-          4,
-          5
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 8,
-        "title": "Eliminar \"Prop Drilling\" con React Context API",
-        "description": "Auditar el flujo de props y refactorizar los casos de \"prop drilling\" utilizando la Context API de React o un gestor de estado para proporcionar datos directamente a los componentes que los necesitan.",
-        "details": "1. Identificar props que se pasan a través de múltiples niveles de componentes sin ser utilizados por los intermediarios. 2. Crear un `Context` para el estado que se está pasando. Ejemplo: `const AuthContext = React.createContext(null);`. 3. Envolver el árbol de componentes relevante con el `Provider` del contexto. 4. En los componentes anidados que necesitan el estado, usar el hook `useContext` para consumirlo. 5. Eliminar las props que ahora se obtienen del contexto de los componentes intermedios.",
-        "testStrategy": "Verificar que los componentes que consumen el estado del contexto reciben los datos correctos y se actualizan cuando el estado cambia en el `Provider`. Realizar pruebas de regresión en la funcionalidad afectada para asegurar que el estado sigue fluyendo correctamente.",
-        "priority": "high",
-        "dependencies": [
-          7
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 9,
-        "title": "Aplicar Técnicas de Memoización para Optimizar Renders",
-        "description": "Utilizar `React.memo`, `useMemo` y `useCallback` para prevenir renders innecesarios en componentes y optimizar cálculos costosos, mejorando la fluidez de la interfaz.",
-        "details": "1. Usar React DevTools Profiler para identificar componentes que se renderizan con demasiada frecuencia. 2. Envolver componentes funcionales que reciben props con `React.memo`. 3. Para funciones pasadas como props, envolver su definición con `useCallback`. 4. Para cálculos costosos dentro de un componente, memoizar el resultado con `useMemo`. 5. Auditar los hooks de estado personalizados (`useAppState`, `useGlobalCache`) para aplicar memoización internamente si es necesario.",
-        "testStrategy": "Usar el React DevTools Profiler para comparar el número de renders antes y después de la optimización. Confirmar que los componentes memoizados no se renderizan cuando cambian props no relacionadas o el estado del padre no relevante.",
-        "priority": "medium",
-        "dependencies": [
-          7,
-          8
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 10,
-        "title": "Optimizar Queries a Supabase",
-        "description": "Analizar las consultas a Supabase, crear índices en la base de datos para las columnas más consultadas y optimizar la estructura de las queries para reducir tiempos de carga.",
-        "details": "1. Utilizar la extensión `pg_stat_statements` en Supabase para identificar queries lentas o frecuentes. 2. Para las columnas usadas en cláusulas `WHERE` o `JOIN`, crear índices: `CREATE INDEX idx_column_name ON table_name (column_name);`. 3. Asegurarse de que las queries solo seleccionan las columnas necesarias (`select('id, title')`) en lugar de `select('*')`. 4. Revisar si se pueden combinar múltiples peticiones en una sola usando las capacidades de Supabase (e.g., joins anidados).",
-        "testStrategy": "Medir el tiempo de respuesta de las páginas que dependen de estas queries antes y después de la optimización, usando la pestaña \"Network\" de las DevTools del navegador. Verificar que los datos devueltos siguen siendo correctos y que la paginación y filtros funcionan como se espera.",
-        "priority": "medium",
-        "dependencies": [
-          3
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 11,
-        "title": "Implementar Lazy Loading y Virtualización de Listas",
-        "description": "Analizar el bundle de producción y aplicar técnicas de división de código (code splitting) y carga perezosa (lazy loading) para páginas y componentes pesados, y considerar la virtualización para listas largas.",
-        "details": "1. Usar `webpack-bundle-analyzer` o similar para visualizar el contenido del bundle. 2. Implementar lazy loading a nivel de ruta usando `React.lazy` y `Suspense`. Ejemplo: `const HomePage = React.lazy(() => import('./pages/HomePage'));`. 3. Para listas con cientos o miles de elementos, implementar virtualización usando una librería como `react-window` o `react-virtualized` para renderizar solo los elementos visibles.",
-        "testStrategy": "Comparar el tamaño del bundle inicial antes y después de los cambios. Verificar en la pestaña \"Network\" que los chunks de las páginas lazy-loaded solo se cargan cuando se navega a ellas. Probar las listas virtualizadas para asegurar un scroll fluido y sin fallos visuales.",
-        "priority": "medium",
-        "dependencies": [
-          7
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 12,
-        "title": "Refactorizar CSS a Tailwind y Purgar Clases no Utilizadas",
-        "description": "Migrar estilos de archivos CSS personalizados a clases de utilidad de Tailwind CSS y configurar PurgeCSS (o el modo `content` de Tailwind) para eliminar todas las clases no utilizadas en producción.",
-        "details": "1. Revisar los archivos `.css` o módulos CSS personalizados. 2. Reemplazar las reglas CSS con las clases de utilidad equivalentes de Tailwind directamente en el JSX. 3. Para estilos complejos o repetidos, usar la directiva `@apply` de Tailwind en un archivo CSS global. 4. Asegurarse de que la configuración de `tailwind.config.js` en la sección `content` incluye todos los archivos que contienen clases de Tailwind (`.tsx`, `.jsx`, etc.) para que el purgado funcione correctamente.",
-        "testStrategy": "Comparar visualmente los componentes antes y después de la migración para asegurar la consistencia del diseño. Inspeccionar el build de producción para confirmar que el tamaño del archivo CSS final se ha reducido significativamente.",
-        "priority": "low",
-        "dependencies": [
-          7
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 13,
-        "title": "Design and Implement Supabase Database Schema",
-        "description": "Design and create the required tables in Supabase for storing prompts, script templates, conversation history, few-shot examples, and performance analytics as specified in the PRD.",
-        "details": "Using Supabase's dashboard or migration scripts, create the following tables:\n- `prompts` (id, version, name, content JSONB, is_active BOOLEAN, created_at)\n- `script_templates` (id, phase INT, lead_type TEXT, content TEXT)\n- `objection_handlers` (id, category TEXT, template TEXT)\n- `few_shot_examples` (id, phase INT, scenario TEXT, example_input TEXT, example_output TEXT)\n- `conversations` (id, lead_id UUID, current_phase INT, qualification_score FLOAT, history JSONB)\n- `prompt_analytics` (id, prompt_id INT, conversation_id INT, alignment_score FLOAT, tone_score FLOAT, generation_time_ms INT, setter_feedback INT)\nEnsure foreign key relationships are established where appropriate (e.g., `prompt_analytics.prompt_id` -> `prompts.id`).",
-        "testStrategy": "Verify all tables and columns exist in the Supabase project via the dashboard. Run test queries to insert and select data from each table to ensure constraints and data types are correct. Use the `supabase-js` v2 library to confirm connectivity.",
-        "priority": "high",
         "dependencies": [],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
-        "id": 14,
-        "title": "Parse and Ingest QUANTUM_SCRIPT_B2B Content",
-        "description": "Create a one-time script to parse the QUANTUM_SCRIPT_B2B document and populate the `script_templates`, `objection_handlers`, and other relevant Supabase tables.",
-        "details": "Develop a Node.js script using `fs` to read the script file. Use regular expressions or a structured parsing approach to identify sales phases (1-5), follow-up sequences, and objection handling logic. Use the `supabase-js` client to batch-insert the parsed content into the corresponding tables (`script_templates`, `objection_handlers`). The script should be idempotent if possible.",
-        "testStrategy": "Run the script and verify the data count in each target table in Supabase. Manually inspect a sample of records in each table to ensure parsing was accurate and content is correctly structured. The script should log its progress and any parsing errors.",
-        "priority": "high",
-        "dependencies": [
-          13
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 15,
-        "title": "Refactor Core Function for Hierarchical Prompting",
-        "description": "Refactor the main `generateAIResponse` function to support a hierarchical prompt structure, including role definitions, rules, and dynamic content sections.",
-        "details": "Modify the `generateAIResponse` function in `gemini.ts`. Instead of a single static prompt, it should now build a structured prompt object. This object will have keys like `system_prompt` (for role definition), `few_shot_examples` (array), `script_context` (current phase script), and `conversation_history`. The final prompt sent to the Gemini 2.5 Pro API should be assembled from these components.",
-        "testStrategy": "Unit test the refactored function. Provide mock data for each part of the prompt structure (role, examples, etc.) and assert that the final assembled prompt string or object is correctly formatted. Ensure it handles missing components gracefully.",
-        "priority": "high",
-        "dependencies": [
-          13
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 16,
-        "title": "Implement Base Prompt Retrieval from Supabase",
-        "description": "Implement the logic to fetch the active, versioned base prompt and role definition from the `prompts` table in Supabase.",
-        "details": "Create a new function, `getBasePrompt()`, that queries the Supabase `prompts` table for the record where `is_active` is true. This function will be called by `generateAIResponse` to retrieve the foundational part of the prompt, including the AI's role and core instructions. Implement caching with a short TTL (e.g., 5 minutes) to reduce database calls.",
-        "testStrategy": "Create a test that calls `getBasePrompt()` and verifies it returns the correct prompt content from the database. Test the caching mechanism by calling the function twice in quick succession and ensuring the second call does not trigger a database query.",
-        "priority": "high",
-        "dependencies": [
-          15
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 17,
-        "title": "Develop Initial Response Alignment Validator",
-        "description": "Develop an initial response validation system to check if the AI's output aligns with the key points of the current sales phase script.",
-        "details": "Create a function `validateResponseAlignment(response, currentPhase)`. This function will fetch the `script_template` for the `currentPhase`. It will then perform keyword and key-phrase matching against the generated `response` to calculate an alignment score (0.0 to 1.0). This can be a simple percentage of matched key phrases. This validator will be called after a response is generated.",
-        "testStrategy": "Write unit tests with sample AI responses and script templates. Test cases should include a perfectly aligned response (score > 0.9), a partially aligned response, and a completely unaligned response. Assert that the calculated scores are within expected ranges.",
-        "priority": "high",
-        "dependencies": [
-          14,
-          16
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Crear interfaz TypeScript para el validador de alineación",
-            "description": "Definir las interfaces y tipos necesarios para el sistema de validación de respuestas",
-            "details": "Crear un archivo response-validator.ts con las siguientes interfaces:\n- ResponseValidationResult: score, matchedKeyPhrases, missingKeyPhrases, suggestions\n- ValidationConfig: minScore, keyPhraseWeight, strictMode\n- KeyPhrase: phrase, required, weight",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 17
-          },
-          {
-            "id": 2,
-            "title": "Implementar extractor de frases clave de templates",
-            "description": "Crear función para extraer automáticamente las frases clave de los script templates",
-            "details": "Implementar extractKeyPhrasesFromTemplate() que:\n- Analice el contenido del template\n- Identifique frases clave (ignorando variables [NOMBRE])\n- Asigne pesos según importancia (preguntas = peso alto)\n- Retorne array de KeyPhrase objects",
-            "status": "done",
-            "dependencies": [
-              "17.1"
-            ],
-            "parentTaskId": 17
-          },
-          {
-            "id": 3,
-            "title": "Implementar algoritmo de coincidencia flexible",
-            "description": "Crear función para detectar coincidencias parciales y sinónimos en las respuestas",
-            "details": "Implementar findPhraseMatches() que:\n- Use distancia Levenshtein para coincidencias parciales\n- Normalice texto (minúsculas, sin acentos, sin puntuación)\n- Detecte sinónimos comunes (ej: 'problema' = 'dificultad')\n- Retorne matches con score de confianza",
-            "status": "done",
-            "dependencies": [
-              "17.1"
-            ],
-            "parentTaskId": 17
-          },
-          {
-            "id": 4,
-            "title": "Crear calculador de score de alineación",
-            "description": "Implementar función que calcule el score final basado en coincidencias",
-            "details": "Implementar calculateAlignmentScore() que:\n- Pondere matches según peso de cada frase\n- Penalice ausencia de frases obligatorias\n- Normalice score entre 0.0 y 1.0\n- Considere longitud de respuesta vs template",
-            "status": "done",
-            "dependencies": [
-              "17.2",
-              "17.3"
-            ],
-            "parentTaskId": 17
-          },
-          {
-            "id": 5,
-            "title": "Implementar función principal validateResponseAlignment",
-            "description": "Crear la función principal que orqueste todo el proceso de validación",
-            "details": "Implementar validateResponseAlignment() que:\n- Obtenga templates de la fase actual desde Supabase\n- Extraiga frases clave de los templates\n- Busque coincidencias en la respuesta\n- Calcule score final\n- Genere sugerencias de mejora si score < 0.8",
-            "status": "done",
-            "dependencies": [
-              "17.4"
-            ],
-            "parentTaskId": 17
-          },
-          {
-            "id": 6,
-            "title": "Integrar validador en generateAIResponse",
-            "description": "Modificar gemini.ts para validar respuestas después de generarlas",
-            "details": "En generateAIResponse:\n- Llamar validateResponseAlignment después de generar\n- Si score < 0.7, regenerar con hints adicionales\n- Logear métricas de validación\n- Retornar respuesta con metadata de validación",
-            "status": "done",
-            "dependencies": [
-              "17.5"
-            ],
-            "parentTaskId": 17
-          },
-          {
-            "id": 7,
-            "title": "Crear tests unitarios para el validador",
-            "description": "Escribir tests para cada componente del sistema de validación",
-            "details": "Crear response-validator.test.ts con tests para:\n- Extracción de frases clave\n- Algoritmo de coincidencia\n- Cálculo de scores\n- Casos edge (respuestas vacías, templates sin frases)\n- Validación completa con datos reales\n<info added on 2025-07-07T09:06:46.229Z>\nUnit tests were not created due to the absence of a configured testing framework in the project. The validation system is fully functional and has been manually tested. It is recommended to add tests once a framework like Jest or Vitest is configured.\n</info added on 2025-07-07T09:06:46.229Z>",
-            "status": "done",
-            "dependencies": [
-              "17.6"
-            ],
-            "parentTaskId": 17
-          }
-        ]
-      },
-      {
-        "id": 18,
-        "title": "Implement Conversation State and History Tracking",
-        "description": "Implement the system to persist conversation history and track the current state of each lead's conversation.",
-        "details": "On each API call, update the `conversations` table. The `history` JSONB column should be appended with the latest user message and AI response. The `current_phase` and `qualification_score` should also be updated based on the conversation flow. Use Supabase's `rpc` for a function like `append_to_conversation(conversation_id, new_turn_data)` for atomicity.",
-        "testStrategy": "Simulate a multi-turn conversation. After each turn, query the `conversations` table to verify that the history has been correctly appended and that the `current_phase` has been updated as expected. Test edge cases like starting a new conversation.",
+        "id": 43,
+        "title": "Split AppContext 2/4: Create LeadsContext",
+        "description": "Create a new `LeadsContext` to handle all state and logic related to lead management, including fetching, creating, and updating leads.",
+        "details": "Create `src/contexts/LeadsContext.tsx`. Move all lead-related state, the `useLeads` hook logic, and any related functions from `AppContext` into this new provider. Create a `useLeadsContext` hook for components to access this state.",
+        "testStrategy": "Replace direct `AppContext` usage in lead-related components (e.g., `LeadsPage`) with the new `useLeadsContext` hook. Verify that leads are still fetched, displayed, and can be interacted with as before.",
         "priority": "medium",
         "dependencies": [
-          13
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Analizar estructura de tabla conversations en Supabase",
-            "description": "Revisar la estructura actual de la tabla conversations, identificar campos existentes y determinar si se necesitan modificaciones para soportar el tracking de estado",
-            "details": "Conectar a Supabase y analizar:\n- Estructura actual de la tabla conversations\n- Tipo de datos del campo history (JSONB)\n- Campos current_phase y qualification_score\n- Índices existentes\n- Relaciones con otras tablas\nDocumentar hallazgos y proponer cambios si son necesarios\n<info added on 2025-07-07T09:22:13.853Z>\nAnálisis completado con cambio de estrategia. En lugar de modificar la tabla conversations existente, se creó una nueva tabla auxiliar conversation_tracking con relación 1:1. Script de migración creado en /supabase/migrations/20250107_create_conversation_tracking_table.sql. Esta solución evita modificar tablas con datos existentes y permite implementar el tracking de forma segura.\n</info added on 2025-07-07T09:22:13.853Z>",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 18
-          },
-          {
-            "id": 2,
-            "title": "Crear función RPC append_to_conversation en Supabase",
-            "description": "Implementar una función PostgreSQL RPC que permita actualizar atómicamente el historial de conversación y los campos de estado",
-            "details": "Crear función RPC que:\n- Reciba conversation_id y new_turn_data\n- Actualice el campo history agregando el nuevo turno\n- Actualice current_phase basado en el análisis\n- Calcule y actualice qualification_score\n- Use transacciones para garantizar atomicidad\n- Maneje errores apropiadamente",
-            "status": "done",
-            "dependencies": [
-              "18.1"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 3,
-            "title": "Crear servicio ConversationStateManager en TypeScript",
-            "description": "Implementar un servicio TypeScript que encapsule toda la lógica de gestión del estado de conversación",
-            "details": "Crear src/lib/conversation-state-manager.ts con:\n- Clase ConversationStateManager\n- Método updateConversationState()\n- Método calculateQualificationScore()\n- Método determineCurrentPhase()\n- Integración con Supabase RPC\n- Manejo de errores y reintentos\n- Tipos TypeScript para conversation state",
-            "status": "done",
-            "dependencies": [
-              "18.2"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 4,
-            "title": "Implementar lógica de cálculo de qualification_score",
-            "description": "Desarrollar algoritmo para calcular el score de cualificación basado en el progreso del lead a través de las fases",
-            "details": "Implementar calculateQualificationScore() que considere:\n- Fase actual alcanzada (peso 40%)\n- Información obtenida en cada fase (peso 30%)\n- Calidad de respuestas del lead (peso 20%)\n- Indicadores de interés/urgencia (peso 10%)\n- Score de 0.0 a 1.0\n- Umbrales: <0.3 bajo, 0.3-0.7 medio, >0.7 alto",
-            "status": "done",
-            "dependencies": [
-              "18.3"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 5,
-            "title": "Integrar tracking en generateAIResponse",
-            "description": "Modificar la función generateAIResponse para que automáticamente actualice el estado de la conversación después de cada respuesta",
-            "details": "Actualizar src/lib/gemini.ts para:\n- Importar ConversationStateManager\n- Después de generar respuesta, llamar updateConversationState\n- Pasar conversation_id, user_message, ai_response\n- Incluir current_phase detectada\n- Manejar errores sin interrumpir el flujo principal\n- Logear métricas de tracking",
-            "status": "done",
-            "dependencies": [
-              "18.4"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 6,
-            "title": "Crear componente de visualización de estado de conversación",
-            "description": "Desarrollar un componente React que muestre visualmente el estado actual de la conversación y el progreso a través de las fases",
-            "details": "Crear ConversationStateIndicator.tsx que muestre:\n- Fase actual (1-5) con indicador visual\n- Qualification score con barra de progreso\n- Información clave recolectada\n- Timeline de la conversación\n- Integrar en AIChatSidebar\n- Estilos responsive con Tailwind",
-            "status": "done",
-            "dependencies": [
-              "18.5"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 7,
-            "title": "Testing manual del sistema de tracking completo",
-            "description": "Realizar pruebas exhaustivas del sistema de tracking de estado de conversación en diferentes escenarios",
-            "details": "Probar:\n- Nueva conversación desde cero\n- Conversación existente con historial\n- Progresión a través de todas las fases\n- Cálculo correcto de qualification_score\n- Actualización atómica en Supabase\n- Visualización correcta en UI\n- Manejo de errores y edge cases\nDocumentar resultados y bugs encontrados",
-            "status": "done",
-            "dependencies": [
-              "18.6"
-            ],
-            "parentTaskId": 18
-          },
-          {
-            "id": 8,
-            "title": "Fix Critical TypeScript Build Errors",
-            "description": "Fix multiple TypeScript build errors that are blocking development progress, including type mismatches in gemini.ts, null safety violations in TemplateModal.tsx, and property access errors in supabase-functions.ts",
-            "details": "<info added on 2025-07-07T10:45:23.900Z>\nCRITICAL UPDATE: The `conversation_tracking` table is redundant as a `conversation_memory` table with similar functionality already exists. The new plan is to consolidate into the existing table to avoid duplication. This requires dropping the `conversation_tracking` table, analyzing the `conversation_memory` schema for compatibility, and updating the RPC functions and `ConversationStateManager` to use the existing table. Remaining TypeScript errors in `TemplateCard.tsx` and `supabase-functions.ts` must also be fixed, followed by a build verification. This consolidation is critical for the continuation of Task 18.6.\n</info added on 2025-07-07T10:45:23.900Z>",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 18
-          }
-        ]
-      },
-      {
-        "id": 19,
-        "title": "Build Dynamic Context Loading System",
-        "description": "Build the system to dynamically load relevant context (conversation history, lead profile, script phase) to optimize token usage for the Gemini API call.",
-        "details": "Create a `getContext(conversation_id)` function. This function will:\n1. Fetch the conversation record from Supabase.\n2. Get the last 5-10 turns from the `history` JSONB object.\n3. Fetch the relevant `script_template` for the `current_phase`.\n4. Summarize older parts of the conversation if it's very long to save tokens.\n5. Return a structured context object to be used by `generateAIResponse`.",
-        "testStrategy": "For a given `conversation_id`, call `getContext()` and assert that the returned object contains the correct script template and a truncated but relevant history. Test with both short and long conversation histories to ensure token optimization logic works.",
-        "priority": "medium",
-        "dependencies": [
-          18
+          33
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 20,
-        "title": "Integrate Few-Shot Example Retrieval",
-        "description": "Enhance the context loading system to retrieve and include relevant few-shot examples from the database.",
-        "details": "Modify `getContext(conversation_id)`. After determining the `current_phase` and analyzing the last user message, query the `few_shot_examples` table for 2-3 examples where the `phase` and `scenario` match the current context. These examples will be added to the context object and formatted for the Gemini API's few-shot prompting capability.",
-        "testStrategy": "Create test data in the `few_shot_examples` table. Call `getContext()` for a conversation in a specific phase (e.g., 'objection handling'). Verify that the returned context includes the correct few-shot examples from the database for that phase.",
+        "id": 44,
+        "title": "Split AppContext 3/4: Create TemplatesContext",
+        "description": "Create a `TemplatesContext` to manage message templates, separating this concern from the main application context.",
+        "details": "Create `src/contexts/TemplatesContext.tsx`. Move all state and logic for fetching and managing templates from `AppContext` into this new provider. Expose the state and functions through a `useTemplatesContext` hook.",
+        "testStrategy": "Refactor components that use templates to get data from `useTemplatesContext`. Verify that templates are loaded and can be selected and used in the chat interface.",
         "priority": "medium",
         "dependencies": [
-          19
+          33
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 21,
-        "title": "Create Dynamic Script Template Engine",
-        "description": "Create a template engine that dynamically retrieves and populates script templates from Supabase based on the conversation's current sales phase and lead type.",
-        "details": "The `getContext` function will be responsible for querying the `script_templates` table using the `current_phase` and `lead_type` from the `conversations` record. It will fetch the appropriate template content. This allows for specialized scripts for different types of leads (e.g., 'ecommerce' vs 'infoproductor').",
-        "testStrategy": "Set up different script templates in the database for the same phase but different lead types. Simulate API calls for leads of different types and verify that the `getContext` function retrieves and returns the correct, specialized script template.",
+        "id": 45,
+        "title": "Split AppContext 4/4: Create ChatContext",
+        "description": "Create a `ChatContext` to manage the state of the active chat session, including messages, conversation ID, and AI interaction state.",
+        "details": "Create `src/contexts/ChatContext.tsx`. This context will hold the state for the currently selected conversation, its messages, loading states for AI responses, etc. Move this logic from `AppContext` and page-level state into the new provider. Create a `useChatContext` hook.",
+        "testStrategy": "Wrap the main chat view with the `ChatProvider`. Refactor `ChatInterface.tsx` and `AIChatSidebar.tsx` to use `useChatContext`. Verify that sending and receiving messages, and all chat-related UI updates, work correctly.",
         "priority": "medium",
         "dependencies": [
-          14,
-          19
+          32
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 22,
-        "title": "Implement Specialized Prompts for Quick Actions",
-        "description": "Create and store specialized prompts in Supabase for handling quick actions like 'summarize', 'analyze phase', and 'suggest next step'.",
-        "details": "In the `prompts` table, add new rows for each quick action (e.g., `name` = 'summarize_conversation'). Create a new API endpoint or modify the existing one to accept a parameter specifying the action. The backend will then retrieve the corresponding specialized prompt instead of the main conversational prompt.",
-        "testStrategy": "Populate the `prompts` table with the specialized prompts. Call the API endpoint with the 'summarize' action and a conversation ID. Verify that the AI response is a summary, not a conversational reply. Repeat for 'analyze' and 'suggest'.",
+        "id": 46,
+        "title": "Finalize Context Split and Deprecate AppContext",
+        "description": "Complete the context refactoring by removing the now-delegated state from `AppContext`, leaving it as a lightweight container or removing it entirely if no longer needed.",
+        "details": "Go back to `src/contexts/AppContext.tsx`. Remove all the state and logic that was migrated to the domain-specific contexts. The `AppProvider` should now compose the new providers (`UIProvider`, `LeadsProvider`, etc.). Update the main application entry point (`App.tsx` or `main.tsx`) to use this new provider structure.",
+        "testStrategy": "Perform a full regression test of the application. All major features (viewing leads, chatting, using templates, changing themes) should work. Use React DevTools to confirm that re-renders are now more localized (e.g., typing in the chat input should not re-render the leads list).",
         "priority": "medium",
         "dependencies": [
-          16
+          42,
+          43,
+          44,
+          45
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 23,
-        "title": "Implement Objection Handling Logic",
-        "description": "Implement logic to detect common sales objections in user messages and retrieve the appropriate handling template from the `objection_handlers` table.",
-        "details": "Within the `generateAIResponse` flow, after receiving a user message, run a classification step. This can be a lightweight NLP check or another small Gemini call to categorize the user's message. If an objection is detected (e.g., 'too expensive'), the `getContext` function should also fetch the relevant template from the `objection_handlers` table to guide the AI's response.",
-        "testStrategy": "Add several objection handlers to the database. Send a user message containing a known objection (e.g., 'I don't have time right now'). Check the logs or debug output to confirm that the correct objection handler template was fetched and included in the prompt context.",
+        "id": 47,
+        "title": "Implement React Router for Navigation",
+        "description": "Integrate React Router to manage navigation, providing URL-based routing, browser history support, and a foundation for future features like route guards.",
+        "details": "Install the library:\n\n```bash\nnpm install react-router-dom\n```\nRefactor `App.tsx` to use `createBrowserRouter` and `RouterProvider`. Define routes for the main pages (e.g., `/`, `/chats/:id`, `/leads`). Replace programmatic navigation with `<Link>` components or the `useNavigate` hook.",
+        "testStrategy": "Navigate through the app using the new routes. Verify that the URL in the browser updates correctly. Test the browser's back and forward buttons; they should navigate through the app's history. Bookmark a specific chat URL, close the tab, and reopen it; it should load the correct chat.",
         "priority": "medium",
-        "dependencies": [
-          21
-        ],
+        "dependencies": [],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 24,
-        "title": "Develop Advanced Validation (Tone and Length)",
-        "description": "Expand the validation system to include checks for tone consistency and response length optimization.",
-        "details": "Create two new validation functions:\n1. `validateTone(response)`: Uses a prompt-based check with Gemini to rate the response's tone (e.g., professional, friendly, not pushy) on a scale.\n2. `validateLength(response)`: Checks if the response is within an optimal character count (e.g., 50-300 characters) to avoid overly long or short replies.\nThese will be called alongside the alignment validator.",
-        "testStrategy": "Test `validateTone` with sample responses that are overly aggressive, too casual, and just right. Assert the scores are appropriate. Test `validateLength` with very short, very long, and ideally sized responses and check the validation result.",
-        "priority": "medium",
-        "dependencies": [
-          17
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 25,
-        "title": "Implement Prompt Performance Analytics Tracking",
-        "description": "Implement the functionality to log performance metrics for each generated response to the `prompt_analytics` table in Supabase.",
-        "details": "After a response is generated and validated, create a new record in the `prompt_analytics` table. This record should include the `prompt_id` and `version` used, `conversation_id`, the calculated `alignment_score`, `tone_score`, and the `generation_time_ms`. This should be an asynchronous operation to not delay the response to the user.",
-        "testStrategy": "After running a few test conversations, query the `prompt_analytics` table. Verify that a record exists for each AI-generated message and that all columns (scores, IDs, timing) are populated correctly.",
+        "id": 48,
+        "title": "Implement Lazy Loading for Routes",
+        "description": "Implement lazy loading for routes using React.lazy() and Suspense to improve initial page load performance by code-splitting page components.",
+        "details": "In the router configuration, import page components using `React.lazy()`. Wrap the `<Outlet />` or router component with `<React.Suspense fallback={...}>` to show a loading indicator while the page component's code is being fetched.\n\n```typescript\nconst ChatsPage = React.lazy(() => import('./pages/ChatsPage'));\n\n// in router config\n{ path: '/chats/:id', element: <ChatsPage /> }\n```",
+        "testStrategy": "Open the browser's network tab. Clear the cache and reload the page. On initial load, only the code for the main page should be downloaded. When you navigate to another page (e.g., a chat), verify that a new JavaScript chunk for that page is downloaded on demand.",
         "priority": "low",
         "dependencies": [
-          17,
-          18
+          47
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 26,
-        "title": "Create Prompt Versioning and A/B Testing Framework",
-        "description": "Build the framework to support A/B testing of different prompt versions and allow for easy rollback.",
-        "details": "Modify the `getBasePrompt` function. If multiple prompt versions are marked as `is_active` for A/B testing, the function should randomly (or based on `conversation_id` hash) select one. The chosen `prompt_id` and `version` must be logged to `prompt_analytics`. To roll back, an admin would simply set the `is_active` flag to `false` on the poorly performing version in the Supabase table.",
-        "testStrategy": "Activate two different prompt versions in the database. Make 100 API calls and query the `prompt_analytics` table. Verify that the usage is split approximately 50/50 between the two versions. Then, deactivate one and verify that 100% of new requests use the remaining active version.",
-        "priority": "low",
+        "id": 49,
+        "title": "Refactor AI Prompt Engine for Dynamic Construction",
+        "description": "Refactor the AI prompt generation logic to be dynamic and phase-aware, constructing prompts based on the current state of the conversation.",
+        "details": "Create a new module `src/lib/prompt-manager.ts`. This module will export a function, e.g., `constructPrompt(phase, context, history)`. This function will use a switch statement or a map to select a base prompt template based on the `phase` (e.g., 'introduction', 'qualification', 'booking'). It will then inject the relevant `context` (lead info, templates) and a summary of the `history`.",
+        "testStrategy": "Write unit tests for `prompt-manager.ts`. For each conversation phase, provide sample inputs and assert that the generated prompt string is correctly constructed and contains the expected information. The tests should cover all phases defined in the prompt engineering analysis document.",
+        "priority": "medium",
         "dependencies": [
-          25
+          30,
+          46
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 27,
-        "title": "Implement Setter Feedback Integration",
-        "description": "Create an API endpoint that allows setters to submit feedback (e.g., a 1-5 star rating) on a specific AI response, updating the analytics record.",
-        "details": "Create a new POST endpoint, e.g., `/api/feedback`. It should accept a `response_id` (or `analytics_id`) and a `rating`. The endpoint handler will find the corresponding record in the `prompt_analytics` table and update the `setter_feedback` column with the provided rating. This requires responses to have a unique ID passed to the frontend.",
-        "testStrategy": "Generate a response and get its `prompt_analytics` record ID. Call the new `/api/feedback` endpoint with this ID and a rating of 4. Query the database directly to confirm that the `setter_feedback` column for that specific record has been updated to 4.",
+        "id": 50,
+        "title": "Implement AI Response Validation and Scoring",
+        "description": "Implement a system for validating and scoring AI responses to ensure they are relevant and high-quality before being displayed or used.",
+        "details": "Create `src/lib/response-validator.ts`. This module will have a function `validateResponse(response, context)` that returns a score from 0.0 to 1.0. The validation can check for key phrases, appropriate sentiment, or whether it answers a user's question. Initially, this can be rule-based. The score can be used for logging and future A/B testing.",
+        "testStrategy": "Unit test the `validateResponse` function. Provide it with various sample AI responses (good, bad, irrelevant) and assert that it returns an appropriate score for each.",
         "priority": "low",
         "dependencies": [
-          25
+          49
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 51,
+        "title": "Implement Few-Shot Example Injection in Prompt Engine",
+        "description": "Enhance the prompt engine to dynamically inject few-shot examples into the prompt, guiding the AI to produce better-formatted and more contextually appropriate responses.",
+        "details": "In `src/lib/prompt-manager.ts`, create a repository of few-shot examples categorized by conversation phase. When constructing a prompt, select 2-3 relevant examples (input/output pairs) and prepend them to the main prompt. The selection should be based on the current conversation phase.",
+        "testStrategy": "In the unit tests for the prompt manager, verify that for a given phase, the correct few-shot examples are included in the final prompt string. Manually trigger AI responses in the app and observe if the output quality and format improve.",
+        "priority": "low",
+        "dependencies": [
+          49
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 52,
+        "title": "Apply DRY Principle and Consolidate Utilities (Task 6)",
+        "description": "Perform a codebase-wide review to identify and eliminate duplicated code, creating shared utilities and hooks to improve maintainability (DRY principle).",
+        "details": "Audit the codebase, especially within components and hooks. Look for repeated logic (e.g., data formatting, API call patterns). Extract this logic into new reusable functions in `src/utils/` or custom hooks in `src/hooks/`. Refactor the original code to use these new shared modules.",
+        "testStrategy": "After refactoring, run all existing unit, integration, and E2E tests. They should all continue to pass. Manually test the refactored parts of the application to ensure no behavior has changed. Code review should confirm a reduction in lines of code and duplication.",
+        "priority": "low",
+        "dependencies": [
+          46
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 53,
+        "title": "Refactor Monolithic Components (Task 7)",
+        "description": "Break down large, monolithic components into smaller, single-responsibility components and reusable UI primitives to improve readability and reusability.",
+        "details": "Identify large components (e.g., `ChatInterface`, `AIChatSidebar`). Break them down into smaller, more focused components. For example, `ChatInterface` could be split into `MessageList`, `MessageInput`, and `ChatHeader`. Generic UI elements like buttons and inputs should be moved to `src/components/ui/`.",
+        "testStrategy": "Use Storybook or a similar tool to render and test the new primitive components in isolation. For the refactored feature components, rely on existing component and E2E tests to ensure that the UI and functionality remain unchanged after the refactor.",
+        "priority": "low",
+        "dependencies": [
+          52
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 54,
+        "title": "Implement Memoization Optimizations (Task 9)",
+        "description": "Apply performance optimization techniques like memoization across the application to prevent unnecessary re-renders.",
+        "details": "Wrap components that render frequently with `React.memo`. Use the `useMemo` hook for expensive calculations and `useCallback` for functions passed as props to memoized children. Profile the application with React DevTools to identify key areas for optimization.",
+        "testStrategy": "Use the React DevTools Profiler to record interactions before and after the changes. The 'after' profile should show fewer component re-renders for the same interactions (e.g., typing in an input field).",
+        "priority": "low",
+        "dependencies": [
+          53
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 55,
+        "title": "Optimize Database Queries (Task 10)",
+        "description": "Analyze and optimize database queries to ensure they are efficient and meet the performance target of < 200ms.",
+        "details": "Review all Supabase queries in the codebase. Use `EXPLAIN ANALYZE` in the Supabase SQL Editor for slow queries to understand their execution plans. Ensure all queries that filter on common columns (like `conversation_id`, `lead_id`, `status`) are using the indexes created in a previous task. Refactor queries as needed.",
+        "testStrategy": "Measure the execution time of key queries using the browser's network tab or directly in Supabase. All primary data-fetching queries should consistently execute in under 200ms with a representative amount of data.",
+        "priority": "low",
+        "dependencies": [
+          35
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 56,
+        "title": "Analyze and Optimize Bundle Size",
+        "description": "Analyze the application's bundle size and implement strategies to reduce it, such as tree-shaking and optimizing dependencies.",
+        "details": "Install `webpack-bundle-analyzer` or a similar tool for Vite (e.g., `rollup-plugin-visualizer`). Generate a bundle analysis report. Identify large dependencies that could be replaced with smaller alternatives or that are not being properly tree-shaken. Ensure libraries with side effects are handled correctly.",
+        "testStrategy": "Generate a bundle report before and after optimizations. The 'after' report should show a noticeable reduction in the overall bundle size, particularly for the main entry chunk. Verify the application still functions correctly after dependency changes.",
+        "priority": "low",
+        "dependencies": [
+          48
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 57,
+        "title": "Implement Script Template Engine (Task 21)",
+        "description": "Implement a dynamic script template engine that allows for variable interpolation based on lead data, enabling personalized messaging.",
+        "details": "Create a `src/lib/template-engine.ts`. The engine should take a template string (e.g., 'Hi {{lead.name}}, are you free on Tuesday?') and a lead object. It should replace placeholders like `{{lead.name}}` with the actual data from the lead object. This will be used to customize messages before sending.",
+        "testStrategy": "Write unit tests for the template engine. Test it with various templates and lead data objects. Cover edge cases like missing data, nested properties, and multiple variables in one template. Ensure it correctly interpolates all variables.",
+        "priority": "low",
+        "dependencies": [
+          49
         ],
         "status": "pending",
         "subtasks": []
@@ -693,7 +471,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-07T12:23:34.318Z",
+      "updated": "2025-07-07T19:58:44.992Z",
       "description": "Tasks for master context"
     }
   }
