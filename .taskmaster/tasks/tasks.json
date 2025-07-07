@@ -483,7 +483,7 @@
         "dependencies": [
           13
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -543,7 +543,7 @@
             "title": "Crear componente de visualización de estado de conversación",
             "description": "Desarrollar un componente React que muestre visualmente el estado actual de la conversación y el progreso a través de las fases",
             "details": "Crear ConversationStateIndicator.tsx que muestre:\n- Fase actual (1-5) con indicador visual\n- Qualification score con barra de progreso\n- Información clave recolectada\n- Timeline de la conversación\n- Integrar en AIChatSidebar\n- Estilos responsive con Tailwind",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "18.5"
             ],
@@ -554,7 +554,7 @@
             "title": "Testing manual del sistema de tracking completo",
             "description": "Realizar pruebas exhaustivas del sistema de tracking de estado de conversación en diferentes escenarios",
             "details": "Probar:\n- Nueva conversación desde cero\n- Conversación existente con historial\n- Progresión a través de todas las fases\n- Cálculo correcto de qualification_score\n- Actualización atómica en Supabase\n- Visualización correcta en UI\n- Manejo de errores y edge cases\nDocumentar resultados y bugs encontrados",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "18.6"
             ],
@@ -564,8 +564,8 @@
             "id": 8,
             "title": "Fix Critical TypeScript Build Errors",
             "description": "Fix multiple TypeScript build errors that are blocking development progress, including type mismatches in gemini.ts, null safety violations in TemplateModal.tsx, and property access errors in supabase-functions.ts",
-            "details": "",
-            "status": "in-progress",
+            "details": "<info added on 2025-07-07T10:45:23.900Z>\nCRITICAL UPDATE: The `conversation_tracking` table is redundant as a `conversation_memory` table with similar functionality already exists. The new plan is to consolidate into the existing table to avoid duplication. This requires dropping the `conversation_tracking` table, analyzing the `conversation_memory` schema for compatibility, and updating the RPC functions and `ConversationStateManager` to use the existing table. Remaining TypeScript errors in `TemplateCard.tsx` and `supabase-functions.ts` must also be fixed, followed by a build verification. This consolidation is critical for the continuation of Task 18.6.\n</info added on 2025-07-07T10:45:23.900Z>",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 18
           }
@@ -693,7 +693,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-07T10:19:27.736Z",
+      "updated": "2025-07-07T12:23:34.318Z",
       "description": "Tasks for master context"
     }
   }

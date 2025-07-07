@@ -128,7 +128,7 @@ export async function sendMessageToConversation(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          instagram_id: conversation.leads.instagram_id,
+          instagram_id: (conversation.leads as any)?.instagram_id,
           message: text,
         }),
       });

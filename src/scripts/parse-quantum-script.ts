@@ -6,7 +6,7 @@ import path from 'path';
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
-const userId = process.env.VITE_USER_ID || '';
+// const userId = process.env.VITE_USER_ID || ''; // Currently unused
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');

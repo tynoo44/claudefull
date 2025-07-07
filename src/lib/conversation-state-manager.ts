@@ -1,19 +1,36 @@
 import { supabase } from './supabase';
 
-// Types for conversation state management
+// Types for conversation memory system
+export interface ConversationMemory {
+  id: string;
+  lead_id: string;
+  conversation_id: string | null;
+  current_phase: number;
+  lead_profile: Record<string, any>;
+  qualification_score: {
+    score: number;
+    breakdown: {
+      phase_score: number;
+      engagement_score: number;
+      info_completeness: number;
+    };
+    last_update: string;
+  };
+  conversation_summary: string;
+  next_steps: string[] | null;
+  objections_raised: string[] | null;
+  last_interaction: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy types for backwards compatibility
 export interface ConversationState {
   last_user_message: string;
   last_ai_response: string;
   last_update: string;
   total_messages: number;
   [key: string]: any;
-}
-
-export interface PhaseHistory {
-  from_phase: number;
-  to_phase: number;
-  timestamp: string;
-  trigger_message: string;
 }
 
 export interface PhaseInfo {
@@ -26,45 +43,38 @@ export interface PhaseInfo {
   [key: string]: any;
 }
 
-export interface ConversationTracking {
-  id: string;
-  conversation_id: string;
-  current_phase: number;
-  qualification_score: number;
-  conversation_state: ConversationState;
-  phase_history: PhaseHistory[];
-  phase_info: PhaseInfo;
-  last_analysis_timestamp: string;
-  created_at: string;
-  updated_at: string;
+export interface AppendConversationMemoryParams {
+  conversationId: string;
+  leadId: string;
+  userMessage: string;
+  aiResponse: string;
+  currentPhase: number;
+  phaseInfo?: PhaseInfo;
+  detectedIntent?: string;
 }
 
-export interface AppendConversationParams {
-  conversation_id: string;
-  user_message: string;
-  ai_response: string;
-  current_phase: number;
-  phase_info?: PhaseInfo;
-  detected_intent?: string;
-}
-
-export interface AppendConversationResult {
+export interface AppendConversationMemoryResult {
   success: boolean;
-  tracking_id?: string;
+  memory_id?: string;
   conversation_id: string;
+  lead_id: string;
   current_phase: number;
   previous_phase: number;
   phase_changed: boolean;
   qualification_score: number;
-  total_messages: number;
+  score_breakdown?: {
+    phase_score: number;
+    engagement_score: number;
+    info_completeness: number;
+  };
   error?: string;
 }
 
 /**
  * ConversationStateManager
  * 
- * Service class for managing conversation state and tracking.
- * Encapsulates all conversation state operations using Supabase RPC functions.
+ * Service class for managing conversation state and memory using the conversation_memory table.
+ * Provides backwards compatibility with the original conversation_tracking interface.
  */
 export class ConversationStateManager {
   /**
@@ -74,83 +84,116 @@ export class ConversationStateManager {
    * @returns Promise with operation result
    */
   static async updateConversationState(
-    params: AppendConversationParams
-  ): Promise<AppendConversationResult> {
+    params: AppendConversationMemoryParams
+  ): Promise<AppendConversationMemoryResult> {
     try {
-      const { data, error } = await supabase.rpc('append_to_conversation', {
-        p_conversation_id: params.conversation_id,
-        p_user_message: params.user_message,
-        p_ai_response: params.ai_response,
-        p_current_phase: params.current_phase,
-        p_phase_info: params.phase_info || {},
-        p_detected_intent: params.detected_intent || null
+      const { data, error } = await supabase.rpc('append_to_conversation_memory', {
+        p_conversation_id: params.conversationId,
+        p_lead_id: params.leadId,
+        p_user_message: params.userMessage,
+        p_ai_response: params.aiResponse,
+        p_current_phase: params.currentPhase,
+        p_phase_info: params.phaseInfo || {},
+        p_detected_intent: params.detectedIntent || null
       });
 
       if (error) {
         console.error('Error updating conversation state:', error);
         return {
           success: false,
-          conversation_id: params.conversation_id,
-          current_phase: params.current_phase,
-          previous_phase: params.current_phase,
+          conversation_id: params.conversationId,
+          lead_id: params.leadId,
+          current_phase: params.currentPhase,
+          previous_phase: params.currentPhase,
           phase_changed: false,
           qualification_score: 0,
-          total_messages: 0,
           error: error.message
         };
       }
 
-      return data as AppendConversationResult;
+      return data as AppendConversationMemoryResult;
     } catch (error) {
       console.error('Exception in updateConversationState:', error);
       return {
         success: false,
-        conversation_id: params.conversation_id,
-        current_phase: params.current_phase,
-        previous_phase: params.current_phase,
+        conversation_id: params.conversationId,
+        lead_id: params.leadId,
+        current_phase: params.currentPhase,
+        previous_phase: params.currentPhase,
         phase_changed: false,
         qualification_score: 0,
-        total_messages: 0,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
 
   /**
-   * Get conversation tracking data
+   * Get conversation memory data by conversation ID
    * 
    * @param conversationId - UUID of the conversation
-   * @returns Promise with tracking data or null if not found
+   * @returns Promise with memory data or null if not found
    */
-  static async getConversationTracking(
+  static async getConversationMemory(
     conversationId: string
-  ): Promise<ConversationTracking | null> {
+  ): Promise<ConversationMemory | null> {
     try {
       const { data, error } = await supabase
-        .from('conversation_tracking')
+        .from('conversation_memory')
         .select('*')
         .eq('conversation_id', conversationId)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No rows returned - tracking doesn't exist yet
+          // No rows returned - memory doesn't exist yet
           return null;
         }
-        console.error('Error fetching conversation tracking:', error);
+        console.error('Error fetching conversation memory:', error);
         return null;
       }
 
-      return data as ConversationTracking;
+      return data as ConversationMemory;
     } catch (error) {
-      console.error('Exception in getConversationTracking:', error);
+      console.error('Exception in getConversationMemory:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get conversation memory data by lead ID
+   * 
+   * @param leadId - UUID of the lead
+   * @returns Promise with memory data or null if not found
+   */
+  static async getConversationMemoryByLead(
+    leadId: string
+  ): Promise<ConversationMemory | null> {
+    try {
+      const { data, error } = await supabase
+        .from('conversation_memory')
+        .select('*')
+        .eq('lead_id', leadId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - memory doesn't exist yet
+          return null;
+        }
+        console.error('Error fetching conversation memory by lead:', error);
+        return null;
+      }
+
+      return data as ConversationMemory;
+    } catch (error) {
+      console.error('Exception in getConversationMemoryByLead:', error);
       return null;
     }
   }
 
   /**
    * Calculate qualification score for a conversation
-   * Helper method that uses the database function
+   * Helper method for backwards compatibility
    * 
    * @param currentPhase - Current sales phase (1-5)
    * @param conversationState - State of the conversation
@@ -163,9 +206,13 @@ export class ConversationStateManager {
     phaseInfo: PhaseInfo
   ): Promise<number> {
     try {
-      const { data, error } = await supabase.rpc('calculate_qualification_score', {
+      // Use the new RPC function
+      const contentLength = (conversationState.last_user_message || '').length + 
+                           (conversationState.last_ai_response || '').length;
+      
+      const { data, error } = await supabase.rpc('calculate_conversation_qualification_score', {
         p_current_phase: currentPhase,
-        p_conversation_state: conversationState,
+        p_content_length: contentLength,
         p_phase_info: phaseInfo
       });
 
@@ -187,26 +234,26 @@ export class ConversationStateManager {
    * 
    * @param minScore - Minimum qualification score
    * @param maxScore - Maximum qualification score
-   * @returns Promise with array of tracking records
+   * @returns Promise with array of memory records
    */
   static async getConversationsByScore(
     minScore: number,
     maxScore: number = 1.0
-  ): Promise<ConversationTracking[]> {
+  ): Promise<ConversationMemory[]> {
     try {
       const { data, error } = await supabase
-        .from('conversation_tracking')
+        .from('conversation_memory')
         .select('*')
-        .gte('qualification_score', minScore)
-        .lte('qualification_score', maxScore)
-        .order('qualification_score', { ascending: false });
+        .gte('qualification_score->score', minScore)
+        .lte('qualification_score->score', maxScore)
+        .order('qualification_score->score', { ascending: false });
 
       if (error) {
         console.error('Error fetching conversations by score:', error);
         return [];
       }
 
-      return data as ConversationTracking[];
+      return data as ConversationMemory[];
     } catch (error) {
       console.error('Exception in getConversationsByScore:', error);
       return [];
@@ -214,79 +261,120 @@ export class ConversationStateManager {
   }
 
   /**
-   * Get phase transition statistics
-   * Useful for analytics and process optimization
+   * Get phase distribution statistics
+   * Updated to work with conversation_memory table
    * 
-   * @param conversationId - Optional conversation ID for specific analysis
-   * @returns Promise with phase transition data
+   * @param leadId - Optional lead ID for specific analysis
+   * @returns Promise with phase statistics
    */
-  static async getPhaseTransitionStats(
-    conversationId?: string
+  static async getPhaseStats(
+    leadId?: string
   ): Promise<{[key: string]: number}> {
     try {
       let query = supabase
-        .from('conversation_tracking')
-        .select('phase_history, current_phase');
+        .from('conversation_memory')
+        .select('current_phase, qualification_score');
 
-      if (conversationId) {
-        query = query.eq('conversation_id', conversationId);
+      if (leadId) {
+        query = query.eq('lead_id', leadId);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching phase transition stats:', error);
+        console.error('Error fetching phase stats:', error);
         return {};
       }
 
-      // Process phase transition statistics
+      // Process phase statistics
       const stats: {[key: string]: number} = {};
       
       data.forEach((record: any) => {
-        const phaseHistory = record.phase_history || [];
-        phaseHistory.forEach((transition: PhaseHistory) => {
-          const key = `${transition.from_phase}_to_${transition.to_phase}`;
-          stats[key] = (stats[key] || 0) + 1;
-        });
+        const phaseKey = `current_phase_${record.current_phase}`;
+        stats[phaseKey] = (stats[phaseKey] || 0) + 1;
         
-        // Count current phases
-        const currentPhaseKey = `current_phase_${record.current_phase}`;
-        stats[currentPhaseKey] = (stats[currentPhaseKey] || 0) + 1;
+        // Score range statistics
+        const score = record.qualification_score?.score || 0;
+        if (score >= 0.8) stats['high_score'] = (stats['high_score'] || 0) + 1;
+        else if (score >= 0.5) stats['medium_score'] = (stats['medium_score'] || 0) + 1;
+        else stats['low_score'] = (stats['low_score'] || 0) + 1;
       });
 
       return stats;
     } catch (error) {
-      console.error('Exception in getPhaseTransitionStats:', error);
+      console.error('Exception in getPhaseStats:', error);
       return {};
     }
   }
 
   /**
-   * Delete conversation tracking record
-   * Use with caution - this will remove all tracking data
+   * Delete conversation memory record
+   * Use with caution - this will remove all memory data
    * 
    * @param conversationId - UUID of the conversation
    * @returns Promise with success boolean
    */
-  static async deleteConversationTracking(
+  static async deleteConversationMemory(
     conversationId: string
   ): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('conversation_tracking')
+        .from('conversation_memory')
         .delete()
         .eq('conversation_id', conversationId);
 
       if (error) {
-        console.error('Error deleting conversation tracking:', error);
+        console.error('Error deleting conversation memory:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Exception in deleteConversationTracking:', error);
+      console.error('Exception in deleteConversationMemory:', error);
       return false;
     }
+  }
+
+  // Legacy compatibility methods
+  /**
+   * @deprecated Use getConversationMemory instead
+   */
+  static async getConversationTracking(conversationId: string) {
+    const memory = await this.getConversationMemory(conversationId);
+    if (!memory) return null;
+    
+    // Convert to legacy format
+    return {
+      id: memory.id,
+      conversation_id: memory.conversation_id || conversationId,
+      current_phase: memory.current_phase,
+      qualification_score: memory.qualification_score.score,
+      conversation_state: {
+        last_user_message: '',
+        last_ai_response: '',
+        last_update: memory.last_interaction,
+        total_messages: 0
+      },
+      phase_history: [],
+      phase_info: memory.lead_profile,
+      last_analysis_timestamp: memory.last_interaction,
+      created_at: memory.created_at,
+      updated_at: memory.updated_at
+    };
+  }
+
+  /**
+   * @deprecated Use getPhaseStats instead
+   */
+  static async getPhaseTransitionStats(conversationId?: string) {
+    return this.getPhaseStats(conversationId);
+  }
+
+  /**
+   * @deprecated Use deleteConversationMemory instead
+   */
+  static async deleteConversationTracking(conversationId: string) {
+    return this.deleteConversationMemory(conversationId);
   }
 }
 

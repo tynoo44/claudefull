@@ -17,11 +17,14 @@ import {
 } from '../../lib/gemini';
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
+import { ConversationStateIndicator } from './ConversationStateIndicator';
 
 interface AIChatSidebarProps {
   darkMode: boolean;
   conversationContext?: string;
   currentConversation?: any; // Replace with actual conversation type
+  conversationId?: string;
+  leadId?: string;
 }
 
 interface AIMessage {
@@ -35,6 +38,8 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   darkMode,
   conversationContext,
   currentConversation,
+  conversationId,
+  leadId,
 }) => {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [conversationError, setConversationError] = useState<string | null>(null);
@@ -319,6 +324,19 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           </div>
         )}
       </div>
+
+      {/* Conversation State Indicator */}
+      {(conversationId || leadId) && (
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4">
+            <ConversationStateIndicator
+              conversationId={conversationId}
+              leadId={leadId}
+              darkMode={darkMode}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">

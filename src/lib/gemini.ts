@@ -27,6 +27,7 @@ interface GenerateResponseOptions {
   currentPhase?: number;
   leadType?: string;
   conversationId?: string;
+  leadId?: string;
   enableTracking?: boolean;
 }
 
@@ -205,18 +206,19 @@ export const generateAIResponse = async ({
     if (enableTracking && conversationId && messages.length > 0) {
       try {
         const userMessage = messages[messages.length - 1]?.content || '';
-        const detectedPhase = currentPhase || await promptManager.detectCurrentPhase(messages.map(m => m.content).join('\n'));
+        const detectedPhase = currentPhase || promptManager.detectCurrentPhase(messages);
         
         // Extract phase-specific information from the conversation
         const phaseInfo = extractPhaseInfo(messages, detectedPhase);
         
         const trackingResult = await ConversationStateManager.updateConversationState({
-          conversation_id: conversationId,
-          user_message: userMessage,
-          ai_response: bestResponse,
-          current_phase: detectedPhase,
-          phase_info: phaseInfo,
-          detected_intent: extractIntent(userMessage)
+          conversationId: conversationId,
+          leadId: '', // TODO: This will need to be passed from the caller
+          userMessage: userMessage,
+          aiResponse: bestResponse,
+          currentPhase: detectedPhase,
+          phaseInfo: phaseInfo,
+          detectedIntent: extractIntent(userMessage)
         });
         
         if (trackingResult.success) {

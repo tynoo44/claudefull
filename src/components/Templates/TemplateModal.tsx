@@ -122,13 +122,13 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
             </div>
             <div>
               <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {template.name}
+                {template?.name || 'Sin nombre'}
               </h2>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {template.category || 'Sin categoría'}
+                {template?.category || 'Sin categoría'}
               </p>
             </div>
-            {template.isFavorite && <Star className="w-5 h-5 text-yellow-500 fill-current" />}
+            {template?.isFavorite && <Star className="w-5 h-5 text-yellow-500 fill-current" />}
           </div>
 
           <button
@@ -301,7 +301,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     <p
                       className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
                     >
-                      {template.uses}
+                      {template?.uses || 0}
                     </p>
                   </div>
                   <div>
@@ -313,7 +313,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     <p
                       className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
                     >
-                      {template.conversionRate}%
+                      {template?.conversionRate || 0}%
                     </p>
                   </div>
                 </div>
@@ -366,7 +366,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 </div>
               </div>
 
-              {template.created_at && (
+              {template?.created_at && (
                 <div className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                   Creado el {new Date(template.created_at).toLocaleDateString('es-ES')}
                 </div>

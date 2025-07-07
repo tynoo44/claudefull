@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MessageSquare, Hash, TrendingUp, Copy, Plus, Sparkles } from 'lucide-react';
+import { Star, MessageSquare, Hash, TrendingUp, Copy } from 'lucide-react';
 import { Template } from '@/types';
 
 interface TemplateCardProps {
