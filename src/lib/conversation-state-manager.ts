@@ -72,19 +72,19 @@ export interface AppendConversationMemoryResult {
 
 /**
  * ConversationStateManager
- * 
+ *
  * Service class for managing conversation state and memory using the conversation_memory table.
  * Provides backwards compatibility with the original conversation_tracking interface.
  */
 export class ConversationStateManager {
   /**
    * Update conversation state with new message turn
-   * 
+   *
    * @param params - Conversation update parameters
    * @returns Promise with operation result
    */
   static async updateConversationState(
-    params: AppendConversationMemoryParams
+    params: AppendConversationMemoryParams,
   ): Promise<AppendConversationMemoryResult> {
     try {
       const { data, error } = await supabase.rpc('append_to_conversation_memory', {
@@ -94,7 +94,7 @@ export class ConversationStateManager {
         p_ai_response: params.aiResponse,
         p_current_phase: params.currentPhase,
         p_phase_info: params.phaseInfo || {},
-        p_detected_intent: params.detectedIntent || null
+        p_detected_intent: params.detectedIntent || null,
       });
 
       if (error) {
@@ -107,7 +107,7 @@ export class ConversationStateManager {
           previous_phase: params.currentPhase,
           phase_changed: false,
           qualification_score: 0,
-          error: error.message
+          error: error.message,
         };
       }
 
@@ -122,20 +122,18 @@ export class ConversationStateManager {
         previous_phase: params.currentPhase,
         phase_changed: false,
         qualification_score: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
 
   /**
    * Get conversation memory data by conversation ID
-   * 
+   *
    * @param conversationId - UUID of the conversation
    * @returns Promise with memory data or null if not found
    */
-  static async getConversationMemory(
-    conversationId: string
-  ): Promise<ConversationMemory | null> {
+  static async getConversationMemory(conversationId: string): Promise<ConversationMemory | null> {
     try {
       const { data, error } = await supabase
         .from('conversation_memory')
@@ -160,14 +158,56 @@ export class ConversationStateManager {
   }
 
   /**
+   * Creates an initial, empty memory record for a conversation.
+   * This is useful for lazy initialization when a conversation is viewed for the first time.
+   *
+   * @param conversationId - UUID of the conversation
+   * @param leadId - UUID of the lead
+   * @returns Promise with the newly created memory data or null on failure
+   */
+  static async createInitialMemory(
+    conversationId: string,
+    leadId: string,
+  ): Promise<ConversationMemory | null> {
+    try {
+      const result = await this.updateConversationState({
+        conversationId,
+        leadId,
+        userMessage: '', // No initial message from user
+        aiResponse: 'Conversation initialized.', // System message
+        currentPhase: 1, // Start at phase 1
+      });
+
+      if (result.success && result.memory_id) {
+        // Fetch the newly created record to return the full object
+        const { data, error } = await supabase
+          .from('conversation_memory')
+          .select('*')
+          .eq('id', result.memory_id)
+          .single();
+
+        if (error) {
+          console.error('Failed to fetch newly created memory:', error);
+          return null;
+        }
+        return data as ConversationMemory;
+      } else {
+        console.error('Failed to create initial memory record:', result.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Exception in createInitialMemory:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get conversation memory data by lead ID
-   * 
+   *
    * @param leadId - UUID of the lead
    * @returns Promise with memory data or null if not found
    */
-  static async getConversationMemoryByLead(
-    leadId: string
-  ): Promise<ConversationMemory | null> {
+  static async getConversationMemoryByLead(leadId: string): Promise<ConversationMemory | null> {
     try {
       const { data, error } = await supabase
         .from('conversation_memory')
@@ -194,7 +234,7 @@ export class ConversationStateManager {
   /**
    * Calculate qualification score for a conversation
    * Helper method for backwards compatibility
-   * 
+   *
    * @param currentPhase - Current sales phase (1-5)
    * @param conversationState - State of the conversation
    * @param phaseInfo - Information collected per phase
@@ -203,17 +243,18 @@ export class ConversationStateManager {
   static async calculateQualificationScore(
     currentPhase: number,
     conversationState: ConversationState,
-    phaseInfo: PhaseInfo
+    phaseInfo: PhaseInfo,
   ): Promise<number> {
     try {
       // Use the new RPC function
-      const contentLength = (conversationState.last_user_message || '').length + 
-                           (conversationState.last_ai_response || '').length;
-      
+      const contentLength =
+        (conversationState.last_user_message || '').length +
+        (conversationState.last_ai_response || '').length;
+
       const { data, error } = await supabase.rpc('calculate_conversation_qualification_score', {
         p_current_phase: currentPhase,
         p_content_length: contentLength,
-        p_phase_info: phaseInfo
+        p_phase_info: phaseInfo,
       });
 
       if (error) {
@@ -231,14 +272,14 @@ export class ConversationStateManager {
   /**
    * Get conversations by qualification score range
    * Useful for analytics and lead prioritization
-   * 
+   *
    * @param minScore - Minimum qualification score
    * @param maxScore - Maximum qualification score
    * @returns Promise with array of memory records
    */
   static async getConversationsByScore(
     minScore: number,
-    maxScore: number = 1.0
+    maxScore: number = 1.0,
   ): Promise<ConversationMemory[]> {
     try {
       const { data, error } = await supabase
@@ -263,17 +304,13 @@ export class ConversationStateManager {
   /**
    * Get phase distribution statistics
    * Updated to work with conversation_memory table
-   * 
+   *
    * @param leadId - Optional lead ID for specific analysis
    * @returns Promise with phase statistics
    */
-  static async getPhaseStats(
-    leadId?: string
-  ): Promise<{[key: string]: number}> {
+  static async getPhaseStats(leadId?: string): Promise<{ [key: string]: number }> {
     try {
-      let query = supabase
-        .from('conversation_memory')
-        .select('current_phase, qualification_score');
+      let query = supabase.from('conversation_memory').select('current_phase, qualification_score');
 
       if (leadId) {
         query = query.eq('lead_id', leadId);
@@ -287,12 +324,12 @@ export class ConversationStateManager {
       }
 
       // Process phase statistics
-      const stats: {[key: string]: number} = {};
-      
+      const stats: { [key: string]: number } = {};
+
       data.forEach((record: any) => {
         const phaseKey = `current_phase_${record.current_phase}`;
         stats[phaseKey] = (stats[phaseKey] || 0) + 1;
-        
+
         // Score range statistics
         const score = record.qualification_score?.score || 0;
         if (score >= 0.8) stats['high_score'] = (stats['high_score'] || 0) + 1;
@@ -310,13 +347,11 @@ export class ConversationStateManager {
   /**
    * Delete conversation memory record
    * Use with caution - this will remove all memory data
-   * 
+   *
    * @param conversationId - UUID of the conversation
    * @returns Promise with success boolean
    */
-  static async deleteConversationMemory(
-    conversationId: string
-  ): Promise<boolean> {
+  static async deleteConversationMemory(conversationId: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('conversation_memory')
@@ -342,7 +377,7 @@ export class ConversationStateManager {
   static async getConversationTracking(conversationId: string) {
     const memory = await this.getConversationMemory(conversationId);
     if (!memory) return null;
-    
+
     // Convert to legacy format
     return {
       id: memory.id,
@@ -353,13 +388,13 @@ export class ConversationStateManager {
         last_user_message: '',
         last_ai_response: '',
         last_update: memory.last_interaction,
-        total_messages: 0
+        total_messages: 0,
       },
       phase_history: [],
       phase_info: memory.lead_profile,
       last_analysis_timestamp: memory.last_interaction,
       created_at: memory.created_at,
-      updated_at: memory.updated_at
+      updated_at: memory.updated_at,
     };
   }
 

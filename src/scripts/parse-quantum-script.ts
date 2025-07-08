@@ -59,51 +59,53 @@ async function parseQuantumScript() {
   try {
     const scriptPath = path.join(process.cwd(), 'appointment_setting', 'QUANTUM_SCRIPT_B2B.md');
     const content = await fs.readFile(scriptPath, 'utf-8');
-    
+
     const templates: ScriptTemplate[] = [];
     const objectionHandlers: ObjectionHandler[] = [];
-    
+
     // Split content into sections
     const sections = content.split(/^##\s+/m);
-    
+
     sections.forEach(section => {
       const lines = section.trim().split('\n');
       if (lines.length === 0) return;
-      
+
       const sectionTitle = lines[0].trim();
-      
+
       // Parse Phase sections
       if (sectionTitle.match(/Fase \d+:/)) {
         const phaseMatch = sectionTitle.match(/Fase (\d+):/);
         if (!phaseMatch) return;
-        
+
         const phase = parseInt(phaseMatch[1]);
         let currentTemplateType = '';
         let currentContent: string[] = [];
-        
+
         lines.forEach((line, idx) => {
           if (idx === 0) return;
-          
+
           // Detect template types
           if (line.match(/^###\s+/)) {
             if (currentContent.length > 0 && currentTemplateType) {
               const content = currentContent.join('\n').trim();
               const variables = extractVariables(content);
-              
+
               const template = {
                 phase,
                 template_type: currentTemplateType,
                 content,
                 variables,
-                priority: 0
+                priority: 0,
               };
-              
+
               if (validateTemplate(template)) {
                 templates.push(template);
               }
             }
-            
-            currentTemplateType = line.replace(/^###\s+/, '').toLowerCase()
+
+            currentTemplateType = line
+              .replace(/^###\s+/, '')
+              .toLowerCase()
               .replace(/opción [ab]/i, 'greeting')
               .replace(/preguntas clave/i, 'question')
               .replace(/transición/i, 'transition');
@@ -113,65 +115,69 @@ async function parseQuantumScript() {
             if (cleanLine) currentContent.push(cleanLine);
           }
         });
-        
+
         // Save last template
         if (currentContent.length > 0 && currentTemplateType) {
           const content = currentContent.join('\n').trim();
           const variables = extractVariables(content);
-          
+
           const template = {
             phase,
             template_type: currentTemplateType,
             content,
             variables,
-            priority: 0
+            priority: 0,
           };
-          
+
           if (validateTemplate(template)) {
             templates.push(template);
           }
         }
       }
-      
+
       // Parse Follow Ups section
       if (sectionTitle.includes('Follow Ups')) {
         let currentFollowUpType = '';
-        
+
         lines.forEach((line, idx) => {
           if (idx === 0) return;
-          
+
           if (line.includes('Follow Up') && line.includes('Horas')) {
             const hoursMatch = line.match(/(\d+)\s+Horas/);
             currentFollowUpType = hoursMatch ? `follow_up_${hoursMatch[1]}h` : 'follow_up';
           } else if (line.trim().startsWith('>') && currentFollowUpType) {
             const content = line.replace(/^>\s*/, '').trim();
             const variables = extractVariables(content);
-            
+
             templates.push({
               phase: 6, // Follow-ups as phase 6
               template_type: currentFollowUpType,
               content,
               variables,
-              priority: 0
+              priority: 0,
             });
           }
         });
       }
     });
-    
+
     // Parse objection handlers from the guide section
-    const objectionSection = sections.find(s => s.includes('El prospecto indica explícitamente no tener capacidad de inversión'));
+    const objectionSection = sections.find(s =>
+      s.includes('El prospecto indica explícitamente no tener capacidad de inversión'),
+    );
     if (objectionSection) {
       objectionHandlers.push({
         objection_type: 'price',
         objection_keywords: ['caro', 'precio', '5000', 'inversión', 'no tengo', 'no puedo pagar'],
         empathy_response: 'Entiendo perfectamente tu situación actual, [NOMBRE].',
-        reframe_response: 'En este caso, mi recomendación es que sigas trabajando en tu proyecto/canal, aprendiendo y mejorando con cada paso.',
-        value_response: 'Cuando tengas la disponibilidad para invertir en acelerar tus conocimientos y habilidades, estaremos encantados de volver a conversar.',
-        example_context: 'Cuando el lead indica que no puede invertir 5000€'
+        reframe_response:
+          'En este caso, mi recomendación es que sigas trabajando en tu proyecto/canal, aprendiendo y mejorando con cada paso.',
+        value_response:
+          'Cuando tengas la disponibilidad para invertir en acelerar tus conocimientos y habilidades, estaremos encantados de volver a conversar.',
+        example_context: 'Cuando el lead indica que no puede invertir 5000€',
       });
     }
-    
+
     return { templates, objectionHandlers };
   } catch (error) {
     console.error('Error parsing script:', error);
@@ -182,55 +188,53 @@ async function parseQuantumScript() {
 // Insert templates into Supabase
 async function insertTemplates(templates: ScriptTemplate[]) {
   console.log(`Inserting ${templates.length} script templates...`);
-  
+
   // First, check for existing templates to avoid duplicates
   const { data: existing } = await supabase
     .from('script_templates')
     .select('phase, template_type, content');
-  
+
   const existingSet = new Set(
-    existing?.map(t => `${t.phase}-${t.template_type}-${t.content.substring(0, 50)}`) || []
+    existing?.map(t => `${t.phase}-${t.template_type}-${t.content.substring(0, 50)}`) || [],
   );
-  
+
   // Filter out duplicates
   const uniqueTemplates = templates.filter(t => {
     const key = `${t.phase}-${t.template_type}-${t.content.substring(0, 50)}`;
     return !existingSet.has(key);
   });
-  
+
   if (uniqueTemplates.length === 0) {
     console.log('No new templates to insert (all duplicates)');
     return;
   }
-  
+
   console.log(`Inserting ${uniqueTemplates.length} unique templates...`);
-  
+
   // Insert in batches to avoid timeout
   const batchSize = 10;
   for (let i = 0; i < uniqueTemplates.length; i += batchSize) {
     const batch = uniqueTemplates.slice(i, i + batchSize);
-    
-    const { error } = await supabase
-      .from('script_templates')
-      .insert(batch);
-    
+
+    const { error } = await supabase.from('script_templates').insert(batch);
+
     if (error) {
       console.error('Error inserting templates:', error);
       throw error;
     }
-    
-    console.log(`Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(templates.length / batchSize)}`);
+
+    console.log(
+      `Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(templates.length / batchSize)}`,
+    );
   }
 }
 
 // Insert objection handlers into Supabase
 async function insertObjectionHandlers(handlers: ObjectionHandler[]) {
   console.log(`Inserting ${handlers.length} objection handlers...`);
-  
-  const { error } = await supabase
-    .from('objection_handlers')
-    .insert(handlers);
-  
+
+  const { error } = await supabase.from('objection_handlers').insert(handlers);
+
   if (error) {
     console.error('Error inserting objection handlers:', error);
     throw error;
@@ -272,7 +276,7 @@ async function insertInitialPrompts() {
 - Un emoji profesional máximo
 - Preguntas abiertas que inviten a compartir`,
       active: true,
-      performance_score: 0.00
+      performance_score: 0.0,
     },
     {
       prompt_type: 'summarize',
@@ -304,7 +308,7 @@ async function insertInitialPrompts() {
 ## ✅ PRÓXIMA ACCIÓN
 [Una línea clara y específica]`,
       active: true,
-      performance_score: 0.00
+      performance_score: 0.0,
     },
     {
       prompt_type: 'analyze_phase',
@@ -326,7 +330,7 @@ async function insertInitialPrompts() {
 ## SIGUIENTE PASO
 [Acción específica para avanzar a la siguiente fase]`,
       active: true,
-      performance_score: 0.00
+      performance_score: 0.0,
     },
     {
       prompt_type: 'suggest_message',
@@ -348,16 +352,14 @@ Cada opción debe:
 ✓ Incluir pregunta abierta o CTA claro
 ✓ Ser copy-paste ready`,
       active: true,
-      performance_score: 0.00
-    }
+      performance_score: 0.0,
+    },
   ];
-  
+
   console.log('Inserting initial prompts...');
-  
-  const { error } = await supabase
-    .from('prompts')
-    .insert(prompts);
-  
+
+  const { error } = await supabase.from('prompts').insert(prompts);
+
   if (error) {
     console.error('Error inserting prompts:', error);
     throw error;
@@ -368,17 +370,19 @@ Cada opción debe:
 async function main() {
   try {
     console.log('Starting Quantum Script parsing and insertion...');
-    
+
     // Parse the script
     const { templates, objectionHandlers } = await parseQuantumScript();
-    
-    console.log(`Parsed ${templates.length} templates and ${objectionHandlers.length} objection handlers`);
-    
+
+    console.log(
+      `Parsed ${templates.length} templates and ${objectionHandlers.length} objection handlers`,
+    );
+
     // Insert data
     await insertTemplates(templates);
     await insertObjectionHandlers(objectionHandlers);
     await insertInitialPrompts();
-    
+
     console.log('✅ Script parsing and insertion completed successfully!');
   } catch (error) {
     console.error('❌ Error in main execution:', error);

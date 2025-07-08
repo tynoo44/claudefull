@@ -160,6 +160,8 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
                   }
                 : null
             }
+            conversationId={localSelectedChat?.id || selectedChat?.id}
+            leadId={localSelectedChat?.leadId || selectedChat?.leadId}
           />
         </ResizableLayout>
       </div>

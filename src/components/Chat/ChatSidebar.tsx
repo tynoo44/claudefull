@@ -119,8 +119,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
   // Aplicar filtros cuando cambien
   useEffect(() => {
+    // Eliminar 'applyFilters' de las dependencias y llamarlo directamente
+    // para evitar re-renders innecesarios cuando la función se recrea.
     applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending);
-  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, applyFilters]);
+  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, conversations]);
 
   // Handle pending chat selection
   useEffect(() => {

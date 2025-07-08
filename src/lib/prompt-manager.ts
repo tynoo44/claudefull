@@ -50,7 +50,7 @@ export class PromptManager {
     const cacheKey = `prompt_${promptType}`;
     const cached = this.promptCache.get(cacheKey);
     const expiry = this.cacheExpiry.get(cacheKey);
-    
+
     if (cached && expiry && Date.now() < expiry) {
       return cached;
     }
@@ -122,12 +122,12 @@ export class PromptManager {
     promptType: string,
     currentPhase?: number,
     leadType?: string,
-    conversationContext?: string
+    conversationContext?: string,
   ): Promise<PromptComponents> {
     const [basePrompt, scriptTemplates, fewShotExamples] = await Promise.all([
       this.getActivePrompt(promptType),
       currentPhase ? this.getScriptTemplates(currentPhase, leadType) : Promise.resolve([]),
-      currentPhase ? this.getFewShotExamples(currentPhase) : Promise.resolve([])
+      currentPhase ? this.getFewShotExamples(currentPhase) : Promise.resolve([]),
     ]);
 
     return {
@@ -135,7 +135,7 @@ export class PromptManager {
       scriptTemplates,
       fewShotExamples,
       conversationContext,
-      currentPhase
+      currentPhase,
     };
   }
 
@@ -143,24 +143,32 @@ export class PromptManager {
   formatFewShotExamples(examples: FewShotExample[]): string {
     if (examples.length === 0) return '';
 
-    return examples.map((example, index) => `
+    return examples
+      .map(
+        (example, index) => `
 Ejemplo ${index + 1}:
 Lead: ${example.example_input}
 Setter: ${example.example_output}
 ${example.explanation ? `Nota: ${example.explanation}` : ''}
-`).join('\n');
+`,
+      )
+      .join('\n');
   }
 
   // Format script templates for prompt
   formatScriptTemplates(templates: ScriptTemplate[]): string {
     if (templates.length === 0) return '';
 
-    return templates.map(template => `
+    return templates
+      .map(
+        template => `
 Tipo: ${template.template_type}
 ${template.lead_type ? `Para leads de: ${template.lead_type}` : ''}
 Template: ${template.content}
 ${template.example_usage ? `Uso: ${template.example_usage}` : ''}
-`).join('\n');
+`,
+      )
+      .join('\n');
   }
 
   // Replace variables in templates
@@ -186,19 +194,35 @@ ${template.example_usage ? `Uso: ${template.example_usage}` : ''}
     const conversation = lastMessages.map(m => m.content.toLowerCase()).join(' ');
 
     // Phase detection patterns
-    if (conversation.includes('llamada') || conversation.includes('agendar') || conversation.includes('calendario')) {
+    if (
+      conversation.includes('llamada') ||
+      conversation.includes('agendar') ||
+      conversation.includes('calendario')
+    ) {
       return 5; // Offer phase
     }
-    if (conversation.includes('qué te impide') || conversation.includes('obstáculo') || conversation.includes('barrera')) {
+    if (
+      conversation.includes('qué te impide') ||
+      conversation.includes('obstáculo') ||
+      conversation.includes('barrera')
+    ) {
       return 4; // Obstacle phase
     }
-    if (conversation.includes('objetivo') || conversation.includes('lograr') || conversation.includes('conseguir')) {
+    if (
+      conversation.includes('objetivo') ||
+      conversation.includes('lograr') ||
+      conversation.includes('conseguir')
+    ) {
       return 3; // Desired situation
     }
-    if (conversation.includes('problema') || conversation.includes('frustración') || conversation.includes('dolor')) {
+    if (
+      conversation.includes('problema') ||
+      conversation.includes('frustración') ||
+      conversation.includes('dolor')
+    ) {
       return 2; // Pain phase
     }
-    
+
     return 1; // Default to initial phase
   }
 }

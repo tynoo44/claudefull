@@ -9,7 +9,7 @@
         "testStrategy": "Manually verify that the props are passed correctly using React Developer Tools. Check that the application does not crash and the sidebar still renders.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -17,7 +17,7 @@
             "description": "Locate the `AIChatSidebar` component instantiation in `ChatsPage.tsx` and pass the `conversationId` from the `selectedChat` object as a prop.",
             "dependencies": [],
             "details": "In `src/pages/ChatsPage.tsx`, find the `<AIChatSidebar ... />` component invocation around lines 150-163. Add the prop `conversationId` and assign it the value `selectedChat?.id`. This will pass the ID of the currently selected chat to the sidebar.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After making the code change, run the application and open the React DevTools. Select the `AIChatSidebar` component and verify that the `conversationId` prop is present and holds the correct ID when a chat is selected in the UI."
           },
           {
@@ -26,7 +26,7 @@
             "description": "In the same component instantiation, pass the `leadId` as a prop. This requires handling two possible locations for the lead ID within the `selectedChat` object.",
             "dependencies": [],
             "details": "In `src/pages/ChatsPage.tsx`, at the same `<AIChatSidebar />` component, add the `leadId` prop. Set its value to `selectedChat?.lead_id || selectedChat?.leads?.id`. This expression ensures that the ID is correctly retrieved whether it's a direct property or nested within a `leads` object.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Using React DevTools, inspect the `AIChatSidebar` component's props. Select different chats and confirm that the `leadId` prop is correctly populated based on the structure of the `selectedChat` data. Check both scenarios where `lead_id` is present and where `leads.id` is present."
           },
           {
@@ -35,7 +35,7 @@
             "description": "Update the TypeScript interface for `AIChatSidebar`'s props to include the new `conversationId` and `leadId`, and then verify that the component receives these values at runtime.",
             "dependencies": [],
             "details": "Navigate to the file where the `AIChatSidebar` component is defined. Find its props interface (e.g., `AIChatSidebarProps`) and add `conversationId?: string;` and `leadId?: string;`. This will resolve any TypeScript errors. As a temporary verification step, add `console.log({ conversationId, leadId })` inside the `AIChatSidebar` component's body to confirm in the browser console that the props are being received correctly when a chat is selected.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the TypeScript compiler or check your IDE for any type errors to ensure the prop types are correct. Then, run the application, open the developer console, navigate to the chats page, and select a conversation. Verify that the console log shows the expected `conversationId` and `leadId`."
           }
         ]
@@ -50,7 +50,7 @@
         "dependencies": [
           28
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -58,7 +58,7 @@
             "description": "Modify the props interface for the `AIChatSidebar` component to formally accept `conversationId` and `leadId`. Then, destructure these new props within the component's function signature to make them available in the component's scope.",
             "dependencies": [],
             "details": "In `src/components/AIChatSidebar.tsx`, locate the props type definition (e.g., `AIChatSidebarProps`). Add `conversationId: string;` and `leadId: string;` to this type. Then, update the component's function definition to destructure `conversationId` and `leadId` from the props object.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After making the changes, ensure the application compiles without any TypeScript errors. The component should still render correctly, although the new props won't be used yet."
           },
           {
@@ -67,7 +67,7 @@
             "description": "Update the arguments passed to the `generateAIResponse` function to include the tracking identifiers and enable the tracking flag.",
             "dependencies": [],
             "details": "In `src/components/AIChatSidebar.tsx`, locate the `generateAIResponse` call around lines 81-86. Modify the object passed to this function to include the `conversationId` and `leadId` variables destructured in the previous step. Also, add the property `enableTracking: true` to the object.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "The code should compile successfully. The primary verification for this change will be performed in the next subtask by inspecting the network request."
           },
           {
@@ -76,7 +76,7 @@
             "description": "Run the application and use browser developer tools to confirm that the `conversationId` and `leadId` are correctly included in the payload of the network request initiated by `generateAIResponse`.",
             "dependencies": [],
             "details": "1. Run the application locally.\n2. Open the browser's developer tools and navigate to the 'Network' tab.\n3. In the application, interact with the AI Chat Sidebar to trigger a message generation.\n4. Filter the network requests to find the API call made by `generateAIResponse` (e.g., a POST request to an endpoint like `/api/ai/response`).\n5. Inspect the 'Payload' or 'Body' of this request to verify that `conversationId` and `leadId` are present and contain the expected values.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "The test is successful if the network request payload contains the `conversationId` and `leadId` keys with non-empty string values, confirming they are being passed correctly to the backend."
           }
         ]
@@ -91,7 +91,7 @@
         "dependencies": [
           29
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -99,7 +99,7 @@
             "description": "Modify the function signature in `src/lib/gemini.ts` that handles content generation to accept an optional `leadId` string parameter. This is a prerequisite for passing the dynamic ID down to the database logic.",
             "dependencies": [],
             "details": "Locate the function that contains the `conversation_memory` insertion logic (likely named `generateContent` or similar). Add `leadId?: string` to its list of parameters. This will cause TypeScript errors at the call sites, which will be fixed in a later subtask.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After modifying the function signature, run the TypeScript compiler (`tsc` or through the IDE). Confirm that type errors appear where the function is called, as it now expects a new argument. This validates that the correct function was identified."
           },
           {
@@ -108,7 +108,7 @@
             "description": "With the `leadId` now available within the function scope, replace the hardcoded empty string with the value from the new parameter when inserting a record into the `conversation_memory` table.",
             "dependencies": [],
             "details": "Inside the modified function in `src/lib/gemini.ts`, find the database insertion call for `conversation_memory` (around line 216). Change the line `leadId: ''` to `leadId: leadId || ''`. This uses the passed `leadId` if it exists, otherwise defaulting to an empty string to prevent errors.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Perform a code review to ensure the change from `''` to `leadId || ''` is correctly implemented. If unit tests exist for this function, update them to pass a mock `leadId` and assert that the database insertion logic is called with the correct dynamic value."
           },
           {
@@ -117,7 +117,7 @@
             "description": "Complete the data flow by finding where the `generateContent` function is called (likely in an API route) and passing the `leadId` from the incoming request. This resolves the type errors from the first subtask.",
             "dependencies": [],
             "details": "Navigate to the API route file that calls the function modified in `gemini.ts` (e.g., `src/app/api/chat/route.ts`). In the request handler (e.g., `POST`), extract the `leadId` from the request body. Then, pass this `leadId` as an argument when you call the `generateContent` function.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Conduct an end-to-end test. Use an API client like Postman to send a request to the chat API endpoint, including a `leadId` in the JSON body. After the request completes, query your database to verify that the new entry in the `conversation_memory` table contains the `leadId` you sent."
           }
         ]
@@ -132,8 +132,36 @@
         "dependencies": [
           30
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate `useVirtual` Hook into the ChatMessages Component",
+            "description": "Set up the basic structure for virtualization by importing and initializing the `useVirtual` hook within the `ChatMessages` component. This involves creating a reference to the scrollable parent container and configuring the hook with the total number of messages and an estimated item size.",
+            "dependencies": [],
+            "details": "In `src/components/Chat/ChatMessages.tsx`, import `useVirtual` from `@tanstack/react-virtual`. Create a `useRef` for the parent scrolling element (the `div` that will have `overflow-y: auto`). Initialize the hook: `const rowVirtualizer = useVirtual({ count: messages.length, getScrollElement: () => parentRef.current, estimateSize: () => 100 });`. The `parentRef` should be attached to the main scrollable container.",
+            "status": "done",
+            "testStrategy": "Verify that the component renders without errors after adding the hook. Use React DevTools to inspect the `ChatMessages` component and confirm that the `rowVirtualizer` object is created and contains properties like `virtualItems`."
+          },
+          {
+            "id": 2,
+            "title": "Render Virtualized Message Items",
+            "description": "Modify the rendering logic to iterate over the `virtualItems` array provided by the `useVirtual` hook instead of the full `messages` array. Apply the necessary styles to each message wrapper for correct absolute positioning within the scroll container.",
+            "dependencies": [],
+            "details": "In `ChatMessages.tsx`, retrieve `virtualItems` and `totalSize` from the `rowVirtualizer` instance. The parent container (with `parentRef`) must have a fixed height and `overflow-y: auto`. Inside it, create a child `div` with `position: 'relative'` and `height: `${totalSize}px``. Map over `rowVirtualizer.virtualItems` to render the messages. For each `virtualItem`, wrap the `ChatMessageItem` in a `div` with `key={virtualItem.key}` and the following inline styles: `{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualItem.start}px)` }`. Fetch the correct message using its index: `messages[virtualItem.index]`.",
+            "status": "done",
+            "testStrategy": "Load a chat with many messages. Observe that the DOM contains only a small subset of the total messages. Scrolling should reveal new messages and remove ones that are no longer visible. Check for any visual glitches during scrolling."
+          },
+          {
+            "id": 3,
+            "title": "Implement Dynamic Row Sizing and Auto-Scrolling",
+            "description": "Enhance the virtualization by implementing dynamic height measurement for each message to handle variable content lengths accurately. Also, add functionality to automatically scroll to the latest message when the chat is opened or a new message arrives.",
+            "dependencies": [],
+            "details": "To implement dynamic sizing, pass a `ref` to the wrapper `div` for each virtual item: `ref={rowVirtualizer.measureElement}`. This allows the library to measure the actual rendered height. For auto-scrolling, use a `useEffect` hook that observes changes in `messages.length`. Inside the effect, call `rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' })` to ensure the view scrolls to the bottom to show the newest message.",
+            "status": "done",
+            "testStrategy": "Verify that messages with varying amounts of text are spaced correctly without overlapping. Send a new message and confirm that the chat view automatically scrolls to the bottom to reveal it. Manually scroll up, then send a new message; the view should remain scrolled up unless you implement logic to only auto-scroll if the user is already at the bottom."
+          }
+        ]
       },
       {
         "id": 32,
@@ -145,8 +173,45 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Scroll Container and Install Dependencies",
+            "description": "Prepare the foundational DOM structure for virtualization. This involves installing the `@tanstack/react-virtual` library and creating a scrollable parent container in `ChatInterface.tsx` with a React ref attached.",
+            "dependencies": [],
+            "details": "In `src/components/Chat/ChatInterface.tsx`, import `useRef` from React. Create a parent `div` that will act as the scrollable viewport for the messages. Assign it a CSS class that gives it a fixed height and `overflow-y: auto`. Create a ref using `const parentRef = useRef(null)` and attach it to this div (`ref={parentRef}`). Install the necessary package by running `npm install @tanstack/react-virtual`.",
+            "status": "done",
+            "testStrategy": "Verify in the browser's developer tools that the message list is wrapped in a new div with a fixed height and a scrollbar appears when content overflows."
+          },
+          {
+            "id": 2,
+            "title": "Integrate `useVirtualizer` Hook",
+            "description": "Initialize the `useVirtualizer` hook with the required configuration. This subtask focuses on setting up the hook's logic, linking it to the scroll container, and providing it with the list of items to virtualize.",
+            "dependencies": [],
+            "details": "In `src/components/Chat/ChatInterface.tsx`, import `useVirtualizer` from `@tanstack/react-virtual`. Call the hook within the component: `const rowVirtualizer = useVirtualizer({ count: messages.length, getScrollElement: () => parentRef.current, estimateSize: () => 70 });`. The `count` should be the length of your messages array, `getScrollElement` should return the ref'd container from the previous subtask, and `estimateSize` can be a reasonable starting pixel value for an average message height (e.g., 70px).",
+            "status": "done",
+            "testStrategy": "Add a `console.log(rowVirtualizer.getVirtualItems())` to check that the hook is running and returns an array of virtual items. The length of this array should be much smaller than the total number of messages."
+          },
+          {
+            "id": 3,
+            "title": "Render Virtualized Message Items",
+            "description": "Refactor the rendering logic to use the output of the `useVirtualizer` hook. Instead of mapping over the entire message array, you will map over the `virtualItems` array and apply the necessary styles to position them correctly.",
+            "dependencies": [],
+            "details": "Inside the scrollable parent `div`, create an inner `div` for positioning. This inner div's `style` should have `height: `${rowVirtualizer.getTotalSize()}px'`, `width: '100%'`, and `position: 'relative'`. Replace your existing `messages.map(...)` with `rowVirtualizer.getVirtualItems().map(virtualItem => ...)`. Inside the map, retrieve the actual message using `const message = messages[virtualItem.index]`. The message component wrapper should have a style object with `position: 'absolute'`, `top: 0`, `left: 0`, `width: '100%'`, `height: `${virtualItem.size}px'`, and `transform: `translateY(${virtualItem.start}px)`. Render your `ChatMessage` component inside this wrapper.",
+            "status": "done",
+            "testStrategy": "Scroll the message list. Verify that only a small, fixed number of message components are present in the DOM at any given time using the browser's element inspector. Check that scrolling is smooth and messages appear correctly."
+          },
+          {
+            "id": 4,
+            "title": "Implement Auto-Scroll to Bottom for New Messages",
+            "description": "Add functionality to automatically scroll to the most recent message when the chat is opened or a new message is added. This is a critical feature for user experience in a chat application.",
+            "dependencies": [],
+            "details": "Use a `useEffect` hook that triggers when the `messages` array length changes. Inside this effect, call `rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' })`. This will programmatically scroll the virtualized list to the last item. You may need to wrap this call in a `setTimeout` with a delay of 0 to ensure it runs after the DOM has been updated with the new message count.",
+            "status": "done",
+            "testStrategy": "Load a chat with many messages; it should start scrolled to the bottom. Send a new message and verify that the view automatically scrolls down to show it."
+          }
+        ]
       },
       {
         "id": 33,
@@ -156,8 +221,45 @@
         "testStrategy": "Use the browser's network tab to verify that the initial fetch only requests a limited number of items. Click the 'Load More' button and confirm a new network request is made for the next page. The UI should update to show the new items.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Refactor `useLeads` Hook for Initial Paginated Fetch",
+            "description": "Modify the `useLeads` hook to fetch only the first page of leads from the database, instead of all records. This will serve as the foundation for the full pagination implementation.",
+            "dependencies": [],
+            "details": "In `src/hooks/useLeads.ts`, update the Supabase query. Use `select('*', { count: 'exact' })` to retrieve the total number of records along with the data. Apply the `.range(0, 49)` method to limit the initial fetch to the first 50 records. The hook should manage and expose the leads data, a loading state, and a new state for the total count.",
+            "status": "done",
+            "testStrategy": "After implementation, verify that the UI component using `useLeads` only displays a maximum of 50 leads on initial load. Use browser developer tools to inspect the network request to Supabase and confirm it includes the `Range` header (e.g., `0-49`)."
+          },
+          {
+            "id": 2,
+            "title": "Implement `loadMore` Functionality in `useLeads` Hook",
+            "description": "Add a function to the `useLeads` hook to fetch subsequent pages of data and append them to the existing list, enabling users to load more leads on demand.",
+            "dependencies": [],
+            "details": "Export a new `loadMore` function from the `useLeads` hook. This function should calculate the next range based on the current number of leads (e.g., `from = leads.length`, `to = leads.length + 49`). On execution, it will fetch the next page and append the results to the `leads` state array. Also, expose a boolean `hasMore` state, calculated by comparing `leads.length` with the total count obtained in the previous subtask.",
+            "status": "done",
+            "testStrategy": "Connect a 'Load More' button in the UI to the `loadMore` function. Clicking the button should fetch and append the next 50 leads to the list. The button should become disabled or hidden when `hasMore` is false."
+          },
+          {
+            "id": 3,
+            "title": "Refactor `useTemplates` Hook for Initial Paginated Fetch",
+            "description": "Apply the same initial pagination logic from `useLeads` to the `useTemplates` hook. This ensures that templates are also loaded efficiently in pages.",
+            "dependencies": [],
+            "details": "In `src/hooks/useTemplates.ts`, replicate the changes from the first subtask. Modify the Supabase query to use `select('*', { count: 'exact' })` and `.range(0, 49)` to fetch the first 50 templates and the total count. Update the hook's state to manage the templates, loading state, and total count.",
+            "status": "done",
+            "testStrategy": "Check the UI where templates are listed or selected. It should now only show the first 50 templates initially. Confirm via network inspection that the Supabase request for templates is correctly paginated."
+          },
+          {
+            "id": 4,
+            "title": "Implement `loadMore` Functionality in `useTemplates` Hook",
+            "description": "Add the `loadMore` functionality to the `useTemplates` hook, completing the pagination refactor for both data types and ensuring consistent behavior across the application.",
+            "dependencies": [],
+            "details": "Replicate the `loadMore` logic from the `useLeads` hook in `src/hooks/useTemplates.ts`. Expose `loadMore` and `hasMore` from the hook. The `loadMore` function will fetch the next page of templates and append them to the state. The `hasMore` boolean will be derived by comparing the current number of loaded templates to the total count.",
+            "status": "done",
+            "testStrategy": "If the UI for templates supports it, add a 'Load More' button or an infinite scroll trigger. Verify that it correctly fetches and appends the next page of templates. The loading mechanism should cease once all templates have been loaded."
+          }
+        ]
       },
       {
         "id": 34,
@@ -167,8 +269,45 @@
         "testStrategy": "Apply the migration. Attempt to insert a `message` with a non-existent `conversation_id`. The database should reject the insertion with a foreign key violation error. Verify that deleting a `lead` also deletes its associated `conversations`.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Analyze and Clean Orphaned Records",
+            "description": "Before applying constraints, identify and remove any orphaned records from the `conversations` and `messages` tables to prevent the migration from failing. An orphaned record is one that references a non-existent parent record.",
+            "dependencies": [],
+            "details": "Execute the following SQL queries against your database to find orphaned records. \n1. Find conversations with a non-existent lead: `SELECT c.id FROM conversations c LEFT JOIN leads l ON c.lead_id = l.id WHERE l.id IS NULL;`\n2. Find messages with a non-existent conversation: `SELECT m.id FROM messages m LEFT JOIN conversations c ON m.conversation_id = c.id WHERE c.id IS NULL;`\nIf any records are found, they must be deleted before proceeding. For example: `DELETE FROM conversations WHERE id IN (...list of orphaned ids...);`",
+            "status": "done",
+            "testStrategy": "Run the SELECT queries again after the cleanup. Both queries should return zero rows, confirming that no orphaned records exist."
+          },
+          {
+            "id": 2,
+            "title": "Create New Supabase Migration File",
+            "description": "Use the Supabase CLI to generate a new, empty SQL migration file. This file will contain the schema changes for adding the foreign key constraints.",
+            "dependencies": [],
+            "details": "In your terminal, navigate to your project's root directory and run the Supabase CLI command: `supabase migration new add_lead_conversation_message_fks`. This will create a new timestamped SQL file inside the `supabase/migrations/` directory.",
+            "status": "done",
+            "testStrategy": "Verify that a new SQL file with a name containing 'add_lead_conversation_message_fks' has been created in the `supabase/migrations/` folder."
+          },
+          {
+            "id": 3,
+            "title": "Add Foreign Key: `conversations` to `leads`",
+            "description": "Edit the newly created migration file to add the SQL statement that creates a foreign key constraint on the `conversations` table, linking `lead_id` to the `leads` table's `id` column.",
+            "dependencies": [],
+            "details": "Open the migration file created in the previous step and add the following SQL command: `ALTER TABLE public.conversations ADD CONSTRAINT fk_lead FOREIGN KEY (lead_id) REFERENCES public.leads(id) ON DELETE CASCADE;`",
+            "status": "done",
+            "testStrategy": "Apply the migration locally (`supabase db reset`). Then, attempt to insert a new row into `conversations` with a `lead_id` that does not exist in the `leads` table. The insertion should fail due to the foreign key constraint violation."
+          },
+          {
+            "id": 4,
+            "title": "Add Foreign Key: `messages` to `conversations`",
+            "description": "In the same migration file, add the second SQL statement to create a foreign key constraint on the `messages` table, linking `conversation_id` to the `conversations` table's `id` column.",
+            "dependencies": [],
+            "details": "In the same migration file, immediately after the previous `ALTER TABLE` statement, add the following SQL command: `ALTER TABLE public.messages ADD CONSTRAINT fk_conversation FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;`",
+            "status": "done",
+            "testStrategy": "After applying the full migration, test the cascading delete. Create a lead, a conversation for that lead, and a message for that conversation. Then, delete the lead. Verify that the associated conversation and message are automatically deleted from their respective tables."
+          }
+        ]
       },
       {
         "id": 35,
@@ -180,8 +319,45 @@
         "dependencies": [
           34
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add Index on messages(conversation_id)",
+            "description": "To speed up queries that filter or join on the `conversation_id` in the `messages` table, add an index to this column. This is the first of four indexes to be added in a new Supabase migration.",
+            "dependencies": [],
+            "details": "Create a new Supabase migration file. In this new file, add the following SQL statement: `CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);`",
+            "status": "done",
+            "testStrategy": "After applying the migration, connect to the database and run `EXPLAIN ANALYZE SELECT * FROM messages WHERE conversation_id = 'some_id';`. The query plan should show an 'Index Scan' using `idx_messages_conversation_id`."
+          },
+          {
+            "id": 2,
+            "title": "Add Descending Index on messages(created_at)",
+            "description": "To optimize fetching the most recent messages, which is a very common operation, add a descending index on the `created_at` column in the `messages` table.",
+            "dependencies": [],
+            "details": "In the same Supabase migration file created in the previous subtask, add the following SQL statement: `CREATE INDEX idx_messages_created_at ON messages(created_at DESC);`",
+            "status": "done",
+            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM messages ORDER BY created_at DESC LIMIT 10;`. The query plan should indicate usage of the `idx_messages_created_at` index."
+          },
+          {
+            "id": 3,
+            "title": "Add Index on conversations(lead_id)",
+            "description": "To improve performance when fetching all conversations associated with a specific lead, add an index to the `lead_id` column in the `conversations` table.",
+            "dependencies": [],
+            "details": "Continue editing the same Supabase migration file. Add the following SQL statement: `CREATE INDEX idx_conversations_lead_id ON conversations(lead_id);`",
+            "status": "done",
+            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM conversations WHERE lead_id = 'some_id';`. The query plan should show an 'Index Scan' using `idx_conversations_lead_id`."
+          },
+          {
+            "id": 4,
+            "title": "Add Index on leads(status)",
+            "description": "To accelerate queries that filter leads by their status (e.g., 'new', 'contacted'), add an index to the `status` column in the `leads` table. This is the final index for this task.",
+            "dependencies": [],
+            "details": "In the same Supabase migration file, add the final SQL statement: `CREATE INDEX idx_leads_status ON leads(status);` Once all four statements are in the file, you can apply the migration to the database.",
+            "status": "done",
+            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM leads WHERE status = 'new';`. The query plan should show an 'Index Scan' using `idx_leads_status`. Also, verify that all four new indexes are present in the database schema."
+          }
+        ]
       },
       {
         "id": 36,
@@ -193,7 +369,7 @@
         "dependencies": [
           34
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -204,7 +380,7 @@
         "testStrategy": "Create a simple test file (e.g., `src/components/ui/Button.test.tsx`) with a basic test that renders a component and asserts its content. Run `npm test` (or `npx vitest`) and confirm that the test passes.",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -471,7 +647,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-07T19:58:44.992Z",
+      "updated": "2025-07-07T22:36:05.228Z",
       "description": "Tasks for master context"
     }
   }

@@ -5,24 +5,28 @@
 ## 🚀 Features
 
 ### **AI-Powered Intelligence**
+
 - **Gemini 2.5 Pro Integration** - Advanced prompt engineering with script validation
 - **Real-time Script Adherence** - 0.0-1.0 scoring system for message quality
 - **Hierarchical Prompts** - Phase-specific templates and few-shot learning
 - **Smart Suggestions** - Context-aware message recommendations
 
 ### **Lead Management CRM**
+
 - **5-Phase Sales Pipeline** - Quantum Creators methodology tracking
 - **Real-time Updates** - Instant synchronization across all users
 - **Advanced Filtering** - Search by status, tags, procedence
 - **Lead Scoring** - Automatic qualification based on conversations
 
 ### **Unified Messaging**
+
 - **Multi-Platform Support** - Instagram, WhatsApp, Facebook
 - **Template System** - Dynamic scripts with variables and analytics
 - **Conversation History** - Complete tracking with AI analysis
 - **Real-time Notifications** - Browser push + in-app alerts
 
 ### **Performance Optimized**
+
 - **Instant Navigation** - <50ms tab switching
 - **Smart Caching** - Persistent data between sessions
 - **Progressive Loading** - On-demand conversation fetching
@@ -40,6 +44,7 @@
 ## 🛠️ Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - Supabase account
 - Gemini API key
@@ -88,8 +93,8 @@ ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
 -- Basic policies
-CREATE POLICY "Authenticated users can read all data" 
-ON public.leads FOR SELECT 
+CREATE POLICY "Authenticated users can read all data"
+ON public.leads FOR SELECT
 USING (auth.role() = 'authenticated');
 ```
 
@@ -205,11 +210,11 @@ message_templates (name, content, conversion_rate)
 
 ```sql
 -- Check publication
-SELECT * FROM pg_publication_tables 
+SELECT * FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime';
 
 -- Re-add tables if needed
-ALTER PUBLICATION supabase_realtime 
+ALTER PUBLICATION supabase_realtime
 ADD TABLE public.your_table;
 ```
 
@@ -241,18 +246,21 @@ console.log(localStorage.getItem('setterai_cache'));
 ## 📈 Roadmap
 
 ### Phase 1: Core Features ✅
+
 - Lead management
 - Chat interface
 - Template system
 - Basic AI integration
 
 ### Phase 2: AI Enhancement (Current)
+
 - Advanced prompt engineering ✅
 - Script validation ✅
 - Conversation state tracking 🚧
 - Performance analytics 📋
 
 ### Phase 3: Advanced Features
+
 - Dynamic context optimization
 - A/B testing framework
 - Setter feedback loop
@@ -273,12 +281,12 @@ MIT License - see LICENSE file for details
 
 ## ⚡ **Performance Metrics**
 
-| Feature | Performance | Notes |
-|---------|------------|-------|
-| Tab Switch | <50ms | Instant navigation |
-| Initial Load | 1-2s | With full cache |
-| API Calls | -90% | Smart caching |
-| Realtime Lag | <100ms | Native WebSockets |
+| Feature      | Performance | Notes              |
+| ------------ | ----------- | ------------------ |
+| Tab Switch   | <50ms       | Instant navigation |
+| Initial Load | 1-2s        | With full cache    |
+| API Calls    | -90%        | Smart caching      |
+| Realtime Lag | <100ms      | Native WebSockets  |
 
 ---
 

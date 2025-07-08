@@ -17,6 +17,11 @@ interface CacheState {
     templates: number;
     dashboardStats: number;
   };
+  totalCounts: {
+    leads: number;
+    templates: number;
+  };
+  pageSize: number;
 }
 
 interface RealtimeSubscriptions {
@@ -44,6 +49,11 @@ let globalCache: CacheState = {
     templates: 0,
     dashboardStats: 0,
   },
+  totalCounts: {
+    leads: 0,
+    templates: 0,
+  },
+  pageSize: 50,
 };
 
 // Cargar cache desde localStorage al inicializar
@@ -90,29 +100,38 @@ export const useGlobalCache = () => {
     return Date.now() - lastUpdate > CACHE_DURATION;
   }, []);
 
-  // Cargar leads desde Supabase
+  // Cargar leads desde Supabase (con paginación)
   const loadLeads = useCallback(
-    async (force = false) => {
-      if (!force && !needsUpdate('leads') && globalCache.leads.length > 0) {
+    async (force = false, append = false) => {
+      if (!force && !append && !needsUpdate('leads') && globalCache.leads.length > 0) {
         return globalCache.leads;
       }
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
+
+        // Calcular el rango para la paginación
+        const from = append ? globalCache.leads.length : 0;
+        const to = from + globalCache.pageSize - 1;
+
+        const { data, error, count } = await supabase
           .from('leads')
-          .select('*')
-          .order('updated_at', { ascending: false });
+          .select('*', { count: 'exact' })
+          .order('updated_at', { ascending: false })
+          .range(from, to);
 
         if (error) throw error;
 
-        const leads = data || [];
+        const newLeads = data || [];
+        const updatedLeads = append ? [...globalCache.leads, ...newLeads] : newLeads;
+
         updateCache({
-          leads,
+          leads: updatedLeads,
           lastUpdated: { ...globalCache.lastUpdated, leads: Date.now() },
+          totalCounts: { ...globalCache.totalCounts, leads: count || 0 },
         });
 
-        return leads;
+        return updatedLeads;
       } catch (err) {
         console.error('Error loading leads:', err);
         setError(err instanceof Error ? err.message : 'Error al cargar leads');
@@ -124,29 +143,40 @@ export const useGlobalCache = () => {
     [needsUpdate, updateCache],
   );
 
-  // Cargar templates desde Supabase
+  // Cargar templates desde Supabase (con paginación)
   const loadTemplates = useCallback(
-    async (force = false) => {
-      if (!force && !needsUpdate('templates') && globalCache.templates.length > 0) {
+    async (force = false, append = false) => {
+      if (!force && !append && !needsUpdate('templates') && globalCache.templates.length > 0) {
         return globalCache.templates;
       }
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
+
+        // Calcular el rango para la paginación
+        const from = append ? globalCache.templates.length : 0;
+        const to = from + globalCache.pageSize - 1;
+
+        const { data, error, count } = await supabase
           .from('message_templates')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
         if (error) throw error;
 
-        const templates = data || [];
+        const newTemplates = data || [];
+        const updatedTemplates = append
+          ? [...globalCache.templates, ...newTemplates]
+          : newTemplates;
+
         updateCache({
-          templates,
+          templates: updatedTemplates,
           lastUpdated: { ...globalCache.lastUpdated, templates: Date.now() },
+          totalCounts: { ...globalCache.totalCounts, templates: count || 0 },
         });
 
-        return templates;
+        return updatedTemplates;
       } catch (err) {
         console.error('Error loading templates:', err);
         setError(err instanceof Error ? err.message : 'Error al cargar plantillas');
@@ -327,6 +357,18 @@ export const useGlobalCache = () => {
     };
   }, [initialize, cleanupSubscriptions]);
 
+  // Funciones de paginación
+  const loadMoreLeads = useCallback(async () => {
+    return await loadLeads(true, true);
+  }, [loadLeads]);
+
+  const loadMoreTemplates = useCallback(async () => {
+    return await loadTemplates(true, true);
+  }, [loadTemplates]);
+
+  const hasMoreLeads = cache.leads.length < cache.totalCounts.leads;
+  const hasMoreTemplates = cache.templates.length < cache.totalCounts.templates;
+
   return {
     // Datos
     leads: cache.leads,
@@ -337,6 +379,7 @@ export const useGlobalCache = () => {
     loading,
     error,
     lastUpdated: cache.lastUpdated,
+    totalCounts: cache.totalCounts,
 
     // Funciones
     loadLeads,
@@ -345,6 +388,12 @@ export const useGlobalCache = () => {
     refresh,
     invalidate,
     clearError,
+
+    // Funciones de paginación
+    loadMoreLeads,
+    loadMoreTemplates,
+    hasMoreLeads,
+    hasMoreTemplates,
 
     // Utilidades
     needsUpdate,

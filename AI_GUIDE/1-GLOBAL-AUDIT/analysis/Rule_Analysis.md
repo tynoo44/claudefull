@@ -12,22 +12,22 @@ The existing rules establish a highly structured, robust, and team-oriented deve
 
 ### 2.1. `.clinerules/`
 
--   **`cline_rules.md`**: Defines meta-rules for creating other rules. **Verdict: Adopt.** We will follow this format for any new rules we create to maintain consistency.
--   **`dev_workflow.md`**: Outlines a sophisticated, multi-context workflow using Taskmaster tags, primarily for team collaboration and large feature branches. **Verdict: Adapt.**
-    -   We will **not** use the multi-tag system for now. All work will remain on the `master` tag to maintain simplicity.
-    -   We **will** adopt the "Basic Loop" as our core process: `list` -> `next` -> `show` -> `expand` -> implement -> `update-subtask` -> `set-status`.
--   **`self_improve.md`**: Provides guidelines for evolving the rule set. **Verdict: Adopt in principle.** We will continuously refine our process, but the threshold for creating new formal rules will be high to avoid unnecessary bureaucracy.
--   **`taskmaster.md`**: A detailed command reference. **Verdict: Adopt as reference.** This is our primary technical manual for using Taskmaster tools.
+- **`cline_rules.md`**: Defines meta-rules for creating other rules. **Verdict: Adopt.** We will follow this format for any new rules we create to maintain consistency.
+- **`dev_workflow.md`**: Outlines a sophisticated, multi-context workflow using Taskmaster tags, primarily for team collaboration and large feature branches. **Verdict: Adapt.**
+  - We will **not** use the multi-tag system for now. All work will remain on the `master` tag to maintain simplicity.
+  - We **will** adopt the "Basic Loop" as our core process: `list` -> `next` -> `show` -> `expand` -> implement -> `update-subtask` -> `set-status`.
+- **`self_improve.md`**: Provides guidelines for evolving the rule set. **Verdict: Adopt in principle.** We will continuously refine our process, but the threshold for creating new formal rules will be high to avoid unnecessary bureaucracy.
+- **`taskmaster.md`**: A detailed command reference. **Verdict: Adopt as reference.** This is our primary technical manual for using Taskmaster tools.
 
 ### 2.2. `.roomodes`
 
--   This file defines different "modes" for an AI agent (Orchestrator, Architect, Debug, etc.).
--   **Verdict: De-prioritize.** For our solo-developer context, operating in a single, unified mode is more efficient. We will not be switching between different agent personas. We will act as a single, focused "Implementer".
+- This file defines different "modes" for an AI agent (Orchestrator, Architect, Debug, etc.).
+- **Verdict: De-prioritize.** For our solo-developer context, operating in a single, unified mode is more efficient. We will not be switching between different agent personas. We will act as a single, focused "Implementer".
 
 ### 2.3. `.taskmaster/config.json`
 
--   This file configures the AI models for Taskmaster.
--   **Verdict: Adopt and Configure.** We will ensure this is configured correctly for our needs, likely using a single powerful model for all roles (main, research, fallback) to simplify setup and reduce potential points of failure. The current configuration will be analyzed as part of the audit.
+- This file configures the AI models for Taskmaster.
+- **Verdict: Adopt and Configure.** We will ensure this is configured correctly for our needs, likely using a single powerful model for all roles (main, research, fallback) to simplify setup and reduce potential points of failure. The current configuration will be analyzed as part of the audit.
 
 ## 3. Adapted Development Protocol for This Project
 

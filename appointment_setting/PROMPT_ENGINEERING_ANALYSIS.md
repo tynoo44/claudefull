@@ -27,16 +27,19 @@ Este documento presenta un análisis detallado del sistema de prompts actual en 
 ### 2. Funciones de Quick Actions
 
 **`summarizeConversation`:**
+
 - Estructura adecuada pero falta profundidad en el análisis
 - No incluye métricas de cualificación del lead
 - Formato de salida no optimizado para copiar/pegar
 
 **`analyzeSalesPhase`:**
+
 - Análisis superficial de las fases
 - No correlaciona con el script oficial de manera explícita
 - Falta guía sobre transiciones entre fases
 
 **`suggestMessages`:**
+
 - **CRÍTICO**: Las sugerencias no siguen fielmente el script de Quantum
 - Falta variedad en las opciones presentadas
 - No considera el contexto completo del lead
@@ -46,22 +49,27 @@ Este documento presenta un análisis detallado del sistema de prompts actual en 
 ### 1. Técnicas de Prompt Engineering Aplicables
 
 #### a) **Chain-of-Thought (CoT) Prompting**
+
 - Implementar razonamiento paso a paso antes de generar respuestas
 - Ejemplo: "Primero identifica la fase actual, luego el objetivo inmediato, finalmente genera la respuesta"
 
 #### b) **Few-Shot Learning**
+
 - Incluir 3-5 ejemplos de conversaciones exitosas por fase
 - Mostrar transiciones correctas entre fases
 
 #### c) **Role-Based Prompting**
+
 - Definir claramente el rol: "Eres un setter experto de Quantum Creators con 5 años de experiencia..."
 - Incluir personalidad y tono específico
 
 #### d) **Structured Output Formatting**
+
 - Usar JSON o formatos estructurados para respuestas consistentes
 - Templates predefinidos para cada tipo de respuesta
 
 #### e) **Self-Consistency**
+
 - Generar múltiples respuestas y seleccionar la mejor
 - Validación interna de coherencia con el script
 
@@ -201,10 +209,10 @@ interface ResponseValidator {
 const PHASE_TEMPLATES = {
   1: {
     templates: [
-      "Hola {nombre}, soy {setter} del equipo de Quantum. Vi que {trigger_específico} y me pareció interesante porque {razón_relevante}. {pregunta_abierta_situación}",
+      'Hola {nombre}, soy {setter} del equipo de Quantum. Vi que {trigger_específico} y me pareció interesante porque {razón_relevante}. {pregunta_abierta_situación}',
       // Más templates...
     ],
-    required_elements: ['saludo', 'presentación', 'trigger', 'pregunta_situación']
+    required_elements: ['saludo', 'presentación', 'trigger', 'pregunta_situación'],
   },
   // Más fases...
 };
@@ -248,15 +256,15 @@ const buildDynamicContext = (phase: number, memory: ConversationMemory) => {
 
 ```typescript
 const LEAD_TYPE_MODIFIERS = {
-  'ecommerce': {
+  ecommerce: {
     pain_points: ['competencia Amazon', 'CAC alto', 'retención baja'],
     youtube_benefits: ['autoridad de marca', 'tráfico orgánico', 'comunidad'],
-    ejemplos: ['casos de éxito en ecommerce']
+    ejemplos: ['casos de éxito en ecommerce'],
   },
-  'infoproductor': {
+  infoproductor: {
     pain_points: ['saturación de mercado', 'credibilidad', 'escalabilidad'],
     youtube_benefits: ['posicionamiento experto', 'leads cualificados', 'ventas evergreen'],
-    ejemplos: ['casos de éxito en infoproductos']
+    ejemplos: ['casos de éxito en infoproductos'],
   },
   // Más tipos...
 };
@@ -266,15 +274,17 @@ const LEAD_TYPE_MODIFIERS = {
 
 ```typescript
 const OBJECTION_HANDLERS = {
-  'precio': {
-    context: "Cuando mencionen que 5000€ es mucho",
+  precio: {
+    context: 'Cuando mencionen que 5000€ es mucho',
     responses: [
       {
-        empathy: "Entiendo perfectamente que 5000€ es una inversión importante...",
-        reframe: "¿Has calculado cuánto te está costando NO tener una estrategia de YouTube que funcione?",
-        value: "Con nuestra garantía de triplicar facturación, realmente es una inversión con ROI garantizado"
-      }
-    ]
+        empathy: 'Entiendo perfectamente que 5000€ es una inversión importante...',
+        reframe:
+          '¿Has calculado cuánto te está costando NO tener una estrategia de YouTube que funcione?',
+        value:
+          'Con nuestra garantía de triplicar facturación, realmente es una inversión con ROI garantizado',
+      },
+    ],
   },
   // Más objeciones...
 };
@@ -303,16 +313,19 @@ interface PromptPerformance {
 ## 🚀 Implementación Recomendada
 
 ### Semana 1-2: Fundamentos
+
 1. Implementar nueva estructura de prompts base
 2. Añadir sistema de validación básico
 3. Incluir ejemplos few-shot por fase
 
 ### Semana 3-4: Optimización
+
 1. Implementar contexto dinámico
 2. Añadir templates por tipo de lead
 3. Sistema de manejo de objeciones
 
 ### Semana 5-6: Refinamiento
+
 1. A/B testing de variantes
 2. Ajustes basados en métricas
 3. Documentación de best practices
@@ -327,16 +340,19 @@ interface PromptPerformance {
 ## 🔧 Consideraciones Técnicas
 
 ### Optimización de Tokens
+
 - Usar aliases para reducir repetición
 - Comprimir contexto no esencial
 - Cache de respuestas comunes
 
 ### Manejo de Errores
+
 - Fallbacks para casos edge
 - Validación de inputs
 - Logs estructurados para debugging
 
 ### Escalabilidad
+
 - Modularización de prompts
 - Versionado de prompts
 - Sistema de rollback
@@ -354,6 +370,6 @@ El ROI estimado de estas mejoras es significativo, con potencial de aumentar la 
 
 ---
 
-*Documento preparado por: Claude (Anthropic)*  
-*Fecha: ${new Date().toLocaleDateString('es-ES')}*  
-*Versión: 1.0*
+_Documento preparado por: Claude (Anthropic)_  
+_Fecha: ${new Date().toLocaleDateString('es-ES')}_  
+_Versión: 1.0_

@@ -8,11 +8,12 @@
 
 **Objetivo:** Iniciar la conversación de forma natural, generar curiosidad y obtener información preliminar.
 
-*(Buscar en el perfil del seguidor indicios de un negocio, marca personal o interés en YouTube).*
+_(Buscar en el perfil del seguidor indicios de un negocio, marca personal o interés en YouTube)._
 
 ### Opción A (Nuevo seguidor con perfil interesante)
 
 Hola [NOMBRE]. Soy XXXX, del equipo de Quantum. He visto que has empezado a seguirnos y tu perfil sobre [tema específico de su negocio] me ha parecido muy interesante.
+
 - **a.** Por curiosidad, ¿ya utilizas YouTube para tu negocio o es algo que estás considerando para potenciarlo?.
 - **b.** Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 
@@ -24,6 +25,7 @@ Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 ### CTA 3X
 
 - **Opción 1:**
+
   > Muy buenas ! Por aquí Raúl, del equipo de Quantum🔮 Acabo de ver tu respuesta de 3X y al ver tu perfil creo que puedes encajar con nuestra metodología.
   > Para entender cómo podríamos ayudarte, cuéntame, ¿a qué te dedicas actualmente? Ya tienes un negocio, vendes servicios, ofreces mentorías…
 
@@ -42,6 +44,7 @@ Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 **Objetivo:** Comprender el estado actual del negocio del prospecto, sus resultados y su nivel de satisfacción.
 
 **Transición natural desde la bienvenida:**
+
 > Entiendo. Y profundizando un poco en tu actividad/negocio, [NOMBRE]...
 
 ### Preguntas Clave (adaptar según la conversación)
@@ -75,9 +78,10 @@ Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 **Objetivo:** Entender claramente qué quiere lograr el prospecto y cuál es su motivación intrínseca.
 
 **Transición natural:**
+
 > Hablamos de desafíos, pero también es fundamental tener clara la meta...
 
-**Preguntas Clave:** *ES PROBABLE QUE NOS HAYA DICHO LO QUE QUIERE CONSEGUIR EN CUANTO A FACTURACION CUANDO LE HEMOS PREGUNTADO POR SU SITUACION ACTUAL, ENTONCES LO USAMOS A NUESTRO FAVOR*
+**Preguntas Clave:** _ES PROBABLE QUE NOS HAYA DICHO LO QUE QUIERE CONSEGUIR EN CUANTO A FACTURACION CUANDO LE HEMOS PREGUNTADO POR SU SITUACION ACTUAL, ENTONCES LO USAMOS A NUESTRO FAVOR_
 
 - **Si no nos ha dicho objetivo anteriormente:** Para comprenderte mejor, [NOMBRE], sabiendo que estamos [SITUACION ACTUAL/DOLOR], ¿cuál es el objetivo principal que tienes con tu negocio o con la implementación de una estrategia de YouTube más sólida? ¿a dónde quieres llegar mejorando XXX? (ser específico con lo que nos ha dicho):
   - Si hablamos de números, ya sea en facturación, número de clientes o altas mensuales, ¿Qué cifra o qué incremento te haría sentir realmente satisfecho y que el esfuerzo ha valido la pena?
@@ -98,6 +102,7 @@ Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 **Objetivo:** Medir cuán serio es el prospecto respecto a sus metas y su disposición a invertir (tiempo, esfuerzo, recursos) para alcanzarlas.
 
 **Transición natural:**
+
 > Veo que tienes bastante claro lo que quieres, [NOMBRE]. Y como sabes, tener la visión es el primer paso, pero el éxito suele llegar cuando se combina con el trabajo y el conocimiento adecuado...
 
 ### Preguntas Clave:
@@ -114,13 +119,16 @@ Cuéntame, ¿qué te ha llamado la atención de Quantum o del mundo de YouTube?
 **Transición (si el compromiso es alto, ej. 8-10):**
 
 - **Opción 1:**
+
   > Te agradezco que hayas compartido conmigo la situación de tu negocio y al ver que tienes ese compromiso tan alto, nos gustaría formar parte de tu crecimiento. Es por ello que no me gustaría que te quedaras sin la oportunidad de tener una llamada con el equipo para que juntos veamos como podemos ayudarte y crear la estrategia adecuada para tu negocio, ¿qué te parece?
 
 - **Opción 2:**
+
   > Me gusta ese nivel de compromiso, [NOMBRE]. Esa determinación es lo que marca la diferencia.
   > La verdad, [NOMBRE], por lo que me cuentas, veo un gran potencial en tu negocio. El siguiente paso lógico sería agendar una llamada con nuestro equipo. Así podrías conocer más sobre nuestra metodología, resolver tus dudas y que podamos valorar juntos cómo ayudarte a conseguir [SU OBJETIVO]. ¿Qué te parece?
 
 - **Si responde "Me parece bien":**
+
   > Genial NOMBRE, te dejo por aquí nuestra agenda para que puedas reservar un hueco el día que te vaya mejor: https://calendly.com/d/cr2k-vns-f9b/llamada-de-descubrimiento
   > Me quedo por aquí para confirmarte que la agenda se realiza correctamente, ¡avísame cuando reserves!
 

@@ -78,7 +78,7 @@ export const useConversationPagination = () => {
           .select(
             `
           *,
-          leads!inner (
+          leads!left (
             id,
             username,
             full_name,
@@ -207,7 +207,8 @@ export const useConversationPagination = () => {
       setVisibleConversations(firstPage);
       currentPage.current = 1;
     } catch (err) {
-      console.error('Error initializing conversations:', err);
+      console.error('[useConversationPagination] Error initializing conversations:', err);
+      setError(err instanceof Error ? err.message : 'Error al inicializar');
     }
   }, [loadConversationMetadata, loadConversationPage]);
 
@@ -244,7 +245,7 @@ export const useConversationPagination = () => {
         .select(
           `
           *,
-          leads!inner (
+          leads!left (
             id,
             username,
             full_name,
@@ -383,7 +384,15 @@ export const useConversationPagination = () => {
             break;
           case 'time':
           default:
-            comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+            {
+              const timeA = a.lastMessage
+                ? new Date(a.lastMessage.created_at).getTime()
+                : new Date(a.updated_at).getTime();
+              const timeB = b.lastMessage
+                ? new Date(b.lastMessage.created_at).getTime()
+                : new Date(b.updated_at).getTime();
+              comparison = timeA - timeB;
+            }
             break;
         }
 
@@ -423,8 +432,6 @@ export const useConversationPagination = () => {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'conversations' },
         async payload => {
-          console.log('Conversation change detected:', payload);
-
           if (payload.eventType === 'INSERT') {
             // Nueva conversación - recargar desde el inicio
             await refresh();
@@ -448,8 +455,6 @@ export const useConversationPagination = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         async payload => {
-          console.log('New message detected:', payload);
-
           // Actualizar la conversación que recibió el mensaje
           const conversationId = payload.new.conversation_id;
           if (loadedConversationIds.current.has(conversationId)) {
@@ -466,8 +471,6 @@ export const useConversationPagination = () => {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'leads' },
         async payload => {
-          console.log('Lead change detected:', payload);
-
           // Buscar conversaciones que usen este lead y actualizarlas
           const leadId = payload.new.id;
           const conversationsToUpdate = conversations.filter(conv => conv.lead_id === leadId);
@@ -480,7 +483,6 @@ export const useConversationPagination = () => {
       .subscribe();
 
     realtimeSubscriptions.current = [conversationsChannel, messagesChannel, leadsChannel];
-    console.log('Realtime subscriptions configured for conversations');
   }, [conversations, refresh, updateConversation]);
 
   // Limpiar suscripciones
@@ -493,15 +495,19 @@ export const useConversationPagination = () => {
 
   // Inicializar al montar
   useEffect(() => {
-    initialize();
+    // Delay initialization to ensure auth is ready
+    const initTimer = setTimeout(() => {
+      initialize();
+    }, 100);
 
     // Configurar tiempo real después de la inicialización
-    const timer = setTimeout(() => {
+    const realtimeTimer = setTimeout(() => {
       setupRealtimeSubscriptions();
-    }, 1000);
+    }, 1500);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(initTimer);
+      clearTimeout(realtimeTimer);
       cleanupSubscriptions();
     };
   }, [initialize, setupRealtimeSubscriptions, cleanupSubscriptions]);

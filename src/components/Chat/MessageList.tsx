@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Message } from '../../lib/supabase';
 
 interface MessageListProps {
@@ -8,6 +8,15 @@ interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ darkMode, messages, loading }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   if (loading) {
     return (
       <div className="flex-1 flex justify-center items-center">
@@ -27,7 +36,7 @@ export const MessageList: React.FC<MessageListProps> = ({ darkMode, messages, lo
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map(msg => (
         <div
           key={msg.id}

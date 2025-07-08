@@ -25,6 +25,8 @@ interface AIChatSidebarProps {
   currentConversation?: any; // Replace with actual conversation type
   conversationId?: string;
   leadId?: string;
+  isAnalyzing?: boolean;
+  analysisError?: string;
 }
 
 interface AIMessage {
@@ -40,6 +42,8 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   currentConversation,
   conversationId,
   leadId,
+  isAnalyzing,
+  analysisError,
 }) => {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [conversationError, setConversationError] = useState<string | null>(null);
@@ -77,12 +81,15 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
 
       // Detect current phase from conversation
       const currentPhase = promptManager.detectCurrentPhase(messages.concat(userMessage));
-      
+
       const response = await generateAIResponse({
         messages: messages.concat(userMessage),
         model: selectedModel,
         conversationContext: fullContext,
         currentPhase,
+        conversationId,
+        leadId,
+        enableTracking: true,
       });
 
       const aiMessage: AIMessage = {
@@ -153,7 +160,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
           actionMessage = 'Generando sugerencias basadas en el script...';
           // Detect current phase for better suggestions
           const currentPhase = promptManager.detectCurrentPhase(conversationMessages);
-          
+
           response = await generateQuickActions.suggestMessages(
             conversationMessages,
             selectedModel,
@@ -325,21 +332,19 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         )}
       </div>
 
-      {/* Conversation State Indicator */}
-      {(conversationId || leadId) && (
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="p-4">
-            <ConversationStateIndicator
-              conversationId={conversationId}
-              leadId={leadId}
-              darkMode={darkMode}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Render ConversationStateIndicator at the top of messages */}
+        {(currentConversation?.id || leadId) && (
+          <ConversationStateIndicator
+            conversationId={currentConversation?.id}
+            leadId={leadId}
+            darkMode={darkMode}
+            isAnalyzing={isAnalyzing}
+            analysisError={analysisError}
+          />
+        )}
+
         {messages.map(message => (
           <div
             key={message.id}

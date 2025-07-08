@@ -1,6 +1,6 @@
 /**
  * Manual Testing Script for Conversation State Tracking System
- * 
+ *
  * This script tests the complete conversation tracking system including:
  * - RPC functions
  * - ConversationStateManager
@@ -47,15 +47,16 @@ class ConversationTrackingTester {
 
   async testDatabaseConnection() {
     try {
-      const { data, error } = await supabase
-        .from('conversation_memory')
-        .select('count')
-        .limit(1);
+      const { data, error } = await supabase.from('conversation_memory').select('count').limit(1);
 
       if (error) throw error;
       this.addResult('Database Connection', true, undefined, data);
     } catch (error) {
-      this.addResult('Database Connection', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'Database Connection',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -68,8 +69,8 @@ class ConversationTrackingTester {
         aiResponse: 'Perfecto, cuéntame más sobre tu situación actual de ventas',
         currentPhase: 1,
         phaseInfo: {
-          current_situation: 'Interesado en mejorar ventas'
-        }
+          current_situation: 'Interesado en mejorar ventas',
+        },
       });
 
       if (!result.success) {
@@ -79,10 +80,14 @@ class ConversationTrackingTester {
       this.addResult('New Conversation Creation', true, undefined, {
         memoryId: result.memory_id,
         score: result.qualification_score,
-        phaseChanged: result.phase_changed
+        phaseChanged: result.phase_changed,
       });
     } catch (error) {
-      this.addResult('New Conversation Creation', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'New Conversation Creation',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -94,26 +99,26 @@ class ConversationTrackingTester {
           phase: 2,
           userMessage: 'Mis ventas han bajado mucho últimamente',
           aiResponse: 'Entiendo tu preocupación. ¿Cuál sería tu situación ideal?',
-          phaseInfo: { pain_points: ['Ventas bajas', 'Falta de clientes'] }
+          phaseInfo: { pain_points: ['Ventas bajas', 'Falta de clientes'] },
         },
         {
           phase: 3,
           userMessage: 'Me gustaría duplicar mis ventas en 6 meses',
           aiResponse: '¡Excelente objetivo! ¿Qué obstáculos ves para lograrlo?',
-          phaseInfo: { desired_situation: 'Duplicar ventas en 6 meses' }
+          phaseInfo: { desired_situation: 'Duplicar ventas en 6 meses' },
         },
         {
           phase: 4,
           userMessage: 'No tengo un sistema organizado de seguimiento',
           aiResponse: 'Ese es exactamente el tipo de problema que solucionamos...',
-          phaseInfo: { obstacles: ['Falta de sistema', 'Desorganización'] }
+          phaseInfo: { obstacles: ['Falta de sistema', 'Desorganización'] },
         },
         {
           phase: 5,
           userMessage: 'Me interesa, ¿cuándo podemos hablar?',
           aiResponse: '¡Perfecto! Te propongo que agendemos una llamada...',
-          phaseInfo: { offer_presented: true, appointment_interest: true }
-        }
+          phaseInfo: { offer_presented: true, appointment_interest: true },
+        },
       ];
 
       let allPassed = true;
@@ -124,7 +129,7 @@ class ConversationTrackingTester {
           userMessage: phaseTest.userMessage,
           aiResponse: phaseTest.aiResponse,
           currentPhase: phaseTest.phase,
-          phaseInfo: phaseTest.phaseInfo
+          phaseInfo: phaseTest.phaseInfo,
         });
 
         if (!result.success || result.current_phase !== phaseTest.phase) {
@@ -135,7 +140,11 @@ class ConversationTrackingTester {
 
       this.addResult('Phase Progression (1-5)', allPassed, undefined, { finalPhase: 5 });
     } catch (error) {
-      this.addResult('Phase Progression (1-5)', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'Phase Progression (1-5)',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -143,7 +152,7 @@ class ConversationTrackingTester {
     try {
       // Get final conversation memory to check score calculation
       const memory = await ConversationStateManager.getConversationMemory(TEST_CONVERSATION_ID);
-      
+
       if (!memory) {
         throw new Error('Conversation memory not found');
       }
@@ -153,31 +162,41 @@ class ConversationTrackingTester {
 
       // Score should be high since we progressed through all phases
       const expectedMinimumScore = 0.7; // Minimum expected for phase 5
-      
+
       if (score < expectedMinimumScore) {
         throw new Error(`Score too low: ${score}, expected >= ${expectedMinimumScore}`);
       }
 
-      if (!breakdown || !breakdown.phase_score || !breakdown.engagement_score || !breakdown.info_completeness) {
+      if (
+        !breakdown ||
+        !breakdown.phase_score ||
+        !breakdown.engagement_score ||
+        !breakdown.info_completeness
+      ) {
         throw new Error('Score breakdown missing components');
       }
 
       this.addResult('Score Calculation', true, undefined, {
         totalScore: score,
         breakdown: breakdown,
-        phase: memory.current_phase
+        phase: memory.current_phase,
       });
     } catch (error) {
-      this.addResult('Score Calculation', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'Score Calculation',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
   async testDataRetrieval() {
     try {
       // Test different retrieval methods
-      const memoryByConv = await ConversationStateManager.getConversationMemory(TEST_CONVERSATION_ID);
+      const memoryByConv =
+        await ConversationStateManager.getConversationMemory(TEST_CONVERSATION_ID);
       const memoryByLead = await ConversationStateManager.getConversationMemoryByLead(TEST_LEAD_ID);
-      
+
       if (!memoryByConv || !memoryByLead) {
         throw new Error('Memory retrieval failed');
       }
@@ -187,9 +206,14 @@ class ConversationTrackingTester {
       }
 
       // Test high score conversations
-      const highScoreConversations = await ConversationStateManager.getConversationsByScore(0.5, 1.0);
-      
-      const ourConversation = highScoreConversations.find(conv => conv.conversation_id === TEST_CONVERSATION_ID);
+      const highScoreConversations = await ConversationStateManager.getConversationsByScore(
+        0.5,
+        1.0,
+      );
+
+      const ourConversation = highScoreConversations.find(
+        conv => conv.conversation_id === TEST_CONVERSATION_ID,
+      );
       if (!ourConversation) {
         throw new Error('Test conversation not found in high score results');
       }
@@ -197,10 +221,14 @@ class ConversationTrackingTester {
       this.addResult('Data Retrieval', true, undefined, {
         memoryConsistency: true,
         foundInHighScore: true,
-        totalHighScoreConversations: highScoreConversations.length
+        totalHighScoreConversations: highScoreConversations.length,
       });
     } catch (error) {
-      this.addResult('Data Retrieval', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'Data Retrieval',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -212,12 +240,12 @@ class ConversationTrackingTester {
         leadId: 'invalid-uuid',
         userMessage: 'Test message',
         aiResponse: 'Test response',
-        currentPhase: 1
+        currentPhase: 1,
       });
 
       // This should either succeed (create new) or fail gracefully
       const gracefulError = !invalidResult.success && invalidResult.error;
-      
+
       // Test missing memory
       const missingMemory = await ConversationStateManager.getConversationMemory('non-existent-id');
       if (missingMemory !== null) {
@@ -226,10 +254,14 @@ class ConversationTrackingTester {
 
       this.addResult('Error Handling', true, undefined, {
         invalidIdHandled: gracefulError || invalidResult.success,
-        missingMemoryHandled: true
+        missingMemoryHandled: true,
       });
     } catch (error) {
-      this.addResult('Error Handling', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'Error Handling',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -237,15 +269,20 @@ class ConversationTrackingTester {
     try {
       // Test that data structure is compatible with ConversationStateIndicator
       const memory = await ConversationStateManager.getConversationMemory(TEST_CONVERSATION_ID);
-      
+
       if (!memory) {
         throw new Error('No memory to test UI compatibility');
       }
 
       // Check required fields for UI component
       const requiredFields = [
-        'id', 'lead_id', 'conversation_id', 'current_phase',
-        'qualification_score', 'conversation_summary', 'last_interaction'
+        'id',
+        'lead_id',
+        'conversation_id',
+        'current_phase',
+        'qualification_score',
+        'conversation_summary',
+        'last_interaction',
       ];
 
       const missingFields = requiredFields.filter(field => !(field in memory));
@@ -263,10 +300,14 @@ class ConversationTrackingTester {
         allFieldsPresent: true,
         validScoreStructure: true,
         phase: memory.current_phase,
-        score: qScore.score
+        score: qScore.score,
       });
     } catch (error) {
-      this.addResult('UI Compatibility', false, error instanceof Error ? error.message : 'Unknown error');
+      this.addResult(
+        'UI Compatibility',
+        false,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
     }
   }
 
@@ -279,7 +320,7 @@ class ConversationTrackingTester {
         .eq('conversation_id', TEST_CONVERSATION_ID);
 
       if (error) throw error;
-      
+
       this.addResult('Cleanup', true, undefined, { testDataRemoved: true });
     } catch (error) {
       this.addResult('Cleanup', false, error instanceof Error ? error.message : 'Unknown error');
@@ -289,27 +330,27 @@ class ConversationTrackingTester {
   printSummary() {
     console.log('\n📊 Test Summary:');
     console.log('================');
-    
+
     const passed = this.results.filter(r => r.passed).length;
     const total = this.results.length;
     const percentage = Math.round((passed / total) * 100);
-    
+
     console.log(`Total Tests: ${total}`);
     console.log(`Passed: ${passed}`);
     console.log(`Failed: ${total - passed}`);
     console.log(`Success Rate: ${percentage}%`);
-    
+
     if (passed === total) {
       console.log('\n🎉 All tests passed! Conversation tracking system is working correctly.');
     } else {
       console.log('\n⚠️  Some tests failed. Check the details above.');
-      
+
       console.log('\n❌ Failed Tests:');
       this.results
         .filter(r => !r.passed)
         .forEach(r => console.log(`  - ${r.testName}: ${r.error}`));
     }
-    
+
     console.log('\n📋 Test Details:');
     this.results.forEach(r => {
       console.log(`\n${r.testName}:`);
