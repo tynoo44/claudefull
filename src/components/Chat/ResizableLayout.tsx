@@ -45,8 +45,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       const availableWidth = containerWidth - actualSidebarWidth;
 
-      // Default proportions for the 3 resizable columns (chat, templates, AI)
-      const defaultProportions = [0.5, 0.25, 0.25];
+      // Default proportions for the 3 resizable columns (AI: 2/5, chat: 2/5, templates: 1/5)
+      const defaultProportions = [0.4, 0.4, 0.2]; // AI Chat, Conversación, Templates
 
       setColumnWidths(prevWidths => {
         // If we have existing widths, maintain proportions

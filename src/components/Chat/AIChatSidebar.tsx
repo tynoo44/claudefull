@@ -50,7 +50,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   const [conversationError, setConversationError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-pro');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   const handleSendMessage = async () => {
