@@ -150,7 +150,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
 
   return (
     <div
-      className={`min-h-screen pt-16 transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+      className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
     >
       <div className={`transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <TemplatesHeader

@@ -129,7 +129,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="h-screen pt-16 flex flex-col">
+      <div className="h-screen flex flex-col">
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
           <LeadsHeader
             darkMode={darkMode}

@@ -104,6 +104,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
     if (isResizing === null) return;
 
     const handleMouseMove = throttle((e: MouseEvent) => {
+      e.stopPropagation();
       if (!containerRef.current) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -220,7 +221,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
           className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
             isResizing === -1 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
           }`}
-          onMouseDown={() => {
+          onMouseDown={(e) => {
+			e.stopPropagation();
             setIsResizing(-1);
           }}
         />
@@ -239,7 +241,10 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
           isResizing === 0 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
         }`}
-        onMouseDown={() => setIsResizing(0)}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          setIsResizing(0);
+        }}
       />
 
       {/* Templates Column */}
@@ -255,7 +260,10 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
           isResizing === 1 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
         }`}
-        onMouseDown={() => setIsResizing(1)}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          setIsResizing(1);
+        }}
       />
 
       {/* AI Column */}

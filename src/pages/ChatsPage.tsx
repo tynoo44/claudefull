@@ -86,15 +86,15 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   const error = conversationsError || templatesError || messagesError;
   if (error) {
     return (
-      <div className={`h-screen pt-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <ErrorState darkMode={darkMode} error={error.message} onRetry={() => queryClient.invalidateQueries()} />
       </div>
     );
   }
 
   return (
-    <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="flex-1 pt-16 overflow-hidden">
+    <div className={`h-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="flex-1 overflow-hidden">
         <ResizableLayout
           darkMode={darkMode}
           sidebarCollapsed={sidebarCollapsed}
