@@ -122,7 +122,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     // Eliminar 'applyFilters' de las dependencias y llamarlo directamente
     // para evitar re-renders innecesarios cuando la función se recrea.
     applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending);
-  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, conversations]);
+  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, applyFilters]);
 
   // Handle pending chat selection
   useEffect(() => {

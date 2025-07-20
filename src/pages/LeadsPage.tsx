@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useLeadsQuery } from '../hooks/useLeadsQuery';
+import React, { useState, useEffect } from 'react';
+import { useLeadsVirtualization } from '../hooks/useLeadsVirtualization';
 import { Lead, createLead, updateLead, deleteLead } from '../lib/supabase';
 import { LeadsHeader } from '../components/Leads/LeadsHeader';
-import { LeadsKanban } from '../components/Leads/LeadsKanban';
-import { LeadsList } from '../components/Leads/LeadsList';
+import { VirtualizedLeadsKanban } from '../components/Leads/VirtualizedLeadsKanban';
+import { VirtualizedLeadsList } from '../components/Leads/VirtualizedLeadsList';
 import { LeadModal } from '../components/Leads/LeadModal';
 
 interface LeadsPageProps {
@@ -13,14 +12,17 @@ interface LeadsPageProps {
 
 export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   const {
-    data,
+    filteredLeads,
+    leadsByStatus,
+    loading,
     error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-  } = useLeadsQuery();
-  const queryClient = useQueryClient();
+    totalCount,
+    filteredCount,
+    applyFilters,
+    refresh,
+    allTags,
+  } = useLeadsVirtualization();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -29,6 +31,18 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+
+  // Apply filters whenever filter state changes
+  useEffect(() => {
+    applyFilters({
+      searchTerm,
+      selectedTags,
+      statusFilter: selectedStatus,
+      procedenceFilter: selectedProcedence,
+      sortBy: 'updated',
+      sortAscending: false
+    });
+  }, [searchTerm, selectedTags, selectedStatus, selectedProcedence, applyFilters]);
 
   const handleAddLead = async (formData: any) => {
     try {
@@ -46,7 +60,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
       };
 
       await createLead(leadData);
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await refresh(); // Reload all leads
       setShowModal(false);
     } catch (error) {
       console.error('Error creating lead:', error);
@@ -67,7 +81,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
       };
 
       await updateLead(editingLead.id, leadData);
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await refresh(); // Reload all leads
       setShowModal(false);
       setEditingLead(null);
     } catch (error) {
@@ -81,7 +95,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
     try {
       await deleteLead(leadId);
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      await refresh(); // Reload all leads
     } catch (error) {
       console.error('Error deleting lead:', error);
       alert('Error al eliminar el lead');
@@ -99,30 +113,31 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     setSelectedProcedence('all');
   };
 
-  const allLeads = data?.pages.flatMap(page => page.data) || [];
+  // allTags now comes from the hook
 
-  const filteredLeads = allLeads.filter(lead => {
-    if (!lead) return false;
-    const matchesSearch =
-      lead.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (lead.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    const matchesTags =
-      selectedTags.length === 0 || selectedTags.some(tag => lead.tags.includes(tag));
-    const matchesStatus = selectedStatus === 'all' || (lead.status || 'Open') === selectedStatus;
-    const matchesProcedence =
-      selectedProcedence === 'all' || lead.procedence === selectedProcedence;
-    return matchesSearch && matchesTags && matchesStatus && matchesProcedence;
-  });
-
-  const allTags = [...new Set(allLeads.flatMap(lead => lead?.tags || []))];
-
-  if (status === 'pending') {
+  if (loading && filteredLeads.length === 0) {
     return (
       <div
         className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
       >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className="text-lg mb-2">Error al cargar los leads</p>
+          <p className="text-sm mb-4">{error}</p>
+          <button
+            onClick={refresh}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }
@@ -133,7 +148,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
           <LeadsHeader
             darkMode={darkMode}
-            totalLeads={filteredLeads.length}
+            totalLeads={filteredCount}
             viewMode={viewMode}
             showFilters={showFilters}
             onViewModeChange={setViewMode}
@@ -158,14 +173,14 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
         <div className="flex-1 overflow-hidden">
           {viewMode === 'kanban' ? (
-            <LeadsKanban
+            <VirtualizedLeadsKanban
               darkMode={darkMode}
-              leads={filteredLeads}
-              onLeadUpdate={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
+              leadsByStatus={leadsByStatus}
+              onLeadUpdate={refresh}
             />
           ) : (
-            <div className="p-6 h-full overflow-auto">
-              <LeadsList
+            <div className="p-6 h-full">
+              <VirtualizedLeadsList
                 darkMode={darkMode}
                 leads={filteredLeads}
                 onEditLead={lead => {
@@ -173,22 +188,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                   setShowModal(true);
                 }}
                 onDeleteLead={handleDeleteLead}
-                onUpdateLead={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
+                onUpdateLead={refresh}
               />
-                {hasNextPage && (
-                  <div className="text-center mt-4">
-                    <button
-                      onClick={() => fetchNextPage()}
-                      disabled={isFetchingNextPage}
-                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-                    >
-                      {isFetchingNextPage ? 'Cargando...' : 'Cargar más'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
         <LeadModal
           darkMode={darkMode}

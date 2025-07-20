@@ -21,7 +21,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [isCreateMode, setIsCreateMode] = useState(false);
 
-  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useTemplatesQuery();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useTemplatesQuery();
   const queryClient = useQueryClient();
 
   const categories = [

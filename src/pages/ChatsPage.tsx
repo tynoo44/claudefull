@@ -23,13 +23,12 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [message, setMessage] = useState('');
   const [showAISuggestion, setShowAISuggestion] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
   const location = useLocation();
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: conversationsData, error: conversationsError } = useConversationsQuery();
+  const { error: conversationsError } = useConversationsQuery();
   const { data: templatesData, error: templatesError } = useTemplatesQuery();
   const { 
     messages, 
@@ -53,7 +52,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
 
   const insertTemplate = async (template: Template) => {
     setMessage(template.content);
-    setSelectedTemplate(template);
     try {
       await incrementTemplateUsage(template.id);
     } catch (error) {
@@ -123,7 +121,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             showAISuggestion={showAISuggestion}
             onMessageChange={setMessage}
             onToggleAISuggestion={() => setShowAISuggestion(!showAISuggestion)}
-            onTemplateInsert={template => setSelectedTemplate(template)}
+            onTemplateInsert={() => {}}
             onChatUpdate={handleChatUpdate}
           />
 

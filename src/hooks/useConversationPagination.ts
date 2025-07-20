@@ -278,6 +278,12 @@ export const useConversationPagination = () => {
     }
   }, []);
 
+  // Ref to hold the latest conversations without causing re-renders
+  const conversationsRef = useRef(conversations);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   // Aplicar filtros localmente
   const applyFilters = useCallback(
     (
@@ -288,7 +294,7 @@ export const useConversationPagination = () => {
       sortBy: 'time' | 'name' | 'status' | 'unread' | 'start-date' = 'time',
       sortAscending: boolean = false,
     ) => {
-      let filtered = [...conversations];
+      let filtered = [...conversationsRef.current];
 
       // Aplicar filtros
       if (searchTerm) {
@@ -359,7 +365,7 @@ export const useConversationPagination = () => {
 
       setVisibleConversations(filtered);
     },
-    [conversations],
+    [], // No dependencies - using ref instead
   );
 
   // Resetear y recargar
