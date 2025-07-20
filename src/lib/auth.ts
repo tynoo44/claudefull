@@ -18,7 +18,7 @@ export class AuthService {
 
     return {
       id: user.id,
-      email: user.email!,
+      email: user.email || '',
       full_name: user.user_metadata?.full_name,
       avatar_url: user.user_metadata?.avatar_url,
     } as AuthUser;
@@ -80,7 +80,7 @@ export class AuthService {
       if (session?.user) {
         const user: AuthUser = {
           id: session.user.id,
-          email: session.user.email!,
+          email: session.user.email || '',
           full_name: session.user.user_metadata?.full_name,
           avatar_url: session.user.user_metadata?.avatar_url,
         };

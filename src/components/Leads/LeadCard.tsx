@@ -101,7 +101,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
 
           {lead.tags && lead.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {lead.tags!.slice(0, 2).map((tag, index) => (
+              {(lead.tags || []).slice(0, 2).map((tag, index) => (
                 <span
                   key={index}
                   className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
@@ -112,11 +112,11 @@ export const LeadCard: React.FC<LeadCardProps> = ({
                   {tag}
                 </span>
               ))}
-              {lead.tags!.length > 2 && (
+              {(lead.tags || []).length > 2 && (
                 <span
                   className={`text-xs px-2 py-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
                 >
-                  +{lead.tags!.length - 2}
+                  +{(lead.tags || []).length - 2}
                 </span>
               )}
             </div>

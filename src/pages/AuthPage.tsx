@@ -26,7 +26,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
         if (result.user) {
           // Create user profile in public.users table
           await AuthService.upsertUserProfile(result.user.id, {
-            email: result.user.email!,
+            email: result.user.email || '',
             full_name: fullName,
           });
         }

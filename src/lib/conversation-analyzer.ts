@@ -81,7 +81,7 @@ export class ConversationAnalyzer {
             await ConversationStateManager.getConversationMemory(conversationId);
           return {
             success: true,
-            memory: existingMemory!,
+            memory: existingMemory || undefined,
             isNewAnalysis: false,
           };
         }
@@ -125,7 +125,7 @@ export class ConversationAnalyzer {
 
       return {
         success: true,
-        memory: updatedMemory!,
+        memory: updatedMemory || undefined,
         isNewAnalysis: true,
       };
     } catch (error) {

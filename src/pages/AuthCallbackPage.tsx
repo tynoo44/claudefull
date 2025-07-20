@@ -29,7 +29,7 @@ export const AuthCallbackPage: React.FC<AuthCallbackPageProps> = ({ darkMode }) 
         if (session?.user) {
           // Update user profile in public.users table
           await AuthService.upsertUserProfile(session.user.id, {
-            email: session.user.email!,
+            email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name,
             avatar_url:
               session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture,
