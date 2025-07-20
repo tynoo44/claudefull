@@ -24,6 +24,7 @@ vi.mock('../../lib/supabase', () => ({
 }));
 
 describe('useLeadsVirtualization', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockSupabase: any;
 
   beforeEach(async () => {

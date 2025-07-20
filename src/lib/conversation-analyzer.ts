@@ -297,6 +297,7 @@ Responde SOLO con el JSON, sin explicaciones adicionales.`;
   /**
    * Generate human-readable summary from analysis
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static generateHumanReadableSummary(analysis: any): string {
     const { leadProfile, qualificationScore, conversationQuality } = analysis;
 

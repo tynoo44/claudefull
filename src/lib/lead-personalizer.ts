@@ -307,7 +307,6 @@ export function personalizeMessage(
 
 // Sugerir siguiente mensaje basado en el perfil
 export function suggestNextMessage(profile: LeadProfile, phase: number): string[] {
-  const rules = getPersonalizationRules(profile);
   const suggestions: string[] = [];
 
   // Generar sugerencias según la fase y el perfil
@@ -347,6 +346,3 @@ export function suggestNextMessage(profile: LeadProfile, phase: number): string[
 
   return suggestions;
 }
-
-// Exportar tipos
-export type { LeadProfile, PersonalizationRules };

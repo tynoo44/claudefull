@@ -34,6 +34,7 @@ vi.mock('../../lib/supabase', () => ({
 }));
 
 describe('useMessagesPagination', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockSupabase: any;
 
   beforeEach(async () => {
@@ -44,6 +45,7 @@ describe('useMessagesPagination', () => {
     vi.clearAllMocks();
 
     // Setup default mock responses
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSupabase.rpc.mockImplementation((fnName: string, params: any) => {
       if (fnName === 'get_initial_messages') {
         if (params.p_conversation_id === 'empty-conv') {
