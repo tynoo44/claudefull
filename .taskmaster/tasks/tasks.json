@@ -2,644 +2,198 @@
   "master": {
     "tasks": [
       {
-        "id": 28,
-        "title": "Fix 1/3: Pass `conversationId` and `leadId` to AIChatSidebar",
-        "description": "Fix the disconnection between the UI and the conversation tracking system by adding the missing `conversationId` and `leadId` props to the AIChatSidebar component in ChatsPage.tsx.",
-        "details": "In `src/pages/ChatsPage.tsx`, locate the `<AIChatSidebar />` component around lines 150-163. Add the `conversationId` and `leadId` props. \n\n```typescript\n// src/pages/ChatsPage.tsx (Lines 150-163)\n<AIChatSidebar\n  darkMode={darkMode}\n  conversationContext={...}\n  currentConversation={...}\n  conversationId={selectedChat?.id}  // ADD THIS\n  leadId={selectedChat?.lead_id || selectedChat?.leads?.id}  // ADD THIS\n/>\n```",
-        "testStrategy": "Manually verify that the props are passed correctly using React Developer Tools. Check that the application does not crash and the sidebar still renders.",
+        "id": 58,
+        "title": "Code Quality: Fix All ESLint and TypeScript Errors",
+        "description": "Resolve all 18 ESLint errors (including lexical declarations and undefined variables) and 3 TypeScript interface errors in LeadsPage.tsx. Eliminate all 'any' types by creating and applying specific TypeScript interfaces.",
+        "details": "1. Run `npm run lint` to identify all errors. 2. Address `no-undef` and similar errors by ensuring all variables are declared before use. 3. For TypeScript errors in `LeadsPage.tsx`, create or correct interfaces for props and state. 4. Systematically search for `any` types in the codebase and replace them with specific types. For example, if a function handles a lead object, define a `TLead` interface and use it. 5. Install `@types/node` by running `npm install --save-dev @types/node` to provide types for Node.js global and module APIs used in script files.",
+        "testStrategy": "Run `npm run lint` and `npx tsc --noEmit`. Both commands must complete with 0 errors. Code reviews should specifically check for the removal of 'any' types.",
         "priority": "high",
-        "dependencies": [],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Add `conversationId` Prop to AIChatSidebar Component",
-            "description": "Locate the `AIChatSidebar` component instantiation in `ChatsPage.tsx` and pass the `conversationId` from the `selectedChat` object as a prop.",
-            "dependencies": [],
-            "details": "In `src/pages/ChatsPage.tsx`, find the `<AIChatSidebar ... />` component invocation around lines 150-163. Add the prop `conversationId` and assign it the value `selectedChat?.id`. This will pass the ID of the currently selected chat to the sidebar.",
-            "status": "done",
-            "testStrategy": "After making the code change, run the application and open the React DevTools. Select the `AIChatSidebar` component and verify that the `conversationId` prop is present and holds the correct ID when a chat is selected in the UI."
-          },
-          {
-            "id": 2,
-            "title": "Add `leadId` Prop to AIChatSidebar Component",
-            "description": "In the same component instantiation, pass the `leadId` as a prop. This requires handling two possible locations for the lead ID within the `selectedChat` object.",
-            "dependencies": [],
-            "details": "In `src/pages/ChatsPage.tsx`, at the same `<AIChatSidebar />` component, add the `leadId` prop. Set its value to `selectedChat?.lead_id || selectedChat?.leads?.id`. This expression ensures that the ID is correctly retrieved whether it's a direct property or nested within a `leads` object.",
-            "status": "done",
-            "testStrategy": "Using React DevTools, inspect the `AIChatSidebar` component's props. Select different chats and confirm that the `leadId` prop is correctly populated based on the structure of the `selectedChat` data. Check both scenarios where `lead_id` is present and where `leads.id` is present."
-          },
-          {
-            "id": 3,
-            "title": "Update AIChatSidebar Prop-Types and Verify Data Reception",
-            "description": "Update the TypeScript interface for `AIChatSidebar`'s props to include the new `conversationId` and `leadId`, and then verify that the component receives these values at runtime.",
-            "dependencies": [],
-            "details": "Navigate to the file where the `AIChatSidebar` component is defined. Find its props interface (e.g., `AIChatSidebarProps`) and add `conversationId?: string;` and `leadId?: string;`. This will resolve any TypeScript errors. As a temporary verification step, add `console.log({ conversationId, leadId })` inside the `AIChatSidebar` component's body to confirm in the browser console that the props are being received correctly when a chat is selected.",
-            "status": "done",
-            "testStrategy": "Run the TypeScript compiler or check your IDE for any type errors to ensure the prop types are correct. Then, run the application, open the developer console, navigate to the chats page, and select a conversation. Verify that the console log shows the expected `conversationId` and `leadId`."
-          }
-        ]
-      },
-      {
-        "id": 29,
-        "title": "Fix 2/3: Pass Tracking IDs to `generateAIResponse`",
-        "description": "Ensure the `conversationId` and `leadId` are passed down to the AI response generation function to enable conversation tracking.",
-        "details": "In `src/components/AIChatSidebar.tsx`, modify the call to `generateAIResponse` around lines 81-86 to include the newly available props and set `enableTracking` to true.\n\n```typescript\n// src/components/AIChatSidebar.tsx (Lines 81-86)\nconst response = await generateAIResponse({\n  messages: messages.concat(userMessage),\n  model: selectedModel,\n  conversationContext: fullContext,\n  currentPhase,\n  conversationId,  // ADD THIS\n  leadId,         // ADD THIS\n  enableTracking: true  // ADD THIS\n});\n```",
-        "testStrategy": "Set a breakpoint in the `generateAIResponse` function to confirm that `conversationId`, `leadId`, and `enableTracking` are received with the correct values when a message is sent.",
-        "priority": "high",
-        "dependencies": [
-          28
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Update `AIChatSidebar` Props Interface and Destructure IDs",
-            "description": "Modify the props interface for the `AIChatSidebar` component to formally accept `conversationId` and `leadId`. Then, destructure these new props within the component's function signature to make them available in the component's scope.",
-            "dependencies": [],
-            "details": "In `src/components/AIChatSidebar.tsx`, locate the props type definition (e.g., `AIChatSidebarProps`). Add `conversationId: string;` and `leadId: string;` to this type. Then, update the component's function definition to destructure `conversationId` and `leadId` from the props object.",
-            "status": "done",
-            "testStrategy": "After making the changes, ensure the application compiles without any TypeScript errors. The component should still render correctly, although the new props won't be used yet."
-          },
-          {
-            "id": 2,
-            "title": "Modify `generateAIResponse` Function Call",
-            "description": "Update the arguments passed to the `generateAIResponse` function to include the tracking identifiers and enable the tracking flag.",
-            "dependencies": [],
-            "details": "In `src/components/AIChatSidebar.tsx`, locate the `generateAIResponse` call around lines 81-86. Modify the object passed to this function to include the `conversationId` and `leadId` variables destructured in the previous step. Also, add the property `enableTracking: true` to the object.",
-            "status": "done",
-            "testStrategy": "The code should compile successfully. The primary verification for this change will be performed in the next subtask by inspecting the network request."
-          },
-          {
-            "id": 3,
-            "title": "Verify Network Request Payload for Tracking IDs",
-            "description": "Run the application and use browser developer tools to confirm that the `conversationId` and `leadId` are correctly included in the payload of the network request initiated by `generateAIResponse`.",
-            "dependencies": [],
-            "details": "1. Run the application locally.\n2. Open the browser's developer tools and navigate to the 'Network' tab.\n3. In the application, interact with the AI Chat Sidebar to trigger a message generation.\n4. Filter the network requests to find the API call made by `generateAIResponse` (e.g., a POST request to an endpoint like `/api/ai/response`).\n5. Inspect the 'Payload' or 'Body' of this request to verify that `conversationId` and `leadId` are present and contain the expected values.",
-            "status": "done",
-            "testStrategy": "The test is successful if the network request payload contains the `conversationId` and `leadId` keys with non-empty string values, confirming they are being passed correctly to the backend."
-          }
-        ]
-      },
-      {
-        "id": 30,
-        "title": "Fix 3/3: Use Dynamic `leadId` in `gemini.ts`",
-        "description": "Correct the backend AI logic to use the passed `leadId` instead of a hardcoded empty string, completing the conversation tracking flow.",
-        "details": "In `src/lib/gemini.ts`, find the `conversation_memory` insertion logic around line 216 and update the `leadId` field.\n\n```typescript\n// src/lib/gemini.ts (Line 216)\n// from\nleadId: ''\n\n// to\nleadId: leadId || '',\n```",
-        "testStrategy": "After sending a message in the UI, query the `conversation_memory` table in Supabase. Verify that a new record is created and the `lead_id` column is populated correctly.",
-        "priority": "high",
-        "dependencies": [
-          29
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "1/3: Update the `generateContent` function signature to accept `leadId`",
-            "description": "Modify the function signature in `src/lib/gemini.ts` that handles content generation to accept an optional `leadId` string parameter. This is a prerequisite for passing the dynamic ID down to the database logic.",
-            "dependencies": [],
-            "details": "Locate the function that contains the `conversation_memory` insertion logic (likely named `generateContent` or similar). Add `leadId?: string` to its list of parameters. This will cause TypeScript errors at the call sites, which will be fixed in a later subtask.",
-            "status": "done",
-            "testStrategy": "After modifying the function signature, run the TypeScript compiler (`tsc` or through the IDE). Confirm that type errors appear where the function is called, as it now expects a new argument. This validates that the correct function was identified."
-          },
-          {
-            "id": 2,
-            "title": "2/3: Replace hardcoded `leadId` with the dynamic parameter",
-            "description": "With the `leadId` now available within the function scope, replace the hardcoded empty string with the value from the new parameter when inserting a record into the `conversation_memory` table.",
-            "dependencies": [],
-            "details": "Inside the modified function in `src/lib/gemini.ts`, find the database insertion call for `conversation_memory` (around line 216). Change the line `leadId: ''` to `leadId: leadId || ''`. This uses the passed `leadId` if it exists, otherwise defaulting to an empty string to prevent errors.",
-            "status": "done",
-            "testStrategy": "Perform a code review to ensure the change from `''` to `leadId || ''` is correctly implemented. If unit tests exist for this function, update them to pass a mock `leadId` and assert that the database insertion logic is called with the correct dynamic value."
-          },
-          {
-            "id": 3,
-            "title": "3/3: Update API route handler to pass `leadId` to `generateContent`",
-            "description": "Complete the data flow by finding where the `generateContent` function is called (likely in an API route) and passing the `leadId` from the incoming request. This resolves the type errors from the first subtask.",
-            "dependencies": [],
-            "details": "Navigate to the API route file that calls the function modified in `gemini.ts` (e.g., `src/app/api/chat/route.ts`). In the request handler (e.g., `POST`), extract the `leadId` from the request body. Then, pass this `leadId` as an argument when you call the `generateContent` function.",
-            "status": "done",
-            "testStrategy": "Conduct an end-to-end test. Use an API client like Postman to send a request to the chat API endpoint, including a `leadId` in the JSON body. After the request completes, query your database to verify that the new entry in the `conversation_memory` table contains the `leadId` you sent."
-          }
-        ]
-      },
-      {
-        "id": 31,
-        "title": "Install TanStack Virtual for Chat Virtualization",
-        "description": "Install and configure TanStack Virtual to prepare for implementing virtual scrolling in the chat interface, preventing browser crashes with long conversations.",
-        "details": "Install the necessary package using npm or your preferred package manager.\n\n```bash\nnpm install @tanstack/react-virtual\n```\nNo code changes are required in this step, only installation. This sets the stage for the implementation task.",
-        "testStrategy": "Verify that the package `@tanstack/react-virtual` is listed in `package.json` and the `node_modules` directory. Ensure the application still builds and runs without errors.",
-        "priority": "high",
-        "dependencies": [
-          30
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Integrate `useVirtual` Hook into the ChatMessages Component",
-            "description": "Set up the basic structure for virtualization by importing and initializing the `useVirtual` hook within the `ChatMessages` component. This involves creating a reference to the scrollable parent container and configuring the hook with the total number of messages and an estimated item size.",
-            "dependencies": [],
-            "details": "In `src/components/Chat/ChatMessages.tsx`, import `useVirtual` from `@tanstack/react-virtual`. Create a `useRef` for the parent scrolling element (the `div` that will have `overflow-y: auto`). Initialize the hook: `const rowVirtualizer = useVirtual({ count: messages.length, getScrollElement: () => parentRef.current, estimateSize: () => 100 });`. The `parentRef` should be attached to the main scrollable container.",
-            "status": "done",
-            "testStrategy": "Verify that the component renders without errors after adding the hook. Use React DevTools to inspect the `ChatMessages` component and confirm that the `rowVirtualizer` object is created and contains properties like `virtualItems`."
-          },
-          {
-            "id": 2,
-            "title": "Render Virtualized Message Items",
-            "description": "Modify the rendering logic to iterate over the `virtualItems` array provided by the `useVirtual` hook instead of the full `messages` array. Apply the necessary styles to each message wrapper for correct absolute positioning within the scroll container.",
-            "dependencies": [],
-            "details": "In `ChatMessages.tsx`, retrieve `virtualItems` and `totalSize` from the `rowVirtualizer` instance. The parent container (with `parentRef`) must have a fixed height and `overflow-y: auto`. Inside it, create a child `div` with `position: 'relative'` and `height: `${totalSize}px``. Map over `rowVirtualizer.virtualItems` to render the messages. For each `virtualItem`, wrap the `ChatMessageItem` in a `div` with `key={virtualItem.key}` and the following inline styles: `{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualItem.start}px)` }`. Fetch the correct message using its index: `messages[virtualItem.index]`.",
-            "status": "done",
-            "testStrategy": "Load a chat with many messages. Observe that the DOM contains only a small subset of the total messages. Scrolling should reveal new messages and remove ones that are no longer visible. Check for any visual glitches during scrolling."
-          },
-          {
-            "id": 3,
-            "title": "Implement Dynamic Row Sizing and Auto-Scrolling",
-            "description": "Enhance the virtualization by implementing dynamic height measurement for each message to handle variable content lengths accurately. Also, add functionality to automatically scroll to the latest message when the chat is opened or a new message arrives.",
-            "dependencies": [],
-            "details": "To implement dynamic sizing, pass a `ref` to the wrapper `div` for each virtual item: `ref={rowVirtualizer.measureElement}`. This allows the library to measure the actual rendered height. For auto-scrolling, use a `useEffect` hook that observes changes in `messages.length`. Inside the effect, call `rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' })` to ensure the view scrolls to the bottom to show the newest message.",
-            "status": "done",
-            "testStrategy": "Verify that messages with varying amounts of text are spaced correctly without overlapping. Send a new message and confirm that the chat view automatically scrolls to the bottom to reveal it. Manually scroll up, then send a new message; the view should remain scrolled up unless you implement logic to only auto-scroll if the user is already at the bottom."
-          }
-        ]
-      },
-      {
-        "id": 32,
-        "title": "Implement Chat Message Virtualization",
-        "description": "Implement virtual scrolling in the chat message list using TanStack Virtual to ensure high performance even with thousands of messages.",
-        "details": "In `src/components/Chat/ChatInterface.tsx`, refactor the message list rendering. Use the `useVirtualizer` hook from `@tanstack/react-virtual`. The implementation should wrap the messages in a scrollable container, use the virtualizer to get the list of virtual items, and render only those items, applying the correct styles for positioning.",
-        "testStrategy": "Load a conversation with over 1000 messages. Confirm that the UI remains responsive and scrolling is smooth. Use browser developer tools to inspect the DOM and verify that only a small subset of message elements are rendered at any time.",
-        "priority": "high",
-        "dependencies": [
-          31
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Setup Scroll Container and Install Dependencies",
-            "description": "Prepare the foundational DOM structure for virtualization. This involves installing the `@tanstack/react-virtual` library and creating a scrollable parent container in `ChatInterface.tsx` with a React ref attached.",
-            "dependencies": [],
-            "details": "In `src/components/Chat/ChatInterface.tsx`, import `useRef` from React. Create a parent `div` that will act as the scrollable viewport for the messages. Assign it a CSS class that gives it a fixed height and `overflow-y: auto`. Create a ref using `const parentRef = useRef(null)` and attach it to this div (`ref={parentRef}`). Install the necessary package by running `npm install @tanstack/react-virtual`.",
-            "status": "done",
-            "testStrategy": "Verify in the browser's developer tools that the message list is wrapped in a new div with a fixed height and a scrollbar appears when content overflows."
-          },
-          {
-            "id": 2,
-            "title": "Integrate `useVirtualizer` Hook",
-            "description": "Initialize the `useVirtualizer` hook with the required configuration. This subtask focuses on setting up the hook's logic, linking it to the scroll container, and providing it with the list of items to virtualize.",
-            "dependencies": [],
-            "details": "In `src/components/Chat/ChatInterface.tsx`, import `useVirtualizer` from `@tanstack/react-virtual`. Call the hook within the component: `const rowVirtualizer = useVirtualizer({ count: messages.length, getScrollElement: () => parentRef.current, estimateSize: () => 70 });`. The `count` should be the length of your messages array, `getScrollElement` should return the ref'd container from the previous subtask, and `estimateSize` can be a reasonable starting pixel value for an average message height (e.g., 70px).",
-            "status": "done",
-            "testStrategy": "Add a `console.log(rowVirtualizer.getVirtualItems())` to check that the hook is running and returns an array of virtual items. The length of this array should be much smaller than the total number of messages."
-          },
-          {
-            "id": 3,
-            "title": "Render Virtualized Message Items",
-            "description": "Refactor the rendering logic to use the output of the `useVirtualizer` hook. Instead of mapping over the entire message array, you will map over the `virtualItems` array and apply the necessary styles to position them correctly.",
-            "dependencies": [],
-            "details": "Inside the scrollable parent `div`, create an inner `div` for positioning. This inner div's `style` should have `height: `${rowVirtualizer.getTotalSize()}px'`, `width: '100%'`, and `position: 'relative'`. Replace your existing `messages.map(...)` with `rowVirtualizer.getVirtualItems().map(virtualItem => ...)`. Inside the map, retrieve the actual message using `const message = messages[virtualItem.index]`. The message component wrapper should have a style object with `position: 'absolute'`, `top: 0`, `left: 0`, `width: '100%'`, `height: `${virtualItem.size}px'`, and `transform: `translateY(${virtualItem.start}px)`. Render your `ChatMessage` component inside this wrapper.",
-            "status": "done",
-            "testStrategy": "Scroll the message list. Verify that only a small, fixed number of message components are present in the DOM at any given time using the browser's element inspector. Check that scrolling is smooth and messages appear correctly."
-          },
-          {
-            "id": 4,
-            "title": "Implement Auto-Scroll to Bottom for New Messages",
-            "description": "Add functionality to automatically scroll to the most recent message when the chat is opened or a new message is added. This is a critical feature for user experience in a chat application.",
-            "dependencies": [],
-            "details": "Use a `useEffect` hook that triggers when the `messages` array length changes. Inside this effect, call `rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' })`. This will programmatically scroll the virtualized list to the last item. You may need to wrap this call in a `setTimeout` with a delay of 0 to ensure it runs after the DOM has been updated with the new message count.",
-            "status": "done",
-            "testStrategy": "Load a chat with many messages; it should start scrolled to the bottom. Send a new message and verify that the view automatically scrolls down to show it."
-          }
-        ]
-      },
-      {
-        "id": 33,
-        "title": "Implement Database-Level Pagination for Leads & Templates",
-        "description": "Refactor the `useLeads` and `useTemplates` hooks to fetch data in pages instead of all at once, improving initial load time and reducing memory usage.",
-        "details": "Modify `src/hooks/useLeads.ts` and `src/hooks/useTemplates.ts`. Change the Supabase query to use `.range(from, to)` to fetch a limited number of records (e.g., 50). Implement a `loadMore` function that fetches the next page of data and appends it to the existing state. Use cursor-based pagination for optimal performance by tracking the last fetched item's ID or timestamp.",
-        "testStrategy": "Use the browser's network tab to verify that the initial fetch only requests a limited number of items. Click the 'Load More' button and confirm a new network request is made for the next page. The UI should update to show the new items.",
-        "priority": "high",
-        "dependencies": [],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Refactor `useLeads` Hook for Initial Paginated Fetch",
-            "description": "Modify the `useLeads` hook to fetch only the first page of leads from the database, instead of all records. This will serve as the foundation for the full pagination implementation.",
-            "dependencies": [],
-            "details": "In `src/hooks/useLeads.ts`, update the Supabase query. Use `select('*', { count: 'exact' })` to retrieve the total number of records along with the data. Apply the `.range(0, 49)` method to limit the initial fetch to the first 50 records. The hook should manage and expose the leads data, a loading state, and a new state for the total count.",
-            "status": "done",
-            "testStrategy": "After implementation, verify that the UI component using `useLeads` only displays a maximum of 50 leads on initial load. Use browser developer tools to inspect the network request to Supabase and confirm it includes the `Range` header (e.g., `0-49`)."
-          },
-          {
-            "id": 2,
-            "title": "Implement `loadMore` Functionality in `useLeads` Hook",
-            "description": "Add a function to the `useLeads` hook to fetch subsequent pages of data and append them to the existing list, enabling users to load more leads on demand.",
-            "dependencies": [],
-            "details": "Export a new `loadMore` function from the `useLeads` hook. This function should calculate the next range based on the current number of leads (e.g., `from = leads.length`, `to = leads.length + 49`). On execution, it will fetch the next page and append the results to the `leads` state array. Also, expose a boolean `hasMore` state, calculated by comparing `leads.length` with the total count obtained in the previous subtask.",
-            "status": "done",
-            "testStrategy": "Connect a 'Load More' button in the UI to the `loadMore` function. Clicking the button should fetch and append the next 50 leads to the list. The button should become disabled or hidden when `hasMore` is false."
-          },
-          {
-            "id": 3,
-            "title": "Refactor `useTemplates` Hook for Initial Paginated Fetch",
-            "description": "Apply the same initial pagination logic from `useLeads` to the `useTemplates` hook. This ensures that templates are also loaded efficiently in pages.",
-            "dependencies": [],
-            "details": "In `src/hooks/useTemplates.ts`, replicate the changes from the first subtask. Modify the Supabase query to use `select('*', { count: 'exact' })` and `.range(0, 49)` to fetch the first 50 templates and the total count. Update the hook's state to manage the templates, loading state, and total count.",
-            "status": "done",
-            "testStrategy": "Check the UI where templates are listed or selected. It should now only show the first 50 templates initially. Confirm via network inspection that the Supabase request for templates is correctly paginated."
-          },
-          {
-            "id": 4,
-            "title": "Implement `loadMore` Functionality in `useTemplates` Hook",
-            "description": "Add the `loadMore` functionality to the `useTemplates` hook, completing the pagination refactor for both data types and ensuring consistent behavior across the application.",
-            "dependencies": [],
-            "details": "Replicate the `loadMore` logic from the `useLeads` hook in `src/hooks/useTemplates.ts`. Expose `loadMore` and `hasMore` from the hook. The `loadMore` function will fetch the next page of templates and append them to the state. The `hasMore` boolean will be derived by comparing the current number of loaded templates to the total count.",
-            "status": "done",
-            "testStrategy": "If the UI for templates supports it, add a 'Load More' button or an infinite scroll trigger. Verify that it correctly fetches and appends the next page of templates. The loading mechanism should cease once all templates have been loaded."
-          }
-        ]
-      },
-      {
-        "id": 34,
-        "title": "DB Schema 1/3: Add Foreign Key Constraints",
-        "description": "Create a new Supabase migration file to add foreign key constraints to the database, ensuring data integrity between leads, conversations, and messages.",
-        "details": "Create a new SQL migration file in your Supabase project. Add the following SQL statements to enforce relationships:\n\n```sql\n-- Add foreign key constraints\nALTER TABLE conversations ADD CONSTRAINT fk_lead FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE;\nALTER TABLE messages ADD CONSTRAINT fk_conversation FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;\n```\nAdding `ON DELETE CASCADE` is a good practice to clean up related data automatically.",
-        "testStrategy": "Apply the migration. Attempt to insert a `message` with a non-existent `conversation_id`. The database should reject the insertion with a foreign key violation error. Verify that deleting a `lead` also deletes its associated `conversations`.",
-        "priority": "high",
-        "dependencies": [],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Analyze and Clean Orphaned Records",
-            "description": "Before applying constraints, identify and remove any orphaned records from the `conversations` and `messages` tables to prevent the migration from failing. An orphaned record is one that references a non-existent parent record.",
-            "dependencies": [],
-            "details": "Execute the following SQL queries against your database to find orphaned records. \n1. Find conversations with a non-existent lead: `SELECT c.id FROM conversations c LEFT JOIN leads l ON c.lead_id = l.id WHERE l.id IS NULL;`\n2. Find messages with a non-existent conversation: `SELECT m.id FROM messages m LEFT JOIN conversations c ON m.conversation_id = c.id WHERE c.id IS NULL;`\nIf any records are found, they must be deleted before proceeding. For example: `DELETE FROM conversations WHERE id IN (...list of orphaned ids...);`",
-            "status": "done",
-            "testStrategy": "Run the SELECT queries again after the cleanup. Both queries should return zero rows, confirming that no orphaned records exist."
-          },
-          {
-            "id": 2,
-            "title": "Create New Supabase Migration File",
-            "description": "Use the Supabase CLI to generate a new, empty SQL migration file. This file will contain the schema changes for adding the foreign key constraints.",
-            "dependencies": [],
-            "details": "In your terminal, navigate to your project's root directory and run the Supabase CLI command: `supabase migration new add_lead_conversation_message_fks`. This will create a new timestamped SQL file inside the `supabase/migrations/` directory.",
-            "status": "done",
-            "testStrategy": "Verify that a new SQL file with a name containing 'add_lead_conversation_message_fks' has been created in the `supabase/migrations/` folder."
-          },
-          {
-            "id": 3,
-            "title": "Add Foreign Key: `conversations` to `leads`",
-            "description": "Edit the newly created migration file to add the SQL statement that creates a foreign key constraint on the `conversations` table, linking `lead_id` to the `leads` table's `id` column.",
-            "dependencies": [],
-            "details": "Open the migration file created in the previous step and add the following SQL command: `ALTER TABLE public.conversations ADD CONSTRAINT fk_lead FOREIGN KEY (lead_id) REFERENCES public.leads(id) ON DELETE CASCADE;`",
-            "status": "done",
-            "testStrategy": "Apply the migration locally (`supabase db reset`). Then, attempt to insert a new row into `conversations` with a `lead_id` that does not exist in the `leads` table. The insertion should fail due to the foreign key constraint violation."
-          },
-          {
-            "id": 4,
-            "title": "Add Foreign Key: `messages` to `conversations`",
-            "description": "In the same migration file, add the second SQL statement to create a foreign key constraint on the `messages` table, linking `conversation_id` to the `conversations` table's `id` column.",
-            "dependencies": [],
-            "details": "In the same migration file, immediately after the previous `ALTER TABLE` statement, add the following SQL command: `ALTER TABLE public.messages ADD CONSTRAINT fk_conversation FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;`",
-            "status": "done",
-            "testStrategy": "After applying the full migration, test the cascading delete. Create a lead, a conversation for that lead, and a message for that conversation. Then, delete the lead. Verify that the associated conversation and message are automatically deleted from their respective tables."
-          }
-        ]
-      },
-      {
-        "id": 35,
-        "title": "DB Schema 2/3: Add Performance Indexes",
-        "description": "Add indexes to frequently queried columns in the database to significantly improve query performance for fetching messages, conversations, and leads.",
-        "details": "Add the following index creation statements to the same Supabase migration file from the previous task:\n\n```sql\n-- Add performance indexes\nCREATE INDEX idx_messages_conversation_id ON messages(conversation_id);\nCREATE INDEX idx_messages_created_at ON messages(created_at DESC);\nCREATE INDEX idx_conversations_lead_id ON conversations(lead_id);\nCREATE INDEX idx_leads_status ON leads(status);\n```",
-        "testStrategy": "Before and after applying the migration, run an `EXPLAIN ANALYZE` on a query fetching messages for a conversation (e.g., `SELECT * FROM messages WHERE conversation_id = 'some-id'`). The 'after' query plan should show the use of the new index and have a lower execution cost.",
-        "priority": "high",
-        "dependencies": [
-          34
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Add Index on messages(conversation_id)",
-            "description": "To speed up queries that filter or join on the `conversation_id` in the `messages` table, add an index to this column. This is the first of four indexes to be added in a new Supabase migration.",
-            "dependencies": [],
-            "details": "Create a new Supabase migration file. In this new file, add the following SQL statement: `CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);`",
-            "status": "done",
-            "testStrategy": "After applying the migration, connect to the database and run `EXPLAIN ANALYZE SELECT * FROM messages WHERE conversation_id = 'some_id';`. The query plan should show an 'Index Scan' using `idx_messages_conversation_id`."
-          },
-          {
-            "id": 2,
-            "title": "Add Descending Index on messages(created_at)",
-            "description": "To optimize fetching the most recent messages, which is a very common operation, add a descending index on the `created_at` column in the `messages` table.",
-            "dependencies": [],
-            "details": "In the same Supabase migration file created in the previous subtask, add the following SQL statement: `CREATE INDEX idx_messages_created_at ON messages(created_at DESC);`",
-            "status": "done",
-            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM messages ORDER BY created_at DESC LIMIT 10;`. The query plan should indicate usage of the `idx_messages_created_at` index."
-          },
-          {
-            "id": 3,
-            "title": "Add Index on conversations(lead_id)",
-            "description": "To improve performance when fetching all conversations associated with a specific lead, add an index to the `lead_id` column in the `conversations` table.",
-            "dependencies": [],
-            "details": "Continue editing the same Supabase migration file. Add the following SQL statement: `CREATE INDEX idx_conversations_lead_id ON conversations(lead_id);`",
-            "status": "done",
-            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM conversations WHERE lead_id = 'some_id';`. The query plan should show an 'Index Scan' using `idx_conversations_lead_id`."
-          },
-          {
-            "id": 4,
-            "title": "Add Index on leads(status)",
-            "description": "To accelerate queries that filter leads by their status (e.g., 'new', 'contacted'), add an index to the `status` column in the `leads` table. This is the final index for this task.",
-            "dependencies": [],
-            "details": "In the same Supabase migration file, add the final SQL statement: `CREATE INDEX idx_leads_status ON leads(status);` Once all four statements are in the file, you can apply the migration to the database.",
-            "status": "done",
-            "testStrategy": "After applying the migration, run `EXPLAIN ANALYZE SELECT * FROM leads WHERE status = 'new';`. The query plan should show an 'Index Scan' using `idx_leads_status`. Also, verify that all four new indexes are present in the database schema."
-          }
-        ]
-      },
-      {
-        "id": 36,
-        "title": "DB Schema 3/3: Enable Basic Row Level Security",
-        "description": "Enable Row Level Security (RLS) on key tables and create basic policies. As this is a personal tool, the policies will be permissive but establish the security foundation.",
-        "details": "Add the following RLS statements to the migration file:\n\n```sql\n-- Basic RLS policies\nALTER TABLE leads ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with their own leads\" ON leads FOR ALL USING (true) WITH CHECK (true);\n\nALTER TABLE conversations ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with conversations\" ON conversations FOR ALL USING (true) WITH CHECK (true);\n\nALTER TABLE messages ENABLE ROW LEVEL SECURITY;\nCREATE POLICY \"Users can do anything with messages\" ON messages FOR ALL USING (true) WITH CHECK (true);\n```\nUsing `(true)` is for permissive access in this personal MVP context.",
-        "testStrategy": "After applying the migration, verify that all data fetching and modification operations in the application continue to work as expected. The permissive `USING (true)` clause should not block any legitimate operations.",
-        "priority": "high",
-        "dependencies": [
-          34
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 37,
-        "title": "Setup Testing Framework (Vitest + RTL)",
-        "description": "Install and configure Vitest and React Testing Library to establish a modern, fast, and effective unit and component testing environment.",
-        "details": "Run the following command to install the development dependencies:\n\n```bash\nnpm install -D vitest @testing-library/react @testing-library/jest-dom jsdom @vitejs/plugin-react\n```\nCreate a `vitest.config.ts` file at the project root to configure the testing environment, including setting up `jsdom` and global imports.",
-        "testStrategy": "Create a simple test file (e.g., `src/components/ui/Button.test.tsx`) with a basic test that renders a component and asserts its content. Run `npm test` (or `npx vitest`) and confirm that the test passes.",
-        "priority": "medium",
         "dependencies": [],
         "status": "in-progress",
         "subtasks": []
       },
       {
-        "id": 38,
-        "title": "Write Unit Tests for Core AI Functions",
-        "description": "Write unit tests for the core AI logic in `gemini.ts` to ensure its functions behave as expected and to prevent regressions.",
-        "details": "Create a test file `src/lib/gemini.test.ts`. Mock the external Gemini API dependency. Write test cases for the `generateAIResponse` function. Test different scenarios: with and without tracking enabled, with different contexts, and ensure it formats the request payload correctly.",
-        "testStrategy": "Run the tests via Vitest. The test suite should achieve high coverage for `gemini.ts`. All tests should pass, confirming the logic for payload construction and function invocation is correct under various conditions.",
-        "priority": "medium",
+        "id": 59,
+        "title": "Implement Chat Message Virtualization with TanStack Virtual",
+        "description": "Replace the current basic scrolling implementation in MessageList.tsx with a virtualized list using TanStack Virtual to handle thousands of messages without performance degradation.",
+        "details": "Refactor `MessageList.tsx` to use the `@tanstack/react-virtual` library (v3). Use the `useVirtualizer` hook. The parent element must be the scroll container. \n\nPseudo-code:\n```typescript\nimport { useVirtualizer } from '@tanstack/react-virtual'\n\nconst MessageList = ({ messages }) => {\n  const parentRef = React.useRef()\n\n  const rowVirtualizer = useVirtualizer({\n    count: messages.length,\n    getScrollElement: () => parentRef.current,\n    estimateSize: () => 100, // Estimate average message height\n    overscan: 5,\n  })\n\n  return (\n    <div ref={parentRef} style={{ overflow: 'auto', height: '500px' }}>\n      <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>\n        {rowVirtualizer.getVirtualItems().map(virtualItem => (\n          <div key={virtualItem.key} style={{...}}>\n            {messages[virtualItem.index].content}\n          </div>\n        ))}\n      </div>\n    </div>\n  )\n}\n```\nEnsure proper key handling and dynamic height estimation if message sizes vary significantly.",
+        "testStrategy": "Manual testing: Load a chat with 2000+ mock messages and verify smooth scrolling (60 FPS) with no UI lag. Automated testing (RTL): Render the component with a large dataset and assert that only a small subset of DOM nodes corresponding to the virtualized items are present.",
+        "priority": "high",
         "dependencies": [
-          37,
-          30
+          58
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 39,
-        "title": "Write Integration Tests for Data Hooks",
-        "description": "Write integration tests for the custom data fetching hooks (`useLeads`, `useTemplates`) to validate their interaction with the Supabase backend.",
-        "details": "Create test files like `src/hooks/useLeads.test.ts`. Use Vitest to test the hooks. You may need to mock the Supabase client to simulate API responses for pagination. Test the initial fetch, the `loadMore` functionality, and loading/error states.",
-        "testStrategy": "Run the tests. Verify that the hooks correctly manage state (data, loading, error) based on the mocked Supabase responses. Ensure the pagination logic correctly appends data.",
-        "priority": "medium",
+        "id": 60,
+        "title": "Expand Test Coverage for Core AI Functions",
+        "description": "Write comprehensive unit tests for the core AI logic, including prompt generation in `prompt-manager.ts`, response validation, and phase detection functions.",
+        "details": "Using Vitest, create test files for each core AI utility. For `prompt-manager.ts`, test that prompts are constructed correctly based on different inputs. For response validation, test the scoring system with mock valid and invalid AI responses. Use `vi.mock` to mock external dependencies like database calls or API fetches to the Gemini API. Aim for at least 80% line coverage on these critical files.",
+        "testStrategy": "Run `npm run test -- --coverage`. Verify that coverage for `prompt-manager.ts` and other AI-related utility files meets or exceeds the 80% target. Ensure all test cases, including edge cases, pass successfully.",
+        "priority": "high",
         "dependencies": [
-          37,
-          33
+          58
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 40,
-        "title": "Setup E2E Testing with Playwright",
-        "description": "Install and configure Playwright to enable end-to-end testing for critical user workflows, ensuring the application works as a whole.",
-        "details": "Initialize Playwright in the project by running:\n\n```bash\nnpm init playwright@latest\n```\nFollow the prompts to configure the project. This will create a `playwright.config.ts` file, an example test, and a `tests` directory. Adjust the config's `webServer` command to start your local development server before tests run.",
-        "testStrategy": "Run the example test provided by the Playwright installer (`npx playwright test`). It should launch a browser, navigate to the specified URL, and pass successfully.",
-        "priority": "medium",
-        "dependencies": [],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 41,
-        "title": "Create E2E Test for Core Conversation Workflow",
-        "description": "Create an E2E test script that simulates a user creating a lead, starting a conversation, and receiving an AI-assisted response.",
-        "details": "Create a new test file in the Playwright `tests` directory. The script should:\n1. Navigate to the leads page.\n2. Click a 'Create Lead' button and fill out the form.\n3. Navigate to the new lead's chat page.\n4. Type and send a message.\n5. Wait for the AI response to appear and assert its presence.",
-        "testStrategy": "Run the new E2E test. The test should pass, visually confirming in the test runner's browser that the entire workflow from lead creation to AI response is functioning correctly.",
+        "id": 61,
+        "title": "Write Integration Tests for Custom React Hooks",
+        "description": "Create integration tests for custom React hooks, particularly those managing state for conversations, leads, and API interactions with TanStack Query.",
+        "details": "Using Vitest and React Testing Library (RTL), write tests for custom hooks. Use the `renderHook` utility from RTL. For hooks that involve data fetching (`useQuery`, `useInfiniteQuery`), mock the API response using `msw` (Mock Service Worker) or `vi.mock`. Test the hook's lifecycle: initial state, loading state, success state with data, and error state.",
+        "testStrategy": "Write tests that cover the primary logic paths for each custom hook. Use `waitFor` from RTL to handle asynchronous state updates within the hooks. Assert that the hook returns the expected values at each stage of its execution.",
         "priority": "medium",
         "dependencies": [
-          40,
-          30
+          58
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 42,
-        "title": "Split AppContext 1/4: Create UIContext",
-        "description": "Create a new, dedicated `UIContext` to manage UI-specific state like theme (dark/light mode), sidebar visibility, etc., to begin splitting the monolithic `AppContext`.",
-        "details": "Create a new file `src/contexts/UIContext.tsx`. Define the context shape, create the provider component, and a custom hook `useUI` for easy consumption. Move any UI-related state and functions from `AppContext.tsx` into this new context.",
-        "testStrategy": "Wrap the application with the new `UIProvider`. Refactor a component that uses UI state (e.g., a theme toggle button) to use the `useUI` hook. Verify that the functionality (e.g., toggling dark mode) still works correctly.",
-        "priority": "medium",
-        "dependencies": [],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 43,
-        "title": "Split AppContext 2/4: Create LeadsContext",
-        "description": "Create a new `LeadsContext` to handle all state and logic related to lead management, including fetching, creating, and updating leads.",
-        "details": "Create `src/contexts/LeadsContext.tsx`. Move all lead-related state, the `useLeads` hook logic, and any related functions from `AppContext` into this new provider. Create a `useLeadsContext` hook for components to access this state.",
-        "testStrategy": "Replace direct `AppContext` usage in lead-related components (e.g., `LeadsPage`) with the new `useLeadsContext` hook. Verify that leads are still fetched, displayed, and can be interacted with as before.",
+        "id": 62,
+        "title": "Correct TaskMaster Project Tracking",
+        "description": "Audit the TaskMaster project management tool and update the status of over 12 tasks to accurately reflect the current state of the codebase as detailed in the PRD.",
+        "details": "Perform a systematic review of all tasks in the TaskMaster system. Mark tasks 47 (React Router), 42-46 (Context), 37 (Testing Framework), and 28-30 (AI Integration) as 'Complete'. Add comments linking to the audit PRD. Adjust any other tasks that are misaligned with the current codebase reality. This is a project management task, not a code task.",
+        "testStrategy": "Verification will be done by project management. A review of the TaskMaster board should show that all tasks mentioned in the PRD's 'ALREADY IMPLEMENTED' section are now correctly marked as complete.",
         "priority": "medium",
         "dependencies": [
-          33
+          58,
+          59,
+          60,
+          61
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 44,
-        "title": "Split AppContext 3/4: Create TemplatesContext",
-        "description": "Create a `TemplatesContext` to manage message templates, separating this concern from the main application context.",
-        "details": "Create `src/contexts/TemplatesContext.tsx`. Move all state and logic for fetching and managing templates from `AppContext` into this new provider. Expose the state and functions through a `useTemplatesContext` hook.",
-        "testStrategy": "Refactor components that use templates to get data from `useTemplatesContext`. Verify that templates are loaded and can be selected and used in the chat interface.",
+        "id": 63,
+        "title": "Implement Lazy Loading for Router Pages",
+        "description": "Implement route-based code splitting using React.lazy() and Suspense to improve initial load times by only loading the code for the current page.",
+        "details": "In `App.tsx` where the React Router is configured, refactor the page components to be lazy-loaded. The router already supports this. \n\nPseudo-code:\n```typescript\nimport React, { Suspense, lazy } from 'react';\nimport { createBrowserRouter, RouterProvider } from 'react-router-dom';\n\nconst LeadsPage = lazy(() => import('./pages/LeadsPage'));\nconst ChatsPage = lazy(() => import('./pages/ChatsPage'));\n\nconst router = createBrowserRouter([\n  {\n    path: '/leads',\n    element: <Suspense fallback={<div>Loading...</div>}><LeadsPage /></Suspense>,\n  },\n  // ... other routes\n]);\n```\nImplement a simple, non-intrusive loading spinner or skeleton component for the `fallback` prop of `<Suspense>`.",
+        "testStrategy": "Using browser developer tools (Network tab), verify that navigating to a page for the first time triggers a download of that page's specific JavaScript chunk. Subsequent visits should use the cache. The initial JS payload should be smaller than before implementation.",
         "priority": "medium",
         "dependencies": [
-          33
+          58
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 45,
-        "title": "Split AppContext 4/4: Create ChatContext",
-        "description": "Create a `ChatContext` to manage the state of the active chat session, including messages, conversation ID, and AI interaction state.",
-        "details": "Create `src/contexts/ChatContext.tsx`. This context will hold the state for the currently selected conversation, its messages, loading states for AI responses, etc. Move this logic from `AppContext` and page-level state into the new provider. Create a `useChatContext` hook.",
-        "testStrategy": "Wrap the main chat view with the `ChatProvider`. Refactor `ChatInterface.tsx` and `AIChatSidebar.tsx` to use `useChatContext`. Verify that sending and receiving messages, and all chat-related UI updates, work correctly.",
+        "id": 64,
+        "title": "Analyze and Optimize Vite Build Bundle",
+        "description": "Analyze the production build output using a bundle analyzer tool and identify opportunities for optimization, such as tree-shaking large libraries or splitting vendor chunks.",
+        "details": "1. Install `rollup-plugin-visualizer` as a dev dependency: `npm install --save-dev rollup-plugin-visualizer`. 2. Update `vite.config.ts` to include the visualizer plugin. \n```typescript\nimport { visualizer } from 'rollup-plugin-visualizer';\n\nexport default defineConfig({\n  plugins: [react(), visualizer({ open: true })],\n})\n```\n3. Run `npm run build`. 4. Analyze the generated `stats.html` file to identify the largest modules in the bundle. Look for unexpectedly large dependencies or modules that could be imported more efficiently.",
+        "testStrategy": "Review the bundle analysis report. The goal is to identify at least one significant optimization. Success is defined by creating a follow-up task with a concrete plan to reduce the bundle size based on the analysis.",
         "priority": "medium",
         "dependencies": [
-          32
+          63
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 46,
-        "title": "Finalize Context Split and Deprecate AppContext",
-        "description": "Complete the context refactoring by removing the now-delegated state from `AppContext`, leaving it as a lightweight container or removing it entirely if no longer needed.",
-        "details": "Go back to `src/contexts/AppContext.tsx`. Remove all the state and logic that was migrated to the domain-specific contexts. The `AppProvider` should now compose the new providers (`UIProvider`, `LeadsProvider`, etc.). Update the main application entry point (`App.tsx` or `main.tsx`) to use this new provider structure.",
-        "testStrategy": "Perform a full regression test of the application. All major features (viewing leads, chatting, using templates, changing themes) should work. Use React DevTools to confirm that re-renders are now more localized (e.g., typing in the chat input should not re-render the leads list).",
+        "id": 65,
+        "title": "Enhance Dynamic AI Prompt Construction",
+        "description": "Enhance the existing `prompt-manager.ts` to support more dynamic prompt construction, allowing for conditional inclusion of prompt sections based on conversation context or lead data.",
+        "details": "Refactor the functions within `prompt-manager.ts`. Instead of static string concatenation, build prompts from a structured object or an array of prompt components. This allows for logic to be applied before joining the final prompt string. For example: `const promptParts = [baseIntro, lead.history ? getHistoryPrompt(lead) : '', mainQuestion]; return promptParts.filter(Boolean).join('\\n');` This makes the system more modular and easier to test.",
+        "testStrategy": "Update unit tests for `prompt-manager.ts`. Add new test cases that verify the conditional logic. For instance, test prompt generation with and without lead history to ensure the output is correct in both scenarios.",
         "priority": "medium",
         "dependencies": [
-          42,
-          43,
-          44,
-          45
+          60
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 47,
-        "title": "Implement React Router for Navigation",
-        "description": "Integrate React Router to manage navigation, providing URL-based routing, browser history support, and a foundation for future features like route guards.",
-        "details": "Install the library:\n\n```bash\nnpm install react-router-dom\n```\nRefactor `App.tsx` to use `createBrowserRouter` and `RouterProvider`. Define routes for the main pages (e.g., `/`, `/chats/:id`, `/leads`). Replace programmatic navigation with `<Link>` components or the `useNavigate` hook.",
-        "testStrategy": "Navigate through the app using the new routes. Verify that the URL in the browser updates correctly. Test the browser's back and forward buttons; they should navigate through the app's history. Bookmark a specific chat URL, close the tab, and reopen it; it should load the correct chat.",
+        "id": 66,
+        "title": "Extend AI Response Validation and Scoring System",
+        "description": "Extend the current AI response scoring system to include more nuanced validation checks, such as checking for specific keywords, sentiment analysis, or adherence to a predefined format.",
+        "details": "In the AI response validation utility, add new functions that perform more advanced checks. For sentiment, a lightweight library like 'sentiment' could be used. For format adherence, use regular expressions or JSON schema validation if the AI is expected to return structured data. Update the overall scoring algorithm to weigh these new checks appropriately.",
+        "testStrategy": "Create unit tests for each new validation function. Provide mock AI responses that should pass and fail each specific check. Test the overall scoring function to ensure the weights are applied correctly and the final score is as expected.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          65
+        ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 48,
-        "title": "Implement Lazy Loading for Routes",
-        "description": "Implement lazy loading for routes using React.lazy() and Suspense to improve initial page load performance by code-splitting page components.",
-        "details": "In the router configuration, import page components using `React.lazy()`. Wrap the `<Outlet />` or router component with `<React.Suspense fallback={...}>` to show a loading indicator while the page component's code is being fetched.\n\n```typescript\nconst ChatsPage = React.lazy(() => import('./pages/ChatsPage'));\n\n// in router config\n{ path: '/chats/:id', element: <ChatsPage /> }\n```",
-        "testStrategy": "Open the browser's network tab. Clear the cache and reload the page. On initial load, only the code for the main page should be downloaded. When you navigate to another page (e.g., a chat), verify that a new JavaScript chunk for that page is downloaded on demand.",
+        "id": 67,
+        "title": "Integrate Few-Shot Examples from Database into Prompts",
+        "description": "Implement logic to fetch and dynamically integrate few-shot examples from the Supabase database into the AI prompt, enhancing the AI's contextual understanding and response quality.",
+        "details": "1. Create a new RPC in Supabase, `get_prompt_examples(topic TEXT)`, that efficiently retrieves relevant examples. 2. In the frontend, before calling `prompt-manager.ts`, fetch these examples using the Supabase client. 3. Pass the fetched examples to the prompt construction function. 4. The prompt manager will then format these examples correctly (e.g., `User: ...\\nAI: ...`) and insert them into the appropriate section of the main prompt.",
+        "testStrategy": "Write an integration test that mocks the Supabase RPC call. Verify that the `prompt-manager` correctly incorporates the mock examples into the final prompt string. Manually test the end-to-end flow to ensure examples are fetched and used correctly, leading to improved AI responses.",
+        "priority": "medium",
+        "dependencies": [
+          65
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 68,
+        "title": "Develop a Variable Interpolation Template Engine",
+        "description": "Develop a simple but effective template engine for messaging that supports variable interpolation, allowing users to create message templates with placeholders like {{lead_name}}.",
+        "details": "Create a utility function `interpolateTemplate(template: string, data: object): string`. This function will use a regular expression like `/\\{\\{\\s*(\\w+)\\s*\\}\\}/g` to find placeholders. It will then replace each placeholder with the corresponding value from the `data` object. Example: `interpolateTemplate('Hello {{name}}', { name: 'John' })` should return `'Hello John'`. This avoids adding a heavy dependency like Handlebars for a simple use case.",
+        "testStrategy": "Create a unit test file for the template engine utility. Test with various inputs: a template with multiple variables, a template with no variables, a template with variables not present in the data object (should not replace them), and edge cases like empty strings.",
+        "priority": "medium",
+        "dependencies": [
+          58
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 69,
+        "title": "Implement Enhanced Lead Scoring Algorithm",
+        "description": "Design and implement an enhanced lead scoring algorithm that goes beyond basic qualification, incorporating factors from conversation analysis, AI response scores, and lead engagement.",
+        "details": "Create a new Supabase RPC `calculate_lead_score(lead_id UUID)`. This function will aggregate data for a given lead: number of messages, AI conversation phase, sentiment scores from AI validation, and lead profile data. It will apply a weighted formula to these factors to produce a numerical score. The frontend will call this RPC to display the score on the lead's profile.",
+        "testStrategy": "Test the Supabase RPC directly using the Supabase SQL editor or a testing framework like `pg_prove`. Create mock leads with different characteristics and verify that the calculated score matches expectations. On the frontend, test that the score is fetched and displayed correctly.",
         "priority": "low",
         "dependencies": [
-          47
+          66,
+          67
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 49,
-        "title": "Refactor AI Prompt Engine for Dynamic Construction",
-        "description": "Refactor the AI prompt generation logic to be dynamic and phase-aware, constructing prompts based on the current state of the conversation.",
-        "details": "Create a new module `src/lib/prompt-manager.ts`. This module will export a function, e.g., `constructPrompt(phase, context, history)`. This function will use a switch statement or a map to select a base prompt template based on the `phase` (e.g., 'introduction', 'qualification', 'booking'). It will then inject the relevant `context` (lead info, templates) and a summary of the `history`.",
-        "testStrategy": "Write unit tests for `prompt-manager.ts`. For each conversation phase, provide sample inputs and assert that the generated prompt string is correctly constructed and contains the expected information. The tests should cover all phases defined in the prompt engineering analysis document.",
-        "priority": "medium",
-        "dependencies": [
-          30,
-          46
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 50,
-        "title": "Implement AI Response Validation and Scoring",
-        "description": "Implement a system for validating and scoring AI responses to ensure they are relevant and high-quality before being displayed or used.",
-        "details": "Create `src/lib/response-validator.ts`. This module will have a function `validateResponse(response, context)` that returns a score from 0.0 to 1.0. The validation can check for key phrases, appropriate sentiment, or whether it answers a user's question. Initially, this can be rule-based. The score can be used for logging and future A/B testing.",
-        "testStrategy": "Unit test the `validateResponse` function. Provide it with various sample AI responses (good, bad, irrelevant) and assert that it returns an appropriate score for each.",
+        "id": 70,
+        "title": "Create Advanced Analytics and Reporting Dashboard",
+        "description": "Build a new dashboard page for conversation insights and reporting, displaying key metrics like average response time, lead qualification rate, and AI performance.",
+        "details": "1. Create a new lazy-loaded page component `AnalyticsPage.tsx`. 2. Develop several new Supabase RPCs to aggregate analytics data efficiently (e.g., `get_analytics_summary(date_range)`, `get_ai_performance_stats()`). 3. Use a charting library like `recharts` or `chart.js` (with `react-chartjs-2`) to visualize the data. 4. Display key metrics in cards and use charts for trends over time. Leverage TanStack Query to cache the analytics data.",
+        "testStrategy": "On the backend, test the RPCs to ensure they return accurate aggregations. On the frontend, use RTL to render the analytics page with mock data and assert that the key metrics are displayed. Manually verify that charts render correctly and are interactive.",
         "priority": "low",
         "dependencies": [
-          49
+          69
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 51,
-        "title": "Implement Few-Shot Example Injection in Prompt Engine",
-        "description": "Enhance the prompt engine to dynamically inject few-shot examples into the prompt, guiding the AI to produce better-formatted and more contextually appropriate responses.",
-        "details": "In `src/lib/prompt-manager.ts`, create a repository of few-shot examples categorized by conversation phase. When constructing a prompt, select 2-3 relevant examples (input/output pairs) and prepend them to the main prompt. The selection should be based on the current conversation phase.",
-        "testStrategy": "In the unit tests for the prompt manager, verify that for a given phase, the correct few-shot examples are included in the final prompt string. Manually trigger AI responses in the app and observe if the output quality and format improve.",
+        "id": 71,
+        "title": "Implement Lead/Conversation Data Export and Import",
+        "description": "Implement functionality for users to export lead and conversation data to CSV and import leads from a CSV file.",
+        "details": "Export: Create a utility function that takes an array of lead/conversation objects and converts them to a CSV string. Use a library like `papaparse` for robust CSV generation. Trigger a file download from the browser. Import: Use `papaparse` to parse an uploaded CSV file in the browser. Provide a mapping UI for users to match CSV columns to lead fields. Create a Supabase RPC for bulk-inserting the parsed lead data.",
+        "testStrategy": "Export: Write a unit test to verify the CSV string output is correct for a given JSON input. Manually test the download functionality. Import: Test the CSV parsing logic with various valid and malformed CSV files. Write an integration test for the bulk-insert RPC to ensure data integrity and error handling.",
         "priority": "low",
         "dependencies": [
-          49
+          58
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 52,
-        "title": "Apply DRY Principle and Consolidate Utilities (Task 6)",
-        "description": "Perform a codebase-wide review to identify and eliminate duplicated code, creating shared utilities and hooks to improve maintainability (DRY principle).",
-        "details": "Audit the codebase, especially within components and hooks. Look for repeated logic (e.g., data formatting, API call patterns). Extract this logic into new reusable functions in `src/utils/` or custom hooks in `src/hooks/`. Refactor the original code to use these new shared modules.",
-        "testStrategy": "After refactoring, run all existing unit, integration, and E2E tests. They should all continue to pass. Manually test the refactored parts of the application to ensure no behavior has changed. Code review should confirm a reduction in lines of code and duplication.",
+        "id": 72,
+        "title": "Refactor for AI Model Flexibility (Multi-Provider Support)",
+        "description": "Refactor the AI integration layer to support multiple AI providers beyond Google Gemini, allowing for model flexibility and future expansion.",
+        "details": "Create an abstract `AIProvider` interface or class with a standard method signature, e.g., `generateResponse(prompt, options)`. Implement a `GeminiProvider` that conforms to this interface. Refactor the existing AI call sites to use a factory function `getAIProvider(providerName)` which returns the appropriate provider instance. This isolates provider-specific logic and makes adding new providers (e.g., OpenAI) as simple as creating a new class that implements the `AIProvider` interface.",
+        "testStrategy": "Ensure all existing AI-related tests pass after the refactor. Create a new test suite for the provider factory and the `GeminiProvider` to ensure they work correctly. If possible, create a mock `TestProvider` to verify that the abstraction works as intended without making real API calls.",
         "priority": "low",
         "dependencies": [
-          46
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 53,
-        "title": "Refactor Monolithic Components (Task 7)",
-        "description": "Break down large, monolithic components into smaller, single-responsibility components and reusable UI primitives to improve readability and reusability.",
-        "details": "Identify large components (e.g., `ChatInterface`, `AIChatSidebar`). Break them down into smaller, more focused components. For example, `ChatInterface` could be split into `MessageList`, `MessageInput`, and `ChatHeader`. Generic UI elements like buttons and inputs should be moved to `src/components/ui/`.",
-        "testStrategy": "Use Storybook or a similar tool to render and test the new primitive components in isolation. For the refactored feature components, rely on existing component and E2E tests to ensure that the UI and functionality remain unchanged after the refactor.",
-        "priority": "low",
-        "dependencies": [
-          52
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 54,
-        "title": "Implement Memoization Optimizations (Task 9)",
-        "description": "Apply performance optimization techniques like memoization across the application to prevent unnecessary re-renders.",
-        "details": "Wrap components that render frequently with `React.memo`. Use the `useMemo` hook for expensive calculations and `useCallback` for functions passed as props to memoized children. Profile the application with React DevTools to identify key areas for optimization.",
-        "testStrategy": "Use the React DevTools Profiler to record interactions before and after the changes. The 'after' profile should show fewer component re-renders for the same interactions (e.g., typing in an input field).",
-        "priority": "low",
-        "dependencies": [
-          53
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 55,
-        "title": "Optimize Database Queries (Task 10)",
-        "description": "Analyze and optimize database queries to ensure they are efficient and meet the performance target of < 200ms.",
-        "details": "Review all Supabase queries in the codebase. Use `EXPLAIN ANALYZE` in the Supabase SQL Editor for slow queries to understand their execution plans. Ensure all queries that filter on common columns (like `conversation_id`, `lead_id`, `status`) are using the indexes created in a previous task. Refactor queries as needed.",
-        "testStrategy": "Measure the execution time of key queries using the browser's network tab or directly in Supabase. All primary data-fetching queries should consistently execute in under 200ms with a representative amount of data.",
-        "priority": "low",
-        "dependencies": [
-          35
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 56,
-        "title": "Analyze and Optimize Bundle Size",
-        "description": "Analyze the application's bundle size and implement strategies to reduce it, such as tree-shaking and optimizing dependencies.",
-        "details": "Install `webpack-bundle-analyzer` or a similar tool for Vite (e.g., `rollup-plugin-visualizer`). Generate a bundle analysis report. Identify large dependencies that could be replaced with smaller alternatives or that are not being properly tree-shaken. Ensure libraries with side effects are handled correctly.",
-        "testStrategy": "Generate a bundle report before and after optimizations. The 'after' report should show a noticeable reduction in the overall bundle size, particularly for the main entry chunk. Verify the application still functions correctly after dependency changes.",
-        "priority": "low",
-        "dependencies": [
-          48
-        ],
-        "status": "pending",
-        "subtasks": []
-      },
-      {
-        "id": 57,
-        "title": "Implement Script Template Engine (Task 21)",
-        "description": "Implement a dynamic script template engine that allows for variable interpolation based on lead data, enabling personalized messaging.",
-        "details": "Create a `src/lib/template-engine.ts`. The engine should take a template string (e.g., 'Hi {{lead.name}}, are you free on Tuesday?') and a lead object. It should replace placeholders like `{{lead.name}}` with the actual data from the lead object. This will be used to customize messages before sending.",
-        "testStrategy": "Write unit tests for the template engine. Test it with various templates and lead data objects. Cover edge cases like missing data, nested properties, and multiple variables in one template. Ensure it correctly interpolates all variables.",
-        "priority": "low",
-        "dependencies": [
-          49
+          67
         ],
         "status": "pending",
         "subtasks": []
@@ -647,7 +201,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-07T22:36:05.228Z",
+      "updated": "2025-07-20T16:19:38.537Z",
       "description": "Tasks for master context"
     }
   }

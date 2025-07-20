@@ -33,6 +33,7 @@ interface LeadsHeaderProps {
   onStatusChange?: (status: string) => void;
   onProcedenceChange?: (procedence: string) => void;
   onClearFilters?: () => void;
+  onToggleFilters?: () => void;
 }
 
 const STATUS_OPTIONS: LeadStatus[] = [

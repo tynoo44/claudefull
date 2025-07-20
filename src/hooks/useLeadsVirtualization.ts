@@ -109,11 +109,12 @@ export const useLeadsVirtualization = () => {
       let comparison = 0;
 
       switch (sortBy) {
-        case 'name':
+        case 'name': {
           const nameA = a.full_name || a.username || '';
           const nameB = b.full_name || b.username || '';
           comparison = nameA.localeCompare(nameB);
           break;
+        }
         case 'status':
           comparison = (a.status || 'Open').localeCompare(b.status || 'Open');
           break;

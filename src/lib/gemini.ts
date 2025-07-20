@@ -269,33 +269,41 @@ const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): any => {
       }
       break;
 
-    case 2: // Dolor
+    case 2: {
+      // Dolor
       const painKeywords = ['problema', 'dificultad', 'dolor', 'frustra', 'difícil'];
       if (painKeywords.some(keyword => conversationText.includes(keyword))) {
         phaseInfo.pain_identified = true;
       }
       break;
+    }
 
-    case 3: // Situación Deseada
+    case 3: {
+      // Situación Deseada
       const goalKeywords = ['quiero', 'objetivo', 'meta', 'lograr', 'ideal'];
       if (goalKeywords.some(keyword => conversationText.includes(keyword))) {
         phaseInfo.goals_defined = true;
       }
       break;
+    }
 
-    case 4: // Obstáculo
+    case 4: {
+      // Obstáculo
       const obstacleKeywords = ['obstáculo', 'impedimento', 'barrera', 'pero', 'however'];
       if (obstacleKeywords.some(keyword => conversationText.includes(keyword))) {
         phaseInfo.obstacles_identified = true;
       }
       break;
+    }
 
-    case 5: // Oferta
+    case 5: {
+      // Oferta
       const offerKeywords = ['llamada', 'reunión', 'cita', 'agenda', 'cuando'];
       if (offerKeywords.some(keyword => conversationText.includes(keyword))) {
         phaseInfo.offer_discussed = true;
       }
       break;
+    }
   }
 
   return phaseInfo;

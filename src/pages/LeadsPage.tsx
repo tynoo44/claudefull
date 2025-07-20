@@ -18,7 +18,6 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     leadsByStatus,
     loading,
     error,
-    totalCount,
     filteredCount,
     applyFilters,
     refresh,

@@ -89,7 +89,7 @@ export async function sendMessageToConversation(
       // Send HTTP request to webhook
       const webhookUrl =
         'https://n8n.srv802330.hstgr.cloud/webhook/8217af76-a02c-4766-8396-a47cd0cd6f1a';
-      const response = await fetch(webhookUrl, {
+      const response = await globalThis.fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

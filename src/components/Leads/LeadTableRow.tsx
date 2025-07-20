@@ -45,10 +45,10 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+      if (statusRef.current && !statusRef.current.contains(event.target as Element)) {
         setShowStatusDropdown(false);
       }
-      if (procedenceRef.current && !procedenceRef.current.contains(event.target as Node)) {
+      if (procedenceRef.current && !procedenceRef.current.contains(event.target as Element)) {
         setShowProcedenceDropdown(false);
       }
     };

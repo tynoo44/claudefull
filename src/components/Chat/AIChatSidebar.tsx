@@ -156,7 +156,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             selectedModel,
           );
           break;
-        case 'suggest':
+        case 'suggest': {
           actionMessage = 'Generando sugerencias basadas en el script...';
           // Detect current phase for better suggestions
           const currentPhase = promptManager.detectCurrentPhase(conversationMessages);
@@ -168,6 +168,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
             undefined, // leadType - TODO: Extract from conversation context
           );
           break;
+        }
       }
 
       const systemMessage: AIMessage = {
