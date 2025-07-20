@@ -1,5 +1,4 @@
 import React, { useRef, useEffect } from 'react';
-import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
 import { Message } from '../../lib/supabase';
 
 interface MessageListProps {
@@ -19,18 +18,13 @@ export const MessageList: React.FC<MessageListProps> = ({
   isFetchingMoreMessages,
   onLoadMoreMessages 
 }) => {
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 100, // Estimación inicial de la altura de cada mensaje
-    overscan: 5,
-  });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const previousMessageCount = useRef(messages.length);
 
   // Handle scroll to load more messages
   useEffect(() => {
-    const scrollElement = parentRef.current;
+    const scrollElement = scrollContainerRef.current;
     if (!scrollElement || !hasMoreMessages || !onLoadMoreMessages) return;
 
     const handleScroll = () => {
@@ -44,12 +38,13 @@ export const MessageList: React.FC<MessageListProps> = ({
     return () => scrollElement.removeEventListener('scroll', handleScroll);
   }, [hasMoreMessages, isFetchingMoreMessages, onLoadMoreMessages]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (only for new messages, not when loading more)
   useEffect(() => {
-    if (messages.length > 0) {
-      rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+    if (messages.length > previousMessageCount.current && lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, rowVirtualizer]);
+    previousMessageCount.current = messages.length;
+  }, [messages.length]);
 
   if (loading) {
     return (
@@ -70,52 +65,45 @@ export const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div ref={parentRef} className="flex-1 overflow-y-auto p-4">
-      <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualItem: VirtualItem) => {
-          const msg = messages[virtualItem.index];
-          return (
+    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4">
+      {/* Load more indicator at the top */}
+      {isFetchingMoreMessages && (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+      
+      {/* Messages list */}
+      <div className="space-y-4">
+        {messages.map((msg, index) => (
+          <div
+            key={msg.id}
+            ref={index === messages.length - 1 ? lastMessageRef : undefined}
+            className={`flex ${msg.sender_type === 'Setter' ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={msg.id}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-              className={`flex ${msg.sender_type === 'Setter' ? 'justify-end' : 'justify-start'} mb-4`}
+              className={`max-w-[70%] px-4 py-2 rounded-lg ${
+                msg.sender_type === 'Setter'
+                  ? 'bg-blue-500 text-white'
+                  : darkMode
+                    ? 'bg-gray-700 text-white'
+                    : 'bg-gray-200 text-gray-900'
+              }`}
             >
-              <div
-                className={`max-w-[70%] px-4 py-2 rounded-lg ${
-                  msg.sender_type === 'Setter'
-                    ? 'bg-blue-500 text-white'
-                    : darkMode
-                      ? 'bg-gray-700 text-white'
-                      : 'bg-gray-200 text-gray-900'
+              <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+              <p
+                className={`text-xs mt-1 ${
+                  msg.sender_type === 'Setter' ? 'text-blue-100' : 'text-gray-500'
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    msg.sender_type === 'Setter' ? 'text-blue-100' : 'text-gray-500'
-                  }`}
-                >
-                  {new Date(msg.created_at).toLocaleTimeString('es-ES', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
+                {new Date(msg.created_at).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

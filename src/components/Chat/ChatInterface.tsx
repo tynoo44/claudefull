@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Chat, Template } from '@/types';
 import { Message } from '../../lib/supabase';
 import {
@@ -6,7 +6,7 @@ import {
 } from '../../lib/supabase-functions';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
-import { MessageInput } from './MessageInput';
+import { MessageInputOptimized } from './MessageInputOptimized';
 import { EmptyState } from './EmptyState';
 import { Loader2 } from 'lucide-react';
 
@@ -27,7 +27,7 @@ interface ChatInterfaceProps {
   onChatUpdate?: (updatedChat: Chat) => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+export const ChatInterface: React.FC<ChatInterfaceProps> = memo(({
   darkMode,
   selectedChat,
   message,
@@ -50,7 +50,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Message loading is now handled by parent component with useMessagesPagination
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!message.trim() || !selectedChat || sending) return;
 
     setSending(true);
@@ -66,7 +66,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } finally {
       setSending(false);
     }
-  };
+  }, [message, selectedChat, sending, onMessageChange, showAISuggestion, onToggleAISuggestion]);
 
   if (!selectedChat) {
     return (
@@ -113,9 +113,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onLoadMoreMessages={onLoadMoreMessages}
           />
 
-          <MessageInput
+          <MessageInputOptimized
             darkMode={darkMode}
-            message={message}
+            initialMessage={message}
             showAISuggestion={showAISuggestion}
             disabled={sending}
             onMessageChange={onMessageChange}
@@ -139,4 +139,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       )}
     </div>
   );
-};
+});
+
+ChatInterface.displayName = 'ChatInterface';
