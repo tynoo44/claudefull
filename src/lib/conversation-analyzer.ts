@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Message } from './supabase';
-import { ConversationStateManager, ConversationMemory } from './conversation-state-manager';
+import { ConversationStateManager } from './conversation-state-manager';
+import { Conversation } from '../types';
 import { APPOINTMENT_SETTING_CONTEXT } from './appointment-setting-context';
 
 // Initialize Gemini AI
@@ -8,7 +9,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 interface AnalysisResult {
   success: boolean;
-  memory?: ConversationMemory;
+  memory?: Conversation;
   error?: string;
   isNewAnalysis: boolean;
 }
@@ -52,7 +53,7 @@ export class ConversationAnalyzer {
       );
 
       // Get the last analysis timestamp
-      const lastAnalysisTime = new Date(memory.last_interaction);
+      const lastAnalysisTime = new Date(memory.last_analysis_timestamp);
 
       // Re-analyze if new messages exist after last analysis
       return latestMessageTime > lastAnalysisTime;
@@ -277,7 +278,7 @@ Responde SOLO con el JSON, sin texto adicional.`;
       return {
         hasAnalysis: true,
         isOutdated: needsUpdate,
-        lastAnalysisTime: new Date(memory.last_interaction),
+        lastAnalysisTime: new Date(memory.last_analysis_timestamp),
       };
     } catch (error) {
       console.error('Error getting analysis status:', error);

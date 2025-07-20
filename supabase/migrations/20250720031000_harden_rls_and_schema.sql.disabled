@@ -1,0 +1,44 @@
+-- Migration: Harden RLS Policies and Schema
+-- Date: 2025-07-20
+-- Purpose: Add user_id columns and implement strict RLS policies.
+
+-- Add user_id to leads table
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_leads_user_id ON public.leads(user_id);
+
+-- Add user_id to conversations table
+ALTER TABLE public.conversations ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON public.conversations(user_id);
+
+-- Drop old permissive policies
+DROP POLICY IF EXISTS "leads_select_anon" ON public.leads;
+DROP POLICY IF EXISTS "leads_select_authenticated" ON public.leads;
+DROP POLICY IF EXISTS "conversations_select_anon" ON public.conversations;
+DROP POLICY IF EXISTS "conversations_select_authenticated" ON public.conversations;
+DROP POLICY IF EXISTS "messages_select_anon" ON public.messages;
+DROP POLICY IF EXISTS "messages_select_authenticated" ON public.messages;
+
+-- Enable RLS
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Create strict RLS policies for leads
+CREATE POLICY "Users can manage their own leads" ON public.leads
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Create strict RLS policies for conversations
+CREATE POLICY "Users can manage their own conversations" ON public.conversations
+    FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Create strict RLS policies for messages
+-- Users can manage messages in conversations they own.
+CREATE POLICY "Users can manage messages in their conversations" ON public.messages
+    FOR ALL
+    USING (
+        (SELECT user_id FROM public.conversations WHERE id = conversation_id) = auth.uid()
+    );

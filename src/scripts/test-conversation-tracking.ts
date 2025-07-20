@@ -47,7 +47,7 @@ class ConversationTrackingTester {
 
   async testDatabaseConnection() {
     try {
-      const { data, error } = await supabase.from('conversation_memory').select('count').limit(1);
+      const { data, error } = await supabase.from('conversations').select('count').limit(1);
 
       if (error) throw error;
       this.addResult('Database Connection', true, undefined, data);
@@ -157,8 +157,8 @@ class ConversationTrackingTester {
         throw new Error('Conversation memory not found');
       }
 
-      const score = memory.qualification_score.score;
-      const breakdown = memory.qualification_score.breakdown;
+      const score = memory.qualification_score?.score || 0;
+      const breakdown = memory.qualification_score?.breakdown;
 
       // Score should be high since we progressed through all phases
       const expectedMinimumScore = 0.7; // Minimum expected for phase 5
@@ -212,7 +212,7 @@ class ConversationTrackingTester {
       );
 
       const ourConversation = highScoreConversations.find(
-        conv => conv.conversation_id === TEST_CONVERSATION_ID,
+        conv => conv.id === TEST_CONVERSATION_ID,
       );
       if (!ourConversation) {
         throw new Error('Test conversation not found in high score results');
@@ -278,11 +278,11 @@ class ConversationTrackingTester {
       const requiredFields = [
         'id',
         'lead_id',
-        'conversation_id',
+        'id',
         'current_phase',
         'qualification_score',
         'conversation_summary',
-        'last_interaction',
+        'last_analysis_timestamp',
       ];
 
       const missingFields = requiredFields.filter(field => !(field in memory));
@@ -292,7 +292,7 @@ class ConversationTrackingTester {
 
       // Check qualification_score structure
       const qScore = memory.qualification_score;
-      if (!qScore.score || !qScore.breakdown || !qScore.last_update) {
+      if (qScore.score === undefined || !qScore.breakdown) {
         throw new Error('Invalid qualification_score structure for UI');
       }
 
@@ -315,9 +315,9 @@ class ConversationTrackingTester {
     try {
       // Clean up test data
       const { error } = await supabase
-        .from('conversation_memory')
+        .from('conversations')
         .delete()
-        .eq('conversation_id', TEST_CONVERSATION_ID);
+        .eq('id', TEST_CONVERSATION_ID);
 
       if (error) throw error;
 
@@ -365,7 +365,8 @@ class ConversationTrackingTester {
 export { ConversationTrackingTester };
 
 // Run tests if this script is executed directly
-if (require.main === module) {
-  const tester = new ConversationTrackingTester();
-  tester.runAllTests().catch(console.error);
-}
+// To run tests, import and instantiate this class from another script.
+// Example:
+// import { ConversationTrackingTester } from './test-conversation-tracking';
+// const tester = new ConversationTrackingTester();
+// tester.runAllTests();

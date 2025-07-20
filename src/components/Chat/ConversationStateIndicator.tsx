@@ -10,7 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { ConversationStateManager, ConversationMemory } from '@/lib/conversation-state-manager';
+import { ConversationStateManager } from '@/lib/conversation-state-manager';
+import { Conversation } from '@/types';
 
 interface ConversationStateIndicatorProps {
   conversationId?: string;
@@ -77,7 +78,7 @@ export const ConversationStateIndicator: React.FC<ConversationStateIndicatorProp
   isAnalyzing = false,
   analysisError,
 }) => {
-  const [conversationMemory, setConversationMemory] = useState<ConversationMemory | null>(null);
+  const [conversationMemory, setConversationMemory] = useState<Conversation | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -252,6 +253,7 @@ export const ConversationStateIndicator: React.FC<ConversationStateIndicatorProp
           {isExpanded && (
             <div className="space-y-4 pt-2 border-t border-gray-200 dark:border-gray-700">
               {/* Score Breakdown */}
+              {/* Score Breakdown */}
               {scoreBreakdown && (
                 <div className="space-y-2">
                   <h4
@@ -359,7 +361,7 @@ export const ConversationStateIndicator: React.FC<ConversationStateIndicatorProp
                 <Clock className="w-3 h-3" />
                 <span>
                   Última interacción:{' '}
-                  {new Date(conversationMemory.last_interaction).toLocaleString('es-ES')}
+                  {new Date(conversationMemory.last_analysis_timestamp).toLocaleString('es-ES')}
                 </span>
               </div>
             </div>

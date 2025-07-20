@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { GlobalNavbar } from '@/components/Layout/GlobalNavbar';
 import { AuthPage } from '@/pages/AuthPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
@@ -8,124 +8,53 @@ import { ChatsPage } from '@/pages/ChatsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
 import { TemplatesPage } from '@/pages/TemplatesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
+import { useTheme } from './contexts/ThemeContext';
+import { useAuth } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/Layout/ProtectedRoute';
 
-import { useAppState } from '@/hooks/useAppState';
-
-const AppContent: React.FC = () => {
-  const {
-    // State
-    darkMode,
-    isAuthenticated,
-    currentUser,
-    showProfileMenu,
-    selectedChat,
-    selectedTemplate,
-    message,
-    showAISuggestion,
-    chats,
-    templates,
-
-    // Actions
-    setShowProfileMenu,
-    setSelectedTemplate,
-    setMessage,
-    setShowAISuggestion,
-    toggleDarkMode,
-    logout,
-    selectChat,
-  } = useAppState();
-
-  // Apply dark mode to document
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  // Close profile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowProfileMenu(false);
-    };
-
-    if (showProfileMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showProfileMenu, setShowProfileMenu]);
+const AppLayout: React.FC = () => {
+  const { darkMode, toggleDarkMode } = useTheme();
+  const { user, logout } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = React.useState(false);
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-      {isAuthenticated && (
-        <GlobalNavbar
-          darkMode={darkMode}
-          showProfileMenu={showProfileMenu}
-          currentUser={currentUser}
-          toggleDarkMode={toggleDarkMode}
-          setShowProfileMenu={setShowProfileMenu}
-          logout={logout}
-        />
-      )}
-
+      <GlobalNavbar
+        darkMode={darkMode}
+        showProfileMenu={showProfileMenu}
+        currentUser={user ? { email: user.email || '', ...user.user_metadata } : null}
+        toggleDarkMode={toggleDarkMode}
+        setShowProfileMenu={setShowProfileMenu}
+        logout={logout}
+      />
       <div className="flex-1 overflow-y-auto">
-        <Routes>
-          <Route
-            path="/auth"
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />
-            }
-          />
-          <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
-          <Route
-            path="/dashboard"
-            element={
-              isAuthenticated ? <DashboardPage darkMode={darkMode} /> : <Navigate to="/auth" />
-            }
-          />
-          <Route
-            path="/chats"
-            element={
-              isAuthenticated ? (
-                <ChatsPage
-                  darkMode={darkMode}
-                  chats={chats}
-                  templates={templates}
-                  selectedChat={selectedChat}
-                  selectedTemplate={selectedTemplate}
-                  message={message}
-                  showAISuggestion={showAISuggestion}
-                  selectChat={selectChat}
-                  setSelectedTemplate={setSelectedTemplate}
-                  setMessage={setMessage}
-                  setShowAISuggestion={setShowAISuggestion}
-                />
-              ) : (
-                <Navigate to="/auth" />
-              )
-            }
-          />
-          <Route
-            path="/leads"
-            element={isAuthenticated ? <LeadsPage darkMode={darkMode} /> : <Navigate to="/auth" />}
-          />
-          <Route
-            path="/templates"
-            element={
-              isAuthenticated ? <TemplatesPage darkMode={darkMode} /> : <Navigate to="/auth" />
-            }
-          />
-          <Route
-            path="/calendar"
-            element={
-              isAuthenticated ? <CalendarPage darkMode={darkMode} /> : <Navigate to="/auth" />
-            }
-          />
-          <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/auth'} />} />
-        </Routes>
+        <Outlet />
       </div>
     </div>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { darkMode } = useTheme();
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Routes>
+      <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<DashboardPage darkMode={darkMode} />} />
+          <Route path="/chats" element={<ChatsPage darkMode={darkMode} />} />
+          <Route path="/leads" element={<LeadsPage darkMode={darkMode} />} />
+          <Route path="/templates" element={<TemplatesPage darkMode={darkMode} />} />
+          <Route path="/calendar" element={<CalendarPage darkMode={darkMode} />} />
+        </Route>
+      </Route>
+
+      <Route path="/" element={<Navigate to={isAuthenticated ? '/dashboard' : '/auth'} />} />
+    </Routes>
   );
 };
 

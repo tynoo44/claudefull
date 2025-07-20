@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, MessageCircle, Trash2, Clock, Hash, User, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Lead, LeadStatus, LeadProcedence, SupabaseService } from '../../lib/supabase';
+import { Lead, LeadStatus, LeadProcedence, updateLead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
 import { createConversationForLead } from '../../lib/supabase-functions';
 
@@ -60,7 +60,7 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
   const handleStatusChange = async (newStatus: LeadStatus) => {
     setIsUpdating(true);
     try {
-      const updatedLead = await SupabaseService.updateLead(lead.id, { status: newStatus });
+      const updatedLead = await updateLead(lead.id, { status: newStatus });
       onUpdateLead?.(updatedLead);
       setShowStatusDropdown(false);
     } catch (error) {
@@ -73,7 +73,7 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
   const handleProcedenceChange = async (newProcedence: LeadProcedence) => {
     setIsUpdating(true);
     try {
-      const updatedLead = await SupabaseService.updateLead(lead.id, { procedence: newProcedence });
+      const updatedLead = await updateLead(lead.id, { procedence: newProcedence });
       onUpdateLead?.(updatedLead);
       setShowProcedenceDropdown(false);
     } catch (error) {

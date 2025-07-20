@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Activity } from 'lucide-react';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useDashboardStatsQuery } from '@/hooks/useDashboardStatsQuery';
+import { useLeadsQuery } from '@/hooks/useLeadsQuery';
 import { LeadStatus, LeadProcedence } from '@/types';
 import { DashboardStats } from '../components/Dashboard/DashboardStats';
 import { StatusChart } from '../components/Dashboard/StatusChart';
@@ -12,92 +13,44 @@ interface DashboardPageProps {
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ darkMode }) => {
-  const { dashboardStats, leads } = useSupabaseData();
+  const { data: dashboardStats, isLoading: statsLoading } = useDashboardStatsQuery();
+  const { data: leadsData, isLoading: leadsLoading } = useLeadsQuery();
 
-  const totalLeads = dashboardStats.totalLeads;
-  const totalChats = dashboardStats.activeConversations;
+  const allLeads = useMemo(() => leadsData?.pages.flatMap(page => page.data) || [], [leadsData]);
 
-  // Calculate status distribution
+  const totalLeads = dashboardStats?.totalLeads || 0;
+  const totalChats = dashboardStats?.activeConversations || 0;
+
   const statusCounts = useMemo(() => {
     const counts: Record<LeadStatus, number> = {
-      Open: 0,
-      'Conectar y Cualificar': 0,
-      'Situación Actual': 0,
-      'Situación Deseada': 0,
-      Obstáculo: 0,
-      Compromiso: 0,
-      Oferta: 0,
-      Agenda: 0,
-      'Follow Up': 0,
-      Freeze: 0,
-      Lose: 0,
+      Open: 0, 'Conectar y Cualificar': 0, 'Situación Actual': 0, 'Situación Deseada': 0,
+      Obstáculo: 0, Compromiso: 0, Oferta: 0, Agenda: 0, 'Follow Up': 0, Freeze: 0, Lose: 0,
     };
-
-    leads.forEach(lead => {
-      if (lead.status && lead.status in counts) {
-        counts[lead.status]++;
+    allLeads.forEach(lead => {
+      if (lead && lead.status && lead.status in counts) {
+        counts[lead.status as LeadStatus]++;
       }
     });
-
     return counts;
-  }, [leads]);
+  }, [allLeads]);
 
-  // Calculate procedence distribution
   const procedenceCounts = useMemo(() => {
-    const counts: Record<LeadProcedence, number> = {
-      Outbound: 0,
-      Inbound: 0,
-      CTA: 0,
-      Spam: 0,
-    };
-
-    leads.forEach(lead => {
-      if (lead.procedence && lead.procedence in counts) {
-        counts[lead.procedence]++;
+    const counts: Record<LeadProcedence, number> = { Outbound: 0, Inbound: 0, CTA: 0, Spam: 0 };
+    allLeads.forEach(lead => {
+      if (lead && lead.procedence && lead.procedence in counts) {
+        counts[lead.procedence as LeadProcedence]++;
       }
     });
-
     return counts;
-  }, [leads]);
+  }, [allLeads]);
 
-  // Generate mock activities
   const activities = useMemo(() => {
     return [
-      {
-        id: '1',
-        type: 'chat' as const,
-        title: 'Nueva conversación iniciada',
-        description: 'Conversación con lead de Instagram',
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '2',
-        type: 'status_change' as const,
-        title: 'Estado actualizado',
-        description: 'Lead movido a "Agenda"',
-        timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '3',
-        type: 'lead' as const,
-        title: 'Nuevo lead creado',
-        description: 'Lead importado desde campaña CTA',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '4',
-        type: 'appointment' as const,
-        title: 'Cita programada',
-        description: 'Reunión para mañana a las 10:00',
-        timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-      },
-      {
-        id: '5',
-        type: 'chat' as const,
-        title: 'Mensaje enviado',
-        description: 'Template de seguimiento enviado',
-        timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-      },
+      { id: '1', type: 'chat' as const, title: 'Nueva conversación iniciada', description: 'Conversación con lead de Instagram', timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
+      { id: '2', type: 'status_change' as const, title: 'Estado actualizado', description: 'Lead movido a "Agenda"', timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString() },
+      { id: '3', type: 'lead' as const, title: 'Nuevo lead creado', description: 'Lead importado desde campaña CTA', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+      { id: '4', type: 'appointment' as const, title: 'Cita programada', description: 'Reunión para mañana a las 10:00', timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString() },
+      { id: '5', type: 'chat' as const, title: 'Mensaje enviado', description: 'Template de seguimiento enviado', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
     ];
   }, []);
 
@@ -112,45 +65,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ darkMode }) => {
     yesterdayChats: Math.floor(totalChats * 0.12),
   };
 
+  if (statsLoading || leadsLoading) {
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`min-h-screen transition-colors p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
-    >
-      {/* Header */}
+    <div className={`min-h-screen transition-colors p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div
-            className={`p-3 rounded-xl bg-gradient-to-br ${
-              darkMode ? 'from-blue-500/20 to-purple-600/20' : 'from-blue-500/10 to-purple-600/10'
-            }`}
-          >
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${darkMode ? 'from-blue-500/20 to-purple-600/20' : 'from-blue-500/10 to-purple-600/10'}`}>
             <Activity className={`h-6 w-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
           <div>
-            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              Dashboard
-            </h1>
-            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Resumen de tu actividad y rendimiento
-            </p>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Resumen de tu actividad y rendimiento</p>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
       <DashboardStats darkMode={darkMode} stats={stats} />
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <StatusChart darkMode={darkMode} statusCounts={statusCounts} totalLeads={totalLeads} />
-        <ProcedenceChart
-          darkMode={darkMode}
-          procedenceCounts={procedenceCounts}
-          totalLeads={totalLeads}
-        />
+        <ProcedenceChart darkMode={darkMode} procedenceCounts={procedenceCounts} totalLeads={totalLeads} />
       </div>
 
-      {/* Activity Feed */}
       <ActivityFeed darkMode={darkMode} activities={activities} />
     </div>
   );

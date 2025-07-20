@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Chat, Template } from '@/types';
 import { Message } from '../../lib/supabase';
 import {
-  getMessagesForConversation,
   sendMessageToConversation,
-  subscribeToMessages,
 } from '../../lib/supabase-functions';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
@@ -16,6 +14,12 @@ interface ChatInterfaceProps {
   darkMode: boolean;
   selectedChat: Chat | null;
   message: string;
+  messages: Message[];
+  messagesLoading: boolean;
+  hasMoreMessages?: boolean;
+  isFetchingMoreMessages?: boolean;
+  onLoadMoreMessages?: () => void;
+  totalMessages?: number;
   showAISuggestion: boolean;
   onMessageChange: (message: string) => void;
   onToggleAISuggestion: () => void;
@@ -27,53 +31,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   darkMode,
   selectedChat,
   message,
+  messages: messagesProp,
+  messagesLoading,
+  hasMoreMessages,
+  isFetchingMoreMessages,
+  onLoadMoreMessages,
+  totalMessages: _totalMessages,
   showAISuggestion,
   onMessageChange,
   onToggleAISuggestion,
   onTemplateInsert: _onTemplateInsert,
   onChatUpdate,
 }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
+  const messages = messagesProp || [];
+  const loading = messagesLoading;
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
-  // Cargar mensajes cuando se selecciona un chat
-  useEffect(() => {
-    if (!selectedChat) {
-      setMessages([]);
-      return;
-    }
-
-    let unsubscribe: (() => void) | undefined;
-
-    const loadMessages = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const loadedMessages = await getMessagesForConversation(selectedChat.id);
-        setMessages(loadedMessages);
-
-        // Suscribirse a nuevos mensajes en tiempo real
-        unsubscribe = subscribeToMessages(selectedChat.id, newMessage => {
-          setMessages(prev => [...prev, newMessage]);
-        });
-      } catch (err) {
-        console.error('Error loading messages:', err);
-        setError('Error al cargar los mensajes. Por favor, intenta de nuevo.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMessages();
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [selectedChat]);
+  // Message loading is now handled by parent component with useMessagesPagination
 
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedChat || sending) return;
@@ -129,7 +104,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       ) : (
         <>
-          <MessageList darkMode={darkMode} messages={messages} loading={loading} />
+          <MessageList 
+            darkMode={darkMode} 
+            messages={messages} 
+            loading={loading}
+            hasMoreMessages={hasMoreMessages}
+            isFetchingMoreMessages={isFetchingMoreMessages}
+            onLoadMoreMessages={onLoadMoreMessages}
+          />
 
           <MessageInput
             darkMode={darkMode}

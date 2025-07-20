@@ -1,79 +1,46 @@
 import { supabase } from './supabase';
+import { ConversationWithLastMessage } from '../types';
 
 // Funciones mejoradas para la gestión de chats con manejo de errores robusto
 
 export async function getConversationsWithDetails() {
   try {
-    // Primero obtenemos todas las conversaciones con sus leads
-    const { data: conversations, error: convError } = await supabase
-      .from('conversations')
-      .select(
-        `
-        *,
-        leads!inner (
-          id,
-          username,
-          full_name,
-          profile_pic,
-          status,
-          tags,
-          notes,
-          followers_count
-        )
-      `,
-      )
-      .order('updated_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_conversations_with_details_rpc');
 
-    if (convError) {
-      console.error('Error fetching conversations:', convError);
-      throw new Error(`Error al cargar conversaciones: ${convError.message}`);
+    if (error) {
+      console.error('Error fetching conversations with RPC:', error);
+      throw new Error(`Error al cargar conversaciones: ${error.message}`);
     }
 
-    if (!conversations || conversations.length === 0) {
+    if (!data) {
       return [];
     }
 
-    // Obtener el último mensaje de cada conversación
-    const conversationsWithMessages = await Promise.all(
-      conversations.map(async conv => {
-        try {
-          const { data: messages, error: msgError } = await supabase
-            .from('messages')
-            .select('id, text, created_at, sender_type')
-            .eq('conversation_id', conv.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
+    // El RPC ya nos devuelve los datos con el último mensaje.
+    // Ahora solo necesitamos añadir el conteo de no leídos.
+    const conversationsWithUnreadCount = await Promise.all(
+      (data as ConversationWithLastMessage[]).map(async conv => {
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: unreadCount } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id)
+          .eq('sender_type', 'Lead')
+          .gte('created_at', twentyFourHoursAgo);
 
-          if (msgError) {
-            console.error(`Error fetching messages for conversation ${conv.id}:`, msgError);
-          }
-
-          // Contar mensajes sin leer (últimas 24 horas y tipo Lead)
-          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-          const { count: unreadCount } = await supabase
-            .from('messages')
-            .select('id', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .eq('sender_type', 'Lead')
-            .gte('created_at', twentyFourHoursAgo);
-
-          return {
-            ...conv,
-            lastMessage: messages?.[0] || null,
-            unreadCount: unreadCount || 0,
-          };
-        } catch (error) {
-          console.error(`Error processing conversation ${conv.id}:`, error);
-          return {
-            ...conv,
-            lastMessage: null,
-            unreadCount: 0,
-          };
-        }
+        return {
+          ...conv,
+          lastMessage: {
+            text: conv.last_message_text,
+            created_at: conv.last_message_created_at,
+            sender_type: conv.last_message_sender_type,
+          },
+          unreadCount: unreadCount || 0,
+        };
       }),
     );
 
-    return conversationsWithMessages;
+    return conversationsWithUnreadCount;
   } catch (error) {
     console.error('Error in getConversationsWithDetails:', error);
     throw error;

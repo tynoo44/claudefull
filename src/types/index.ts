@@ -120,6 +120,38 @@ export interface ConversationWithLead {
   unreadCount: number;
 }
 
+export interface Conversation {
+  id: string;
+  lead_id: string;
+  opened_at: string;
+  updated_at: string;
+  
+  // Merged from conversation_memory
+  current_phase: number;
+  qualification_score: {
+    score: number;
+    breakdown?: {
+      phase_score: number;
+      engagement_score: number;
+      info_completeness: number;
+    };
+  };
+  conversation_state: Record<string, any>; // JSONB
+  phase_history: Record<string, any>[]; // JSONB
+  phase_info: Record<string, any>; // JSONB
+  lead_profile: Record<string, any>; // JSONB
+  conversation_summary: string;
+  next_steps: string[];
+  last_analysis_timestamp: string;
+
+  // Optional fields from RPCs/joins
+  last_message_text?: string | null;
+  last_message_created_at?: string | null;
+  last_message_sender_type?: 'Lead' | 'Setter' | null;
+  leads?: Lead; // From joins
+  unreadCount?: number;
+}
+
 export interface MessageTemplate {
   id: string;
   name: string;
@@ -134,3 +166,24 @@ export interface MessageTemplate {
   updated_at: string;
   last_used?: string;
 }
+
+export type ConversationWithLastMessage = {
+  id: string;
+  lead_id: string;
+  opened_at: string;
+  updated_at: string;
+  last_message_text: string | null;
+  last_message_created_at: string | null;
+  last_message_sender_type: 'Lead' | 'Setter' | null;
+  leads: {
+    id: string;
+    username: string;
+    full_name: string | null;
+    profile_pic: string | null;
+    status: string;
+    tags: string[];
+    notes: string | null;
+    followers_count: number | null;
+  };
+  unreadCount?: number;
+};

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Hash } from 'lucide-react';
 import { Chat } from '@/types';
 import { LeadInfoModal } from './LeadInfoModal';
-import { SupabaseService } from '../../lib/supabase';
+import { updateLead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
 import { LeadStatus, LeadProcedence } from '../../types';
 
@@ -45,7 +45,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat, 
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     try {
-      await SupabaseService.updateLead(selectedChat.leadId, { status: newStatus });
+      await updateLead(selectedChat.leadId, { status: newStatus });
 
       if (onChatUpdate) {
         onChatUpdate({
@@ -63,7 +63,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat, 
 
   const handleProcedenceChange = async (newProcedence: LeadProcedence) => {
     try {
-      await SupabaseService.updateLead(selectedChat.leadId, { procedence: newProcedence });
+      await updateLead(selectedChat.leadId, { procedence: newProcedence });
 
       if (onChatUpdate) {
         onChatUpdate({

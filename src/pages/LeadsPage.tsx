@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { SupabaseService, Lead } from '../lib/supabase';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLeadsQuery } from '../hooks/useLeadsQuery';
+import { Lead, createLead, updateLead, deleteLead } from '../lib/supabase';
 import { LeadsHeader } from '../components/Leads/LeadsHeader';
 import { LeadsKanban } from '../components/Leads/LeadsKanban';
 import { LeadsList } from '../components/Leads/LeadsList';
@@ -10,8 +12,15 @@ interface LeadsPageProps {
 }
 
 export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useLeadsQuery();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -20,21 +29,6 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-
-  useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        const leadsData = await SupabaseService.getLeads();
-        setLeads(leadsData);
-      } catch (error) {
-        console.error('Error fetching leads:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeads();
-  }, []);
 
   const handleAddLead = async (formData: any) => {
     try {
@@ -51,8 +45,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         procedence: formData.procedence || null,
       };
 
-      const createdLead = await SupabaseService.createLead(leadData);
-      setLeads(prev => [createdLead, ...prev]);
+      await createLead(leadData);
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
       setShowModal(false);
     } catch (error) {
       console.error('Error creating lead:', error);
@@ -72,8 +66,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         procedence: formData.procedence || null,
       };
 
-      const updatedLead = await SupabaseService.updateLead(editingLead.id, leadData);
-      setLeads(prev => prev.map(lead => (lead.id === editingLead.id ? updatedLead : lead)));
+      await updateLead(editingLead.id, leadData);
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
       setShowModal(false);
       setEditingLead(null);
     } catch (error) {
@@ -86,8 +80,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este lead?')) return;
 
     try {
-      await SupabaseService.deleteLead(leadId);
-      setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      await deleteLead(leadId);
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
     } catch (error) {
       console.error('Error deleting lead:', error);
       alert('Error al eliminar el lead');
@@ -105,7 +99,10 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     setSelectedProcedence('all');
   };
 
-  const filteredLeads = leads.filter(lead => {
+  const allLeads = data?.pages.flatMap(page => page.data) || [];
+
+  const filteredLeads = allLeads.filter(lead => {
+    if (!lead) return false;
     const matchesSearch =
       lead.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (lead.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
@@ -118,9 +115,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     return matchesSearch && matchesTags && matchesStatus && matchesProcedence;
   });
 
-  const allTags = [...new Set(leads.flatMap(lead => lead.tags))];
+  const allTags = [...new Set(allLeads.flatMap(lead => lead?.tags || []))];
 
-  if (loading) {
+  if (status === 'pending') {
     return (
       <div
         className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
@@ -164,11 +161,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
             <LeadsKanban
               darkMode={darkMode}
               leads={filteredLeads}
-              onLeadUpdate={updatedLead => {
-                setLeads(prev =>
-                  prev.map(lead => (lead.id === updatedLead.id ? updatedLead : lead)),
-                );
-              }}
+              onLeadUpdate={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
             />
           ) : (
             <div className="p-6 h-full overflow-auto">
@@ -180,15 +173,22 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                   setShowModal(true);
                 }}
                 onDeleteLead={handleDeleteLead}
-                onUpdateLead={updatedLead => {
-                  setLeads(prev =>
-                    prev.map(lead => (lead.id === updatedLead.id ? updatedLead : lead)),
-                  );
-                }}
+                onUpdateLead={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
               />
-            </div>
-          )}
-        </div>
+                {hasNextPage && (
+                  <div className="text-center mt-4">
+                    <button
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                    >
+                      {isFetchingNextPage ? 'Cargando...' : 'Cargar más'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
         <LeadModal
           darkMode={darkMode}

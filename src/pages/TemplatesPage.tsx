@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { TemplatesHeader, SortOption } from '../components/Templates/TemplatesHeader';
 import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
-import { useTemplates } from '../hooks/useTemplates';
-import { MessageTemplate } from '../lib/supabase';
+import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
+import { useQueryClient } from '@tanstack/react-query';
+import { MessageTemplate, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate } from '../lib/supabase';
 import { Template } from '../types';
 
 interface TemplatesPageProps {
@@ -20,12 +21,15 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [isCreateMode, setIsCreateMode] = useState(false);
 
-  const { templates, loading, saveTemplate, deleteTemplate, toggleFavorite } = useTemplates();
+  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useTemplatesQuery();
+  const queryClient = useQueryClient();
 
   const categories = [
     'all',
-    ...new Set(templates.map(t => t.category).filter(Boolean) as string[]),
+    ...new Set((data?.pages.flatMap(page => page.data) || []).map(t => t.category).filter(Boolean) as string[]),
   ];
+
+  const allTemplates = data?.pages.flatMap(page => page.data) || [];
 
   const sortTemplates = (templates: MessageTemplate[]) => {
     return [...templates].sort((a, b) => {
@@ -47,7 +51,8 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   };
 
   const filteredTemplates = sortTemplates(
-    templates.filter(template => {
+    allTemplates.filter(template => {
+      if (!template) return false;
       const matchesSearch =
         template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         template.content.toLowerCase().includes(searchTerm.toLowerCase());
@@ -101,22 +106,20 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
 
   const handleTemplateSave = async (template: Template) => {
     const messageTemplate = convertToMessageTemplate(template);
-    const success = await saveTemplate(
-      messageTemplate as any,
-      !isCreateMode,
-      isCreateMode ? undefined : template.id,
-    );
-    if (success) {
-      handleModalClose();
+    if (isCreateMode) {
+      await createMessageTemplate(messageTemplate as any);
+    } else {
+      await updateMessageTemplate(template.id, messageTemplate);
     }
-    return success;
+    queryClient.invalidateQueries({ queryKey: ['templates'] });
+    handleModalClose();
+    return true;
   };
 
   const handleTemplateDelete = async (template: Template) => {
-    const success = await deleteTemplate(template.id);
-    if (success) {
-      handleModalClose();
-    }
+    await deleteMessageTemplate(template.id);
+    queryClient.invalidateQueries({ queryKey: ['templates'] });
+    handleModalClose();
   };
 
   const handleCopyTemplate = async (template: Template) => {
@@ -128,10 +131,11 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   };
 
   const handleToggleFavorite = async (template: Template) => {
-    await toggleFavorite(template.id, !template.isFavorite);
+    await updateMessageTemplate(template.id, { is_favorite: !template.isFavorite });
+    queryClient.invalidateQueries({ queryKey: ['templates'] });
   };
 
-  if (loading) {
+  if (status === 'pending') {
     return (
       <div className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="flex items-center justify-center h-64">
@@ -188,17 +192,30 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map(template => (
-              <TemplateCard
-                key={template.id}
-                template={convertToTemplate(template)}
-                darkMode={darkMode}
-                onClick={() => handleTemplateClick(template)}
-                onCopy={handleCopyTemplate}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates.map(template => (
+                <TemplateCard
+                  key={template.id}
+                  template={convertToTemplate(template)}
+                  darkMode={darkMode}
+                  onClick={() => handleTemplateClick(template)}
+                  onCopy={handleCopyTemplate}
+                />
+              ))}
+            </div>
+            {hasNextPage && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? 'Cargando...' : 'Cargar más plantillas'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

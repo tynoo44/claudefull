@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Chat, Template } from '@/types';
-import { SupabaseService } from '../lib/supabase';
-import { useSupabaseData } from '../hooks/useSupabaseData';
-import { useConversationMessages } from '../hooks/useConversationMessages';
+import { incrementTemplateUsage, updateMessageTemplate } from '../lib/supabase';
+import { useConversationsQuery } from '../hooks/useConversationsQuery';
+import { useMessagesPagination } from '../hooks/useMessagesPagination';
+import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
 import { ChatSidebar } from '../components/Chat/ChatSidebar';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { ChatTemplatesView } from '../components/Chat/ChatTemplatesView';
@@ -13,95 +15,79 @@ import { ErrorState } from '../components/Chat/ErrorState';
 
 interface ChatsPageProps {
   darkMode: boolean;
-  chats: Chat[];
-  templates: Template[];
-  selectedChat: Chat | null;
-  selectedTemplate: Template | null;
-  message: string;
-  showAISuggestion: boolean;
-  selectChat: (chat: Chat) => void;
-  setSelectedTemplate: (template: Template | null) => void;
-  setMessage: (message: string) => void;
-  setShowAISuggestion: (show: boolean) => void;
 }
 
-export const ChatsPage: React.FC<ChatsPageProps> = ({
-  darkMode,
-  chats: _propsChats,
-  templates: _propsTemplates,
-  selectedChat,
-  message,
-  showAISuggestion,
-  selectChat,
-  setSelectedTemplate,
-  setMessage,
-  setShowAISuggestion,
-}) => {
+export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(522);
-  const [localSelectedChat, setLocalSelectedChat] = useState(selectedChat);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [message, setMessage] = useState('');
+  const [showAISuggestion, setShowAISuggestion] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
   const location = useLocation();
   const [pendingChatId, setPendingChatId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Load messages for current conversation
-  const { messages } = useConversationMessages(localSelectedChat?.id || selectedChat?.id || null);
+  const { data: conversationsData, error: conversationsError } = useConversationsQuery();
+  const { data: templatesData, error: templatesError } = useTemplatesQuery();
+  const { 
+    messages, 
+    error: messagesError, 
+    isLoading: messagesLoading,
+    hasMore: hasMoreMessages,
+    isFetchingNextPage: isFetchingMoreMessages,
+    loadMoreMessages,
+    totalCount: totalMessages
+  } = useMessagesPagination(selectedChat?.id || null);
 
-  // Handle navigation state from leads page
+  const allTemplates = templatesData?.pages.flatMap(page => page.data) || [];
+
   useEffect(() => {
     const state = location.state as { selectedChatId?: string } | null;
     if (state?.selectedChatId) {
       setPendingChatId(state.selectedChatId);
-      // Clear the state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
   }, [location]);
 
-  // Usar datos reales de Supabase solo para templates (chats ahora se cargan progresivamente)
-  const { templatesFormatted, error: dataError, fetchAllData } = useSupabaseData();
-
   const insertTemplate = async (template: Template) => {
     setMessage(template.content);
     setSelectedTemplate(template);
-
     try {
-      await SupabaseService.incrementTemplateUsage(template.id);
+      await incrementTemplateUsage(template.id);
     } catch (error) {
       console.error('Error incrementing template usage:', error);
     }
   };
 
   const handleTemplateDelete = (template: Template) => {
-    // TODO: Implement template deletion in chat context
     console.log('Delete template:', template);
   };
 
   const handleToggleFavorite = async (template: Template) => {
     try {
-      await SupabaseService.updateMessageTemplate(template.id, {
-        is_favorite: !template.isFavorite,
-      });
-      // Refetch data to update UI
-      fetchAllData();
+      await updateMessageTemplate(template.id, { is_favorite: !template.isFavorite });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
   };
 
   const handleChatSelect = (chat: Chat) => {
-    selectChat(chat);
-    setLocalSelectedChat(chat);
+    setSelectedChat(chat);
   };
 
-  const handleChatUpdate = async (updatedChat: Chat) => {
-    setLocalSelectedChat(updatedChat);
-    // El ChatSidebar ahora maneja sus propias actualizaciones
+  const handleChatUpdate = (updatedChat: Chat) => {
+    setSelectedChat(updatedChat);
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
   };
 
-  // Mostrar error solo si hay problemas críticos con plantillas
-  if (dataError && !templatesFormatted.length) {
+  const error = conversationsError || templatesError || messagesError;
+  if (error) {
     return (
       <div className={`h-screen pt-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <ErrorState darkMode={darkMode} error={dataError} onRetry={fetchAllData} />
+        <ErrorState darkMode={darkMode} error={error.message} onRetry={() => queryClient.invalidateQueries()} />
       </div>
     );
   }
@@ -114,7 +100,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
           sidebarCollapsed={sidebarCollapsed}
           onSidebarWidthChange={setSidebarWidth}
         >
-          {/* Chat List */}
           <ChatSidebar
             darkMode={darkMode}
             selectedChat={selectedChat}
@@ -125,11 +110,16 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             onPendingChatLoaded={() => setPendingChatId(null)}
           />
 
-          {/* Chat Window */}
           <ChatInterface
             darkMode={darkMode}
-            selectedChat={localSelectedChat || selectedChat}
+            selectedChat={selectedChat}
             message={message}
+            messages={messages}
+            messagesLoading={messagesLoading}
+            hasMoreMessages={hasMoreMessages}
+            isFetchingMoreMessages={isFetchingMoreMessages}
+            onLoadMoreMessages={loadMoreMessages}
+            totalMessages={totalMessages}
             showAISuggestion={showAISuggestion}
             onMessageChange={setMessage}
             onToggleAISuggestion={() => setShowAISuggestion(!showAISuggestion)}
@@ -137,31 +127,29 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({
             onChatUpdate={handleChatUpdate}
           />
 
-          {/* Templates */}
           <ChatTemplatesView
             darkMode={darkMode}
-            templates={templatesFormatted}
+            templates={allTemplates.map(t => ({...t, uses: t.usage_count || 0, conversionRate: t.conversion_rate || 0, isFavorite: t.is_favorite || false}))}
             onTemplateInsert={insertTemplate}
             onTemplateDelete={handleTemplateDelete}
             onToggleFavorite={handleToggleFavorite}
           />
 
-          {/* AI Chat */}
           <AIChatSidebar
             darkMode={darkMode}
             conversationContext={
               selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined
             }
             currentConversation={
-              localSelectedChat || selectedChat
+              selectedChat
                 ? {
-                    ...(localSelectedChat || selectedChat),
-                    messages: messages,
+                    ...selectedChat,
+                    messages: messages || [],
                   }
                 : null
             }
-            conversationId={localSelectedChat?.id || selectedChat?.id}
-            leadId={localSelectedChat?.leadId || selectedChat?.leadId}
+            conversationId={selectedChat?.id}
+            leadId={selectedChat?.leadId}
           />
         </ResizableLayout>
       </div>

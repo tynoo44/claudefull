@@ -63,7 +63,7 @@ export const useConversationPagination = () => {
     }
   }, []);
 
-  // Cargar página específica de conversaciones con todos los detalles
+  // Cargar página específica de conversaciones con todos los detalles usando RPC optimizado
   const loadConversationPage = useCallback(
     async (page: number, existingIds = new Set<string>()) => {
       try {
@@ -72,26 +72,9 @@ export const useConversationPagination = () => {
 
         const offset = page * CONVERSATIONS_PER_PAGE;
 
-        // Obtener conversaciones con leads
+        // Usar el RPC optimizado que incluye todos los datos en una sola query
         const { data: conversationsData, error: convError } = await supabase
-          .from('conversations')
-          .select(
-            `
-          *,
-          leads!left (
-            id,
-            username,
-            full_name,
-            profile_pic,
-            status,
-            procedence,
-            tags,
-            notes,
-            followers_count
-          )
-        `,
-          )
-          .order('updated_at', { ascending: false })
+          .rpc('get_conversations_with_details_optimized')
           .range(offset, offset + CONVERSATIONS_PER_PAGE - 1);
 
         if (convError) throw convError;
@@ -102,74 +85,48 @@ export const useConversationPagination = () => {
         }
 
         // Filtrar conversaciones ya cargadas
-        const newConversations = conversationsData.filter(conv => !existingIds.has(conv.id));
+        const newConversations = conversationsData.filter((conv: any) => !existingIds.has(conv.id));
 
-        // Cargar últimos mensajes y conteo de no leídos en paralelo
-        const conversationsWithDetails = await Promise.all(
-          newConversations.map(async conv => {
-            try {
-              const [lastMessageResult, unreadCountResult, lastUserMessageResult] =
-                await Promise.all([
-                  // Último mensaje
-                  supabase
-                    .from('messages')
-                    .select('id, text, created_at, sender_type')
-                    .eq('conversation_id', conv.id)
-                    .order('created_at', { ascending: false })
-                    .limit(1),
+        // Transformar datos del RPC al formato esperado
+        const conversationsWithDetails = newConversations.map((conv: any) => {
+          // Verificar si hay mensajes sin responder
+          let hasUnansweredMessages = false;
+          if (conv.last_message_sender_type === 'Lead' && conv.unread_count > 0) {
+            hasUnansweredMessages = true;
+          }
 
-                  // Mensajes no leídos (últimas 24 horas de leads)
-                  supabase
-                    .from('messages')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('conversation_id', conv.id)
-                    .eq('sender_type', 'Lead')
-                    .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
-
-                  // Último mensaje del usuario (Setter)
-                  supabase
-                    .from('messages')
-                    .select('id, created_at')
-                    .eq('conversation_id', conv.id)
-                    .eq('sender_type', 'Setter')
-                    .order('created_at', { ascending: false })
-                    .limit(1),
-                ]);
-
-              const lastMessage = lastMessageResult.data?.[0] || null;
-              const lastUserMessage = lastUserMessageResult.data?.[0] || null;
-
-              // Check if there are unanswered messages
-              let hasUnansweredMessages = false;
-              if (lastMessage && lastMessage.sender_type === 'Lead') {
-                if (
-                  !lastUserMessage ||
-                  new Date(lastMessage.created_at) > new Date(lastUserMessage.created_at)
-                ) {
-                  hasUnansweredMessages = true;
-                }
-              }
-
-              return {
-                ...conv,
-                lastMessage,
-                unreadCount: unreadCountResult.count || 0,
-                hasUnansweredMessages,
-              };
-            } catch (error) {
-              console.error(`Error loading details for conversation ${conv.id}:`, error);
-              return {
-                ...conv,
-                lastMessage: null,
-                unreadCount: 0,
-                hasUnansweredMessages: false,
-              };
-            }
-          }),
-        );
+          return {
+            id: conv.id,
+            lead_id: conv.lead_id,
+            opened_at: conv.opened_at,
+            updated_at: conv.updated_at,
+            current_phase: conv.current_phase,
+            qualification_score: conv.qualification_score,
+            leads: {
+              id: conv.lead_id,
+              username: conv.lead_username,
+              full_name: conv.lead_full_name,
+              profile_pic: conv.lead_profile_pic,
+              status: conv.lead_status,
+              instagram_id: conv.lead_instagram_id,
+              procedence: conv.lead_procedence,
+              tags: conv.lead_tags || [],
+              notes: conv.lead_notes,
+              followers_count: conv.lead_followers_count,
+            },
+            lastMessage: conv.last_message_text ? {
+              id: 'temp-' + conv.id, // RPC doesn't return message ID
+              text: conv.last_message_text,
+              created_at: conv.last_message_created_at,
+              sender_type: conv.last_message_sender_type,
+            } : null,
+            unreadCount: conv.unread_count || 0,
+            hasUnansweredMessages,
+          };
+        });
 
         // Actualizar IDs cargados
-        conversationsWithDetails.forEach(conv => loadedConversationIds.current.add(conv.id));
+        conversationsWithDetails.forEach((conv: any) => loadedConversationIds.current.add(conv.id));
 
         // Verificar si hay más páginas
         if (conversationsData.length < CONVERSATIONS_PER_PAGE) {

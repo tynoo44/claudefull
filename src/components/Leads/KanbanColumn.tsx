@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDrop, DropTargetMonitor } from 'react-dnd';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Lead, LeadStatus, SupabaseService } from '../../lib/supabase';
+import { Lead, LeadStatus, updateLead } from '../../lib/supabase';
 import { KanbanCard } from './KanbanCard';
 
 interface KanbanColumnProps {
@@ -40,7 +40,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       if (item.lead.status !== status) {
         try {
           setIsDropping(true);
-          const updatedLead = await SupabaseService.updateLead(item.lead.id, { status });
+          const updatedLead = await updateLead(item.lead.id, { status });
           onLeadUpdate(updatedLead);
         } catch (error) {
           console.error('Error updating lead status:', error);

@@ -10,8 +10,7 @@ import {
   FileText,
   ChevronDown,
 } from 'lucide-react';
-import { Lead, LeadStatus, LeadProcedence } from '../../lib/supabase';
-import { SupabaseService } from '../../lib/supabase';
+import { Lead, LeadStatus, LeadProcedence, updateLead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
 
 interface LeadInfoModalProps {
@@ -91,7 +90,7 @@ export const LeadInfoModal: React.FC<LeadInfoModalProps> = ({
 
     setSaving(true);
     try {
-      const updatedLead = await SupabaseService.updateLead(editedLead.id, {
+      const updatedLead = await updateLead(editedLead.id, {
         status: editedLead.status,
         tags: editedLead.tags,
         notes: editedLead.notes,
