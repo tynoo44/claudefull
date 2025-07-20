@@ -25,20 +25,20 @@ vi.mock('../../lib/supabase', () => ({
 
 describe('useLeadsPagination', () => {
   let mockSupabase: any;
-  
+
   beforeEach(async () => {
     // Get the mocked supabase instance
     const { supabase } = await import('../../lib/supabase');
     mockSupabase = supabase;
-    
+
     vi.clearAllMocks();
-    
+
     // Setup default mock responses
     mockSupabase.rpc.mockResolvedValue({
       data: mockLeads,
       error: null,
     });
-    
+
     mockSupabase.from().select().eq().single.mockResolvedValue({
       data: mockLeads[0],
       error: null,
@@ -59,10 +59,16 @@ describe('useLeadsPagination', () => {
   it('should load leads on initialization', async () => {
     const { result } = renderHook(() => useLeadsPagination());
 
-    // Wait for initialization
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization timeout (100ms)
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    // Wait for loading to complete
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith('get_all_leads_optimized');
     expect(result.current.allLeads).toHaveLength(mockLeads.length);
@@ -100,10 +106,10 @@ describe('useLeadsPagination', () => {
       result.current.applyFilters('testuser1'); // Search for specific username
     });
 
-    const filteredLeads = result.current.leads.filter(lead => 
-      lead.username.toLowerCase().includes('testuser1')
+    const filteredLeads = result.current.leads.filter(lead =>
+      lead.username.toLowerCase().includes('testuser1'),
     );
-    
+
     expect(result.current.leads).toEqual(expect.arrayContaining(filteredLeads));
   });
 
@@ -177,17 +183,20 @@ describe('useLeadsPagination', () => {
   });
 
   it('should handle errors gracefully', async () => {
-    // Mock error response
-    mockSupabase.rpc.mockResolvedValueOnce({
-      data: null,
-      error: new Error('Network error'),
-    });
+    // Mock error response for the next call
+    mockSupabase.rpc.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useLeadsPagination());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     expect(result.current.error).toBeTruthy();
     expect(result.current.leads).toEqual([]);

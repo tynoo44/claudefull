@@ -3,6 +3,8 @@ import { APPOINTMENT_SETTING_CONTEXT } from './appointment-setting-context';
 import { promptManager, PromptComponents } from './prompt-manager';
 import { responseValidator, ValidationConfig } from './response-validator';
 import { ConversationStateManager } from './conversation-state-manager';
+import { detectIntent, getIntentRecommendations } from './intent-detector';
+import { analyzeLeadProfile, getPersonalizationRules } from './lead-personalizer';
 
 interface PhaseInfo {
   business_type?: string;
@@ -91,14 +93,30 @@ ${messages.map(msg => `${msg.role === 'user' ? 'Usuario' : 'Asistente'}: ${msg.c
   if (components.basePrompt?.content.includes('Formato de Respuesta')) {
     // Use format from database
   } else {
-    parts.push(`# FORMATO DE RESPUESTA
-- Mensajes concisos y naturales
-- Máximo 3 párrafos por mensaje
-- Un emoji profesional máximo por mensaje
-- Preguntas abiertas que inviten a compartir
-- NO uses signos de interrogación al inicio
-- NO uses signos de exclamación al inicio
-- Escribe como una persona real, no un robot`);
+    parts.push(`# FORMATO DE RESPUESTA OBLIGATORIO
+
+REGLAS ESENCIALES (DEBES CUMPLIR TODAS):
+- NUNCA uses ¿ o ¡ (la gente real no los usa en chats)
+- NO uses "comillas" a menos que sea absolutamente necesario
+- Escribe de forma INFORMAL pero profesional
+- USA lenguaje coloquial cuando sea apropiado: "bro", "jefe", "tio", "colega"
+- Puedes usar "joder" o expresiones casuales SI el lead también las usa
+- EVITA párrafos largos - máximo 2-3 líneas por mensaje
+- NO repitas el nombre del lead constantemente
+- Sé directo y al grano, sin rodeos innecesarios
+
+ADAPTACIÓN AL LEAD:
+- Si el lead es joven/informal → usa "bro", "tio", lenguaje más casual
+- Si el lead es formal/empresario → mantén respeto pero sé cercano
+- SIEMPRE adapta tu tono al del lead - espéjalo sutilmente
+
+CÓMO ESCRIBIR:
+- En vez de: "¿Cuál es tu principal problema?" 
+- Escribe: "Cuéntame, qué es lo que más te frustra ahora mismo"
+- En vez de: "¡Excelente! Me alegra mucho escuchar eso"
+- Escribe: "Genial tio, eso está muy bien"
+
+OBJETIVO: Que el lead sienta que habla con un colega experto que le puede ayudar, NO con un vendedor o un bot`);
   }
 
   return parts.join('\n\n');
@@ -125,16 +143,65 @@ export const generateAIResponse = async ({
       conversationContext,
     );
 
-    // Build the hierarchical prompt
-    const fullPrompt = buildHierarchicalPrompt(components, messages);
+    // Detectar intención y perfil del lead
+    let intentContext = '';
+    let personalizationContext = '';
 
-    // Validation configuration
+    if (messages.length > 0) {
+      const lastUserMessage = messages[messages.length - 1];
+      const userMessages = messages.filter(m => m.role === 'user').map(m => m.content);
+
+      if (lastUserMessage.role === 'user') {
+        // Análisis de intención
+        const intent = detectIntent(lastUserMessage.content);
+        const recommendations = getIntentRecommendations(intent);
+
+        // Análisis de perfil del lead
+        const leadProfile = analyzeLeadProfile(userMessages);
+        const personalizationRules = getPersonalizationRules(leadProfile);
+
+        // Contexto de intención
+        intentContext = `\n\n# ANÁLISIS DE INTENCIÓN DEL LEAD
+- Intención detectada: ${intent.primaryIntent} (confianza: ${Math.round(intent.confidence * 100)}%)
+- Tono emocional: ${intent.emotionalTone}
+- Señales de compra: ${intent.buyingSignals}/10
+- Nivel de urgencia: ${intent.urgencyLevel}/10
+${intent.objectionType ? `- Tipo de objeción: ${intent.objectionType}` : ''}
+
+RECOMENDACIONES:
+${recommendations.map((r: string) => `- ${r}`).join('\n')}`;
+
+        // Contexto de personalización
+        personalizationContext = `\n\n# PERFIL Y PERSONALIZACIÓN DEL LEAD
+- Tipo de lead: ${leadProfile.type}
+- Grupo de edad: ${leadProfile.ageGroup}
+- Estilo de comunicación: ${leadProfile.communicationStyle}
+- Nivel técnico: ${leadProfile.techSavviness}
+- Estilo de decisión: ${leadProfile.decisionMakingStyle}
+
+REGLAS DE PERSONALIZACIÓN:
+- Usa vocabulario: ${personalizationRules.vocabularyLevel}
+- Longitud de frases: ${personalizationRules.sentenceLength}
+- Usar jerga/slang: ${personalizationRules.useSlang ? 'SÍ' : 'NO'}
+- Estilo de persuasión: ${personalizationRules.persuasionStyle}
+
+EJEMPLOS DE FRASES PARA ESTE LEAD:
+${personalizationRules.examplePhrases.greeting.length > 0 ? `Saludos: ${personalizationRules.examplePhrases.greeting[0]}` : ''}
+${personalizationRules.examplePhrases.question.length > 0 ? `Preguntas: ${personalizationRules.examplePhrases.question[0]}` : ''}`;
+      }
+    }
+
+    // Build the hierarchical prompt with intent and personalization context
+    const basePrompt = buildHierarchicalPrompt(components, messages);
+    const fullPrompt = basePrompt + intentContext + personalizationContext;
+
+    // Validation configuration - Muy permisivo para respuestas naturales
     const validationConfig: ValidationConfig = {
-      minScore: 0.7,
-      keyPhraseWeight: 0.8,
+      minScore: 0.4, // Muy bajo para permitir creatividad
+      keyPhraseWeight: 0.5, // Menos énfasis en frases exactas
       strictMode: false,
-      regenerateThreshold: 0.5,
-      maxRegenerationAttempts: 2,
+      regenerateThreshold: 0.2, // Solo regenerar si es terrible
+      maxRegenerationAttempts: 1, // Evitar sobre-optimización
     };
 
     let attempts = 0;
@@ -384,12 +451,13 @@ Proporciona:
 4. **Fase actual**: En qué fase de las 5 se encuentra
 5. **Próximos pasos recomendados**: Qué debería hacer el setter ahora
 
-ESTILO DE ESCRITURA:
-- Habla de forma natural y cercana
-- NO uses signos de interrogación ni exclamación al inicio
-- Sé directo y conciso
-- Escribe como una persona real, no un robot
-- Evita párrafos largos sin valor
+ESTILO DE ESCRITURA NATURAL:
+- Olvida las formalidades - habla como hablarías con un colega
+- PROHIBIDO usar ¿ o ¡ - nadie los usa en mensajes reales
+- Evita las "comillas" innecesarias
+- Si el lead es joven, puedes usar "bro", "tio", "colega"
+- Mensajes cortos y al punto - máximo 3 líneas
+- Adapta tu nivel de informalidad al del lead
 
 Recuerda: Te diriges al setter para ayudarle, NO al lead.`;
       }
@@ -441,12 +509,12 @@ Proporciona un análisis detallado:
 💡 **RECOMENDACIÓN**:
 [Qué deberías hacer ahora como setter para avanzar]
 
-ESTILO DE ESCRITURA:
-- Habla de forma natural como un compañero de trabajo
-- NO uses signos de interrogación ni exclamación al inicio
-- Sé directo, no des rodeos
-- Escribe como una persona real ayudando a otra
-- Mantén el mensaje conciso y útil
+ESTILO DE ESCRITURA COLEGA:
+- Habla como le hablarías a un compañero de curro
+- NUNCA uses ¿ o ¡ - son de bot
+- Directo al grano, sin rollos
+- Puedes usar expresiones como "mira", "la verdad", "te digo"
+- Si ves que puedes ayudar, dilo claro: "creo que aquí te puedo echar una mano"
 
 Recuerda: Este análisis es para TI como setter, para ayudarte a entender el progreso.`;
       }
@@ -530,13 +598,14 @@ ${messages.map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content
 - **Opción 2**: [Estrategia de esta opción]
 - **Opción 3**: [Estrategia de esta opción]
 
-ESTILO DE ESCRITURA:
-- Escribe de forma natural y fluida
-- NO uses signos de interrogación ni exclamación al inicio
-- Los mensajes sugeridos deben sonar humanos, no robóticos
-- Sé conciso pero cálido
-- Evita frases hechas o demasiado formales
-- Cada opción debe ser práctica y fácil de copiar
+ESTILO PARA LAS SUGERENCIAS:
+- Los mensajes deben sonar 100% humanos y casuales
+- CERO signos ¿ o ¡ - prohibidos totalmente
+- Lenguaje directo: "mira", "oye", "te cuento"
+- Si es apropiado: "bro", "jefe", "tio"
+- Frases cortas, máximo 2-3 líneas
+- Evita formalismos tipo "Me complace informarle" - eso es de bot
+- Cada opción debe poder copiarse y enviarse tal cual
 
 Recuerda: Estas son sugerencias para TI como setter. Copia y pega la que prefieras.`;
       }

@@ -6,13 +6,16 @@
 
 ## 🚀 Features
 
-### **🤖 Enterprise AI Engine**
+### **🤖 Revolutionary AI Engine (OVERHAULED 2025-01-20)**
 
+- **Natural Language Generation** - Human-like responses in informal Spanish, no robotic patterns
+- **Advanced Intent Detection** - Emotional tone, buying signals (0-10), urgency analysis
+- **Lead Personalization System** - Auto-adapts to age group, communication style, business type
 - **Multi-Model Support** - Gemini 2.5 Flash/Pro with intelligent model switching
-- **Advanced Response Validation** - Multi-attempt generation with 0.0-1.0 scoring
-- **Database-Driven Prompts** - Hierarchical prompt building from Supabase tables
-- **Phase Detection** - Automatic sales phase identification with context awareness
-- **Conversation Analytics** - Real-time conversation analysis and lead profiling
+- **Optimized Response Validation** - Permissive scoring for creative, natural responses
+- **Database-Driven Prompts** - Hierarchical prompt building with few-shot examples
+- **Phase Detection** - Automatic sales phase with realistic qualification scoring
+- **Conversation Analytics 2.0** - Red flags detection, missed opportunities tracking
 
 ### **Lead Management CRM**
 
@@ -45,7 +48,7 @@
 - **Database**: Supabase (PostgreSQL + Realtime + Custom RPCs)
 - **Auth**: Supabase Auth with OAuth
 - **Styling**: Tailwind CSS 3.4.17
-- **Testing**: Vitest + React Testing Library ✅
+- **Testing**: Vitest + React Testing Library + MSW ✅
 - **Dev Tools**: ESLint + Prettier + Husky
 
 ## 🛠️ Quick Start
@@ -118,8 +121,11 @@ Visit `http://localhost:5173` 🎉
 ```
 src/
 ├── lib/                       # 🧠 Core Business Logic
-│   ├── gemini.ts              # Advanced AI engine with validation
-│   ├── conversation-analyzer.ts # AI conversation analysis
+│   ├── gemini.ts              # AI engine with intent + personalization
+│   ├── conversation-analyzer.ts # Realistic conversation analysis
+│   ├── intent-detector.ts     # ✨ NEW: Advanced intent detection
+│   ├── lead-personalizer.ts   # ✨ NEW: Dynamic lead adaptation
+│   ├── response-validator.ts  # Optimized for natural language
 │   ├── conversation-state-manager.ts # State tracking system
 │   ├── prompt-manager.ts      # Database-driven prompt hierarchy
 │   ├── qualification-scoring.ts # Lead scoring algorithms
@@ -139,21 +145,23 @@ src/
     └── [All pages with protected routing]
 ```
 
-## 🤖 AI System
+## 🤖 AI System (Completely Overhauled)
 
-### Prompt Engineering Architecture
+### Natural Language Architecture
 
-1. **Base Prompts** - Role definitions and system instructions
-2. **Script Templates** - Phase-specific message patterns
-3. **Few-Shot Examples** - Learning from successful conversations
-4. **Dynamic Context** - Real-time adaptation to conversation flow
+1. **Conversational Spanish** - No ¿¡ symbols, informal tone, adapts to lead
+2. **Intent & Emotion Detection** - Analyzes buying signals, urgency, objections
+3. **Lead Personalization** - Detects age group, style, business type automatically
+4. **Few-Shot Learning** - Real conversation examples for each phase
+5. **Dynamic Context** - Includes intent analysis + personalization rules
 
-### Script Validation
+### Advanced Features
 
-- **Key Phrase Matching** - Detects required elements
-- **Synonym Recognition** - Flexible language understanding
-- **Alignment Scoring** - 0.0-1.0 quality measurement
-- **Auto-Regeneration** - Improves responses below threshold
+- **Conservative Scoring** - Realistic qualification (most leads < 0.6)
+- **Red Flag Detection** - Identifies warning signs and missed opportunities
+- **Adaptive Vocabulary** - Uses "bro", "tío", "jefe" when appropriate
+- **Short Messages** - 2-3 lines maximum for natural flow
+- **Permissive Validation** - Allows creative responses, not rigid scripts
 
 ## 📊 Development Workflow
 
@@ -170,6 +178,8 @@ npm run lint                  # ESLint check
 npm run lint:fix             # Fix linting issues
 npm run format               # Format with Prettier
 npm run type-check          # TypeScript validation
+npm run test                  # Run test suite (41 integration tests)
+npm run test:coverage        # Run tests with coverage report
 
 # Scripts
 npm run parse-script         # Parse Quantum scripts
@@ -269,7 +279,7 @@ console.log(localStorage.getItem('setterai_cache'));
 
 - **Router & Navigation** - React Router v7 with nested routes
 - **Context Architecture** - Clean, split contexts (59+43 lines)
-- **Testing Framework** - Vitest + RTL configured with actual tests
+- **Testing Framework** - Vitest + RTL + MSW with 41 integration tests for React hooks
 - **AI Integration** - Advanced multi-model system with validation
 - **Database Architecture** - Custom RPCs, indexes, foreign keys
 - **Performance Systems** - TanStack Query, pagination, virtualization (leads)
@@ -317,7 +327,7 @@ MIT License - see LICENSE file for details
 | ------------------------ | ----------- | -------------------------------- |
 | **Architecture Quality** | 8.5/10      | Enterprise-grade patterns        |
 | **Database Records**     | 2,244 total | 287 leads, 1,670 messages        |
-| **Code Coverage**        | Basic       | Framework ready, tests needed    |
+| **Code Coverage**        | 41 Tests    | Integration tests for React hooks |
 | **Performance**          | Optimized   | Custom RPCs, pagination, caching |
 | **AI Integration**       | Advanced    | Multi-model, validation, scoring |
 | **Production Readiness** | 95%         | 2 critical fixes needed          |
@@ -332,4 +342,4 @@ MIT License - see LICENSE file for details
 
 **Built for appointment setters who demand enterprise-grade performance and AI intelligence.**
 
-**Last Updated**: 2025-07-20 | **Audit Status**: Comprehensive source code analysis completed
+**Last Updated**: 2025-01-20 | **Audit Status**: Comprehensive source code analysis completed | **AI System**: Completely overhauled for natural language generation

@@ -160,55 +160,77 @@ export class ConversationAnalyzer {
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
-      // Build analysis prompt
+      // Build analysis prompt with focus on natural understanding
       const prompt = `
 ${APPOINTMENT_SETTING_CONTEXT}
 
-Analiza esta conversación completa entre un setter y un lead. Proporciona un análisis exhaustivo en formato JSON.
+Analiza esta conversación entre un setter y un lead como si fueras un experto en ventas observando la interacción. 
+Necesito un análisis PRECISO y DETALLADO en formato JSON.
 
-CONVERSACIÓN COMPLETA:
+CONVERSACIÓN:
 ${conversationText}
 
-Genera un análisis JSON con EXACTAMENTE esta estructura:
+IMPORTANTE: 
+- Detecta la fase REAL de la conversación (no donde debería estar, sino donde ESTÁ)
+- Identifica TODOS los pain points mencionados, incluso los sutiles
+- Captura los objetivos tanto explícitos como implícitos
+- Evalúa el nivel REAL de interés (no seas optimista, sé realista)
+- Detecta resistencias o señales de desinterés
+
+Genera un JSON con esta estructura EXACTA:
 {
-  "currentPhase": número (1-5 según las fases del script),
+  "currentPhase": número (1-5 basado en el progreso REAL de la conversación),
+  "phaseJustification": "explicación breve de por qué está en esa fase",
   "leadProfile": {
-    "business_type": "tipo de negocio mencionado o null",
-    "business_age": "antigüedad del negocio o null",
-    "pain_points": ["lista de puntos de dolor identificados"],
-    "goals": ["lista de objetivos mencionados"],
-    "obstacles": ["lista de obstáculos identificados"],
-    "current_situation": "descripción de la situación actual",
-    "desired_situation": "descripción de la situación deseada",
-    "has_shown_interest": true/false,
-    "objections_raised": ["lista de objeciones mencionadas"]
+    "business_type": "tipo específico de negocio o null",
+    "business_details": "detalles adicionales del negocio",
+    "current_youtube_status": "no tiene canal|tiene canal sin resultados|tiene canal con algo de tracción|canal exitoso|null",
+    "pain_points": ["dolor 1 explícito", "dolor 2 sutil", "frustración mencionada"],
+    "real_goals": ["objetivo real 1", "motivación profunda detectada"],
+    "stated_goals": ["lo que dice querer conseguir"],
+    "obstacles": ["obstáculo 1", "barrera mencionada"],
+    "budget_signals": "señales sobre capacidad de inversión",
+    "commitment_level": "bajo|medio|alto|no determinado",
+    "personality_type": "formal|informal|directo|evasivo|entusiasta|escéptico",
+    "red_flags": ["señal preocupante 1", "posible objeción no expresada"]
   },
   "qualificationScore": {
-    "score": número decimal 0.0-1.0,
-    "reasoning": "explicación del score"
+    "score": número 0.0-1.0 (sé conservador),
+    "factors": {
+      "has_business": true/false,
+      "shows_pain": true/false,
+      "has_budget_potential": true/false,
+      "shows_commitment": true/false,
+      "good_fit": true/false
+    },
+    "reasoning": "explicación honesta del score"
   },
-  "conversationSummary": "resumen ejecutivo de 2-3 líneas",
-  "nextSteps": ["paso 1 recomendado", "paso 2 recomendado", "paso 3 recomendado"],
-  "detectedIntent": "positive_response" | "negative_response" | "question" | "price_inquiry" | "interest_expression" | "general_response",
-  "lastUserMessage": "último mensaje del lead",
-  "phaseTransitions": [
-    {
-      "from": número,
-      "to": número,
-      "messageIndex": número
-    }
-  ]
+  "conversationQuality": {
+    "setter_performance": "buena|regular|mejorable",
+    "rapport_level": "alto|medio|bajo",
+    "missed_opportunities": ["oportunidad perdida 1", "pregunta que debió hacer"],
+    "good_moves": ["acierto del setter 1", "buena pregunta realizada"]
+  },
+  "nextSteps": [
+    "acción específica y concreta 1",
+    "alternativa si el lead no responde bien",
+    "plan B si hay resistencia"
+  ],
+  "detectedIntent": "high_interest|moderate_interest|low_interest|just_curious|time_waster|price_shopping|not_qualified",
+  "suggestedApproach": "directo|exploratorio|educativo|descalificar|nutrir_largo_plazo",
+  "conversationMomentum": "ascendente|estancado|descendente",
+  "estimatedCloseProbability": número 0-100,
+  "lastUserMessage": "último mensaje literal del lead"
 }
 
-REGLAS IMPORTANTES:
-1. currentPhase debe ser un número del 1 al 5 basado en la fase más avanzada alcanzada
-2. Extrae TODA la información relevante mencionada en la conversación
-3. El qualificationScore debe reflejar qué tan cualificado está el lead (0=nada, 1=totalmente)
-4. Los nextSteps deben ser acciones concretas para el setter
-5. Detecta TODAS las transiciones de fase que ocurrieron
-6. Si no hay información para un campo, usa null o array vacío según corresponda
+REGLAS CRÍTICAS:
+1. Sé REALISTA con el qualification score (la mayoría de leads no superan 0.6)
+2. Detecta TODAS las señales sutiles de desinterés o resistencia
+3. No asumas cosas que no se han dicho explícitamente
+4. Identifica oportunidades perdidas por el setter
+5. Si el lead evade preguntas importantes, refléjalo
 
-Responde SOLO con el JSON, sin texto adicional.`;
+Responde SOLO con el JSON, sin explicaciones adicionales.`;
 
       const result = await model.generateContent(prompt);
       const response = result.response.text();
@@ -221,19 +243,39 @@ Responde SOLO con el JSON, sin texto adicional.`;
 
       const analysis = JSON.parse(jsonMatch[0]);
 
-      // Validate and sanitize the analysis
+      // Validate and enhance the analysis
       return {
         currentPhase: Number(analysis.currentPhase) || 1,
-        leadProfile: analysis.leadProfile || {},
+        leadProfile: {
+          ...analysis.leadProfile,
+          // Ensure arrays are properly formatted
+          pain_points: Array.isArray(analysis.leadProfile?.pain_points)
+            ? analysis.leadProfile.pain_points
+            : [],
+          real_goals: Array.isArray(analysis.leadProfile?.real_goals)
+            ? analysis.leadProfile.real_goals
+            : [],
+          obstacles: Array.isArray(analysis.leadProfile?.obstacles)
+            ? analysis.leadProfile.obstacles
+            : [],
+          red_flags: Array.isArray(analysis.leadProfile?.red_flags)
+            ? analysis.leadProfile.red_flags
+            : [],
+        },
         qualificationScore: analysis.qualificationScore?.score || 0,
-        summary: analysis.conversationSummary || 'Conversación analizada',
-        nextSteps: analysis.nextSteps || [],
-        detectedIntent: analysis.detectedIntent || 'general_response',
+        summary: this.generateHumanReadableSummary(analysis),
+        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        detectedIntent: analysis.detectedIntent || 'not_qualified',
         lastUserMessage:
           analysis.lastUserMessage ||
           messages.filter(m => m.sender_type === 'Lead').pop()?.text ||
           '',
         phaseTransitions: analysis.phaseTransitions || [],
+        // Additional insights
+        conversationQuality: analysis.conversationQuality || {},
+        suggestedApproach: analysis.suggestedApproach || 'exploratorio',
+        conversationMomentum: analysis.conversationMomentum || 'estancado',
+        estimatedCloseProbability: analysis.estimatedCloseProbability || 0,
       };
     } catch (error) {
       console.error('Error generating AI analysis:', error);
@@ -245,11 +287,44 @@ Responde SOLO con el JSON, sin texto adicional.`;
         qualificationScore: 0,
         summary: 'Error al analizar la conversación',
         nextSteps: ['Revisar la conversación manualmente'],
-        detectedIntent: 'general_response',
+        detectedIntent: 'not_qualified',
         lastUserMessage: messages.filter(m => m.sender_type === 'Lead').pop()?.text || '',
         phaseTransitions: [],
       };
     }
+  }
+
+  /**
+   * Generate human-readable summary from analysis
+   */
+  private static generateHumanReadableSummary(analysis: any): string {
+    const { leadProfile, qualificationScore, conversationQuality } = analysis;
+
+    let summary = `Lead en fase ${analysis.currentPhase}. `;
+
+    if (leadProfile.business_type) {
+      summary += `Negocio: ${leadProfile.business_type}. `;
+    }
+
+    if (qualificationScore.score >= 0.7) {
+      summary += 'Cualificación ALTA - buen candidato. ';
+    } else if (qualificationScore.score >= 0.4) {
+      summary += 'Cualificación MEDIA - necesita más exploración. ';
+    } else {
+      summary += 'Cualificación BAJA - evaluar si vale la pena continuar. ';
+    }
+
+    if (leadProfile.pain_points?.length > 0) {
+      summary += `Dolor principal: ${leadProfile.pain_points[0]}. `;
+    }
+
+    if (conversationQuality?.rapport_level === 'alto') {
+      summary += 'Buena conexión establecida. ';
+    } else if (conversationQuality?.rapport_level === 'bajo') {
+      summary += 'Necesita mejorar la conexión. ';
+    }
+
+    return summary.trim();
   }
 
   /**

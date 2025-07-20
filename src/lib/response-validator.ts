@@ -40,26 +40,46 @@ export interface ValidationContext {
   conversationHistory?: string[];
 }
 
-// Default configuration
+// Default configuration - Ajustado para permitir respuestas más naturales
 export const DEFAULT_VALIDATION_CONFIG: ValidationConfig = {
-  minScore: 0.7,
-  keyPhraseWeight: 0.8,
+  minScore: 0.5, // Reducido para permitir más flexibilidad
+  keyPhraseWeight: 0.6, // Menos énfasis en coincidencias exactas
   strictMode: false,
-  regenerateThreshold: 0.5,
-  maxRegenerationAttempts: 2,
+  regenerateThreshold: 0.3, // Solo regenerar si es muy malo
+  maxRegenerationAttempts: 1, // Menos intentos para evitar sobre-optimización
 };
 
-// Synonym mapping for flexible matching
+// Synonym mapping for flexible matching - Expandido con lenguaje informal
 export const SYNONYM_MAP: Record<string, string[]> = {
-  problema: ['dificultad', 'inconveniente', 'reto', 'desafío', 'obstáculo'],
-  objetivo: ['meta', 'propósito', 'finalidad', 'intención'],
-  negocio: ['empresa', 'emprendimiento', 'proyecto', 'compañía'],
-  youtube: ['canal', 'contenido', 'videos', 'plataforma'],
-  ayudar: ['asistir', 'apoyar', 'colaborar', 'contribuir'],
-  entender: ['comprender', 'entiendo', 'comprendo'],
+  problema: [
+    'dificultad',
+    'inconveniente',
+    'reto',
+    'desafío',
+    'obstáculo',
+    'lio',
+    'rollo',
+    'tema',
+    'movida',
+  ],
+  objetivo: [
+    'meta',
+    'propósito',
+    'finalidad',
+    'intención',
+    'lo que quieres',
+    'lo que buscas',
+    'tu plan',
+  ],
+  negocio: ['empresa', 'emprendimiento', 'proyecto', 'compañía', 'curro', 'tu rollo', 'lo tuyo'],
+  youtube: ['canal', 'contenido', 'videos', 'plataforma', 'yt', 'el tubo'],
+  ayudar: ['asistir', 'apoyar', 'colaborar', 'contribuir', 'echar una mano', 'darle', 'meter caña'],
+  entender: ['comprender', 'entiendo', 'comprendo', 'pillo', 'capto', 'te sigo', 'claro'],
+  hola: ['hey', 'que tal', 'buenas', 'que pasa', 'como va', 'ey'],
+  gracias: ['grax', 'thanks', 'genial', 'top', 'guay', 'de puta madre'],
 };
 
-// Phase-specific validation rules
+// Phase-specific validation rules - Más flexible para lenguaje natural
 export const PHASE_VALIDATION_RULES: Record<
   number,
   {
@@ -69,29 +89,29 @@ export const PHASE_VALIDATION_RULES: Record<
   }
 > = {
   1: {
-    requiredElements: ['pregunta', 'youtube', 'negocio'],
-    forbiddenElements: ['precio', '5000', 'llamada', 'agendar'],
-    maxLength: 150,
+    requiredElements: [], // No forzar palabras específicas
+    forbiddenElements: ['precio', '5000', '€', 'euros', 'coste'], // Solo evitar hablar de dinero
+    maxLength: 250, // Más espacio para conversación natural
   },
   2: {
-    requiredElements: ['problema', 'frustración', 'dificultad'],
-    forbiddenElements: ['precio', '5000'],
-    maxLength: 200,
+    requiredElements: [], // Permitir flexibilidad en cómo expresar dolor
+    forbiddenElements: ['precio', '5000', '€', 'euros'],
+    maxLength: 300,
   },
   3: {
-    requiredElements: ['objetivo', 'lograr', 'conseguir'],
-    forbiddenElements: ['precio', '5000'],
-    maxLength: 200,
+    requiredElements: [], // Objetivos pueden expresarse de muchas formas
+    forbiddenElements: ['precio', '5000', '€', 'euros'],
+    maxLength: 300,
   },
   4: {
-    requiredElements: ['obstáculo', 'impide', 'barrera'],
-    forbiddenElements: ['precio'],
-    maxLength: 250,
+    requiredElements: [], // Obstáculos son contextuales
+    forbiddenElements: ['precio específico', '5000'],
+    maxLength: 350,
   },
   5: {
-    requiredElements: ['llamada', 'agendar', 'minutos'],
+    requiredElements: [], // La oferta puede ser sutil
     forbiddenElements: [],
-    maxLength: 300,
+    maxLength: 400,
   },
 };
 
@@ -125,13 +145,14 @@ export function extractKeyPhrasesFromTemplate(template: ScriptTemplate): KeyPhra
       // Extract meaningful phrases
       const phrase = words.join(' ');
 
-      // Determine weight based on content
-      let weight = 0.5; // default weight
+      // Determine weight based on content - Reducido para más flexibilidad
+      let weight = 0.3; // default weight más bajo
 
-      if (isQuestion) weight = 0.8;
-      else if (phrase.includes('youtube') || phrase.includes('negocio')) weight = 0.7;
-      else if (phrase.includes('problema') || phrase.includes('objetivo')) weight = 0.7;
-      else if (phrase.includes('ayud') || phrase.includes('apoy')) weight = 0.6;
+      if (isQuestion)
+        weight = 0.5; // Las preguntas son importantes pero no críticas
+      else if (phrase.includes('youtube') || phrase.includes('negocio')) weight = 0.4;
+      else if (phrase.includes('problema') || phrase.includes('objetivo')) weight = 0.4;
+      else if (phrase.includes('ayud') || phrase.includes('apoy')) weight = 0.3;
 
       // Determine if required based on template type
       const required =
@@ -326,8 +347,9 @@ export function findPhraseMatches(
       }
     }
 
-    // Consider it a match if similarity is above threshold
-    if (bestMatch.confidence > 0.7) {
+    // Consider it a match if similarity is above threshold - Más permisivo
+    if (bestMatch.confidence > 0.5) {
+      // Reducido de 0.7 a 0.5
       matches.push({
         phrase: keyPhrase.phrase,
         matchConfidence: bestMatch.confidence,
@@ -342,10 +364,11 @@ export function findPhraseMatches(
     );
 
     const partialMatchRatio = matchedWords.length / importantWords.length;
-    if (partialMatchRatio >= 0.6) {
+    if (partialMatchRatio >= 0.4) {
+      // Más permisivo con coincidencias parciales
       matches.push({
         phrase: keyPhrase.phrase,
-        matchConfidence: 0.5 + partialMatchRatio * 0.3,
+        matchConfidence: 0.4 + partialMatchRatio * 0.3, // Score base más bajo
         matchedText: 'partial match',
       });
     }
@@ -393,23 +416,25 @@ export function calculateAlignmentScore(
   // Calculate base score
   let finalScore = weightSum > 0 ? totalScore / weightSum : 0;
 
-  // Apply penalties
+  // Apply penalties - Mucho más suave para permitir naturalidad
   if (config.strictMode && requiredMissing > 0) {
-    // In strict mode, missing required phrases severely penalize the score
-    finalScore *= Math.pow(0.5, requiredMissing);
+    // In strict mode, missing required phrases moderately penalize the score
+    finalScore *= Math.pow(0.7, requiredMissing); // Menos severo
   } else if (requiredMissing > 0) {
-    // Normal mode: moderate penalty for missing required phrases
-    finalScore *= Math.pow(0.8, requiredMissing);
+    // Normal mode: light penalty for missing required phrases
+    finalScore *= Math.pow(0.9, requiredMissing); // Muy suave
   }
 
-  // Length penalty - responses should be similar length to templates
+  // Length penalty - Más flexible con la longitud
   const lengthRatio = responseLength / templateLength;
-  if (lengthRatio < 0.5) {
+  if (lengthRatio < 0.3) {
+    // Solo penalizar si es MUY corto
     // Too short
-    finalScore *= 0.8;
-  } else if (lengthRatio > 2.0) {
+    finalScore *= 0.9; // Penalización suave
+  } else if (lengthRatio > 3.0) {
+    // Permitir respuestas más largas
     // Too long
-    finalScore *= 0.9;
+    finalScore *= 0.95; // Penalización mínima
   }
 
   // Ensure score is between 0 and 1
@@ -526,23 +551,20 @@ export async function validateResponseAlignment(
       );
 
       if (forbiddenFound.length > 0) {
-        validationResult.score *= 0.7; // Penalty for forbidden elements
+        validationResult.score *= 0.85; // Penalización más suave
         validationResult.suggestions.push(
-          `Evita mencionar: ${forbiddenFound.join(', ')} en esta fase.`,
+          `Intenta no mencionar directamente: ${forbiddenFound.join(', ')} en esta fase.`,
         );
       }
 
-      // Check required elements
+      // Ya no verificamos elementos requeridos para permitir más naturalidad
+      // Las respuestas naturales no siempre mencionan palabras clave específicas
+      // Mantenemos la lógica comentada por si se necesita en el futuro
+      /*
       const requiredMissing = phaseRules.requiredElements.filter(
         element => !response.toLowerCase().includes(element.toLowerCase()),
       );
-
-      if (requiredMissing.length > 0) {
-        validationResult.score *= Math.pow(0.9, requiredMissing.length);
-        validationResult.suggestions.push(
-          `Asegúrate de incluir conceptos sobre: ${requiredMissing.join(', ')}`,
-        );
-      }
+      */
 
       // Check length compliance
       if (response.length > phaseRules.maxLength) {

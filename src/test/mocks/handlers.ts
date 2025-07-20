@@ -88,14 +88,14 @@ export const handlers = [
 
   // Mock regular Supabase table queries
   http.get('*/rest/v1/leads', ({ request }) => {
-    const url = new URL(request.url);
+    const url = new globalThis.URL(request.url);
     const id = url.searchParams.get('id');
-    
+
     if (id) {
       const lead = mockLeads.find(l => l.id === id);
       return HttpResponse.json([lead].filter(Boolean));
     }
-    
+
     return HttpResponse.json(mockLeads);
   }),
 

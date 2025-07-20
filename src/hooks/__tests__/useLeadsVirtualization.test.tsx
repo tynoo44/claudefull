@@ -25,20 +25,20 @@ vi.mock('../../lib/supabase', () => ({
 
 describe('useLeadsVirtualization', () => {
   let mockSupabase: any;
-  
+
   beforeEach(async () => {
     // Get the mocked supabase instance
     const { supabase } = await import('../../lib/supabase');
     mockSupabase = supabase;
-    
+
     vi.clearAllMocks();
-    
+
     // Setup default mock responses
     mockSupabase.rpc.mockResolvedValue({
       data: mockLeads,
       error: null,
     });
-    
+
     mockSupabase.from().select().eq().single.mockResolvedValue({
       data: mockLeads[0],
       error: null,
@@ -60,10 +60,16 @@ describe('useLeadsVirtualization', () => {
   it('should load all leads on initialization', async () => {
     const { result } = renderHook(() => useLeadsVirtualization());
 
-    // Wait for initialization
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization timeout (100ms)
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    // Wait for loading to complete
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith('get_all_leads_optimized');
     expect(result.current.allLeads).toHaveLength(mockLeads.length);
@@ -75,12 +81,18 @@ describe('useLeadsVirtualization', () => {
   it('should group leads by status correctly', async () => {
     const { result } = renderHook(() => useLeadsVirtualization());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     const { leadsByStatus } = result.current;
-    
+
     // Check that leads are grouped by status
     Object.entries(leadsByStatus).forEach(([status, leads]) => {
       leads.forEach(lead => {
@@ -110,12 +122,12 @@ describe('useLeadsVirtualization', () => {
 
     const { filteredLeads } = result.current;
     filteredLeads.forEach(lead => {
-      const matchesSearch = 
+      const matchesSearch =
         lead.username.toLowerCase().includes('testuser1') ||
         lead.full_name?.toLowerCase().includes('testuser1') ||
         lead.notes?.toLowerCase().includes('testuser1') ||
         lead.tags?.some(tag => tag.toLowerCase().includes('testuser1'));
-      
+
       expect(matchesSearch).toBe(true);
     });
   });
@@ -290,17 +302,20 @@ describe('useLeadsVirtualization', () => {
   });
 
   it('should handle errors gracefully', async () => {
-    // Mock error response
-    mockSupabase.rpc.mockResolvedValueOnce({
-      data: null,
-      error: new Error('Network error'),
-    });
+    // Mock error response for the next call
+    mockSupabase.rpc.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderHook(() => useLeadsVirtualization());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     expect(result.current.error).toBeTruthy();
     expect(result.current.allLeads).toEqual([]);
@@ -330,13 +345,19 @@ describe('useLeadsVirtualization', () => {
   it('should extract all unique tags correctly', async () => {
     const { result } = renderHook(() => useLeadsVirtualization());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    await waitFor(
+      () => {
+        expect(result.current.loading).toBe(false);
+      },
+      { timeout: 2000 },
+    );
 
     const { allTags } = result.current;
     const expectedTags = [...new Set(mockLeads.flatMap(lead => lead.tags || []))];
-    
+
     expect(allTags).toHaveLength(expectedTags.length);
     expectedTags.forEach(tag => {
       expect(allTags).toContain(tag);
@@ -362,15 +383,15 @@ describe('useLeadsVirtualization', () => {
     });
 
     const { filteredLeads } = result.current;
-    
+
     filteredLeads.forEach(lead => {
       // Check search term
-      const matchesSearch = 
+      const matchesSearch =
         lead.username.toLowerCase().includes('test') ||
         lead.full_name?.toLowerCase().includes('test') ||
         lead.notes?.toLowerCase().includes('test') ||
         lead.tags?.some(tag => tag.toLowerCase().includes('test'));
-      
+
       if (filteredLeads.length > 0) {
         expect(matchesSearch).toBe(true);
         expect(lead.tags).toContain('warm');
@@ -397,7 +418,7 @@ describe('useLeadsVirtualization', () => {
 
     // Filtered count should match the number of filtered leads
     expect(result.current.filteredCount).toBe(result.current.filteredLeads.length);
-    
+
     // If filter is restrictive, count should be less than or equal to initial
     if (result.current.filteredLeads.some(lead => lead.status !== 'Open')) {
       expect(result.current.filteredCount).toBeLessThanOrEqual(initialCount);

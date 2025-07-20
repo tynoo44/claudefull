@@ -31,16 +31,19 @@ Personal MVP platform for professional appointment setting with AI-powered conve
 - **Auth**: Supabase Auth (User ID: `4435e069-4294-4e44-8fd3-25840e5a3aa0`)
 - **Styling**: Tailwind CSS 3.4.17
 - **Dev Tools**: ESLint + Prettier + Husky
-- **Testing**: Vitest + React Testing Library ✅
+- **Testing**: Vitest + React Testing Library + MSW ✅
 
 ## Key Files & Structure (UPDATED)
 
 ```
 src/
 ├── lib/
-│   ├── gemini.ts              # AI response generation ✅
-│   ├── conversation-analyzer.ts # AI conversation analysis ✅
-│   ├── prompt-manager.ts      # Basic prompt handling (basic implementation)
+│   ├── gemini.ts              # AI response generation ✅ ENHANCED with intent + personalization
+│   ├── conversation-analyzer.ts # AI conversation analysis ✅ OVERHAULED - realistic scoring
+│   ├── prompt-manager.ts      # ✅ Database-driven prompt hierarchy
+│   ├── response-validator.ts  # ✅ OPTIMIZED - permissive for natural language
+│   ├── intent-detector.ts     # ✅ NEW - Advanced intent & emotion detection
+│   ├── lead-personalizer.ts   # ✅ NEW - Dynamic lead profiling & adaptation
 │   └── supabase.ts           # Database client ✅
 ├── components/Chat/
 │   ├── AIChatSidebar.tsx      # Main AI assistant ✅
@@ -54,7 +57,7 @@ src/
 │   ├── useLeadsPagination.ts    # ✅ 20 items/page + prefetch
 │   └── useLeadsVirtualization.ts # ✅ Leads virtualization
 ├── pages/ # ✅ React Router implemented
-└── test/ # ✅ Vitest + RTL configured + actual tests
+└── test/ # ✅ Vitest + RTL + MSW configured + 41 integration tests
 ```
 
 **Config Files:**
@@ -94,6 +97,8 @@ npm run dev                    # Start dev server (MUST run on port 5173!)
 npm run build                 # Production build
 npm run lint                  # ESLint check
 npm run format               # Prettier format
+npm run test                  # Run test suite (41 integration tests)
+npm run test:coverage        # Run tests with coverage report
 
 # TaskMaster
 task-master next             # Get next task
@@ -227,7 +232,7 @@ MAIN TASK: [Objective]
 - Key Outcomes: [Results]
 ```
 
-## Current Status (Updated 2025-07-20)
+## Current Status (Updated 2025-01-20)
 
 ### ✅ COMPLETED CRITICAL FIXES (Priority 0 - DONE)
 
@@ -238,6 +243,25 @@ MAIN TASK: [Objective]
 3. ✅ **54 'any' Types** → 0 (100% eliminated - proper TypeScript interfaces implemented)
 4. ✅ **ALL Warnings** → 0 (100% eliminated - non-null assertions fixed)
 
+### ✅ AI SYSTEM COMPLETELY OVERHAULED (2025-01-20)
+
+**REVOLUTIONARY AI IMPROVEMENTS:**
+
+1. ✅ **Natural Language Generation** - Eliminated robotic responses, uses informal Spanish
+2. ✅ **Advanced Intent Detection** - Analyzes emotional tone, buying signals, urgency (0-10)
+3. ✅ **Lead Personalization System** - Auto-adapts to lead age, style, and business type
+4. ✅ **Conversation Analyzer 2.0** - Realistic scoring, red flags detection, missed opportunities
+5. ✅ **Response Validator Optimized** - Permissive validation for creative, human-like responses
+6. ✅ **Prompt System Updated** - Database prompts use natural, conversational Spanish
+7. ✅ **Few-Shot Examples Added** - Real conversation examples for each sales phase
+
+**KEY AI FEATURES:**
+- NEVER uses ¿ or ¡ symbols (too formal)
+- Adapts vocabulary: "bro", "tío", "jefe" when appropriate
+- Short messages (2-3 lines max)
+- Mirrors lead's communication style
+- Conservative qualification scoring (most leads < 0.6)
+
 **REMAINING HIGH PRIORITY:**
 
 1. **Chat Virtualization Missing** - MessageList.tsx uses basic scrolling despite claims
@@ -246,10 +270,11 @@ MAIN TASK: [Objective]
 
 - **Router & Navigation**: ✅ React Router fully implemented in App.tsx
 - **Context Architecture**: ✅ Already split (AuthContext + ThemeContext)
-- **Testing Framework**: ✅ Vitest + RTL configured with actual tests
+- **Testing Framework**: ✅ Vitest + RTL + MSW with 41 integration tests for React hooks
 - **Database Pagination**: ✅ TanStack Query with 20 items/page
 - **Conversation Tracking**: ✅ Props flow correctly implemented
 - **Database Schema**: ✅ Optimized with foreign keys and indexes
+- **Hook Testing**: ✅ Complete integration test coverage for useMessagesPagination, useLeadsPagination, useLeadsVirtualization
 
 ### 📋 NEW TASK SYSTEM
 
@@ -265,6 +290,7 @@ MAIN TASK: [Objective]
 - Updated PRD: `.taskmaster/docs/prd_updated_2025-07-20.md`
 - Detailed audit: `AI_GUIDE/4-2025-07-20-COMPLETE-AUDIT.md`
 - Fresh tasks: Check `task-master get_tasks` for current status
+- AI Overhaul Log: `.taskmaster/logs/task73_ai_overhaul_log.md`
 
 ## Environment Variables
 
@@ -275,7 +301,7 @@ VITE_SUPABASE_ANON_KEY=[your_key]
 VITE_USER_ID=4435e069-4294-4e44-8fd3-25840e5a3aa0
 ```
 
-## Essential Rules Summary (UPDATED 2025-07-20)
+## Essential Rules Summary (UPDATED 2025-01-20)
 
 1. **Always use English** for technical work
 2. **Plan before acting** - no improvisation
