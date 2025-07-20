@@ -18,6 +18,10 @@ interface ConversationOptimized {
   lead_profile_pic: string | null;
   lead_status: string;
   lead_instagram_id: string;
+  lead_procedence: string | null;
+  lead_tags: string[] | null;
+  lead_notes: string | null;
+  lead_followers_count: number | null;
 }
 
 const fetchConversations = async ({ pageParam = 0 }) => {
