@@ -10,7 +10,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [darkMode, setDarkMode] = useState(() => {
     const storedPreference = localStorage.getItem('darkMode');
-    return storedPreference ? JSON.parse(storedPreference) : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return storedPreference
+      ? JSON.parse(storedPreference)
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {

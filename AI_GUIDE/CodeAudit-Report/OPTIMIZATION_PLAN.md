@@ -11,6 +11,7 @@ Se debe modificar la función `get_conversations_with_details_rpc` para que acep
 **Archivo a modificar:** `supabase/migrations/20250720024200_create_rpc_get_conversations_with_last_message.sql`
 
 **Nuevo contenido:**
+
 ```sql
 -- Migration: Create RPC for fetching conversations with last message
 -- Date: 2025-07-20
@@ -68,6 +69,7 @@ Se debe reemplazar `useQuery` por `useInfiniteQuery` para gestionar la carga pag
 **Archivo a modificar:** `src/hooks/useConversationsQuery.ts`
 
 **Nuevo contenido:**
+
 ```typescript
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { getPaginatedConversations } from '../lib/supabase-functions';
@@ -78,7 +80,10 @@ export const useConversationsQuery = () => {
   return useInfiniteQuery({
     queryKey: ['conversations'],
     queryFn: ({ pageParam = 0 }) => {
-      return getPaginatedConversations(CONVERSATIONS_PAGE_SIZE, pageParam * CONVERSATIONS_PAGE_SIZE);
+      return getPaginatedConversations(
+        CONVERSATIONS_PAGE_SIZE,
+        pageParam * CONVERSATIONS_PAGE_SIZE,
+      );
     },
     getNextPageParam: (lastPage, allPages) => {
       // If the last page has fewer items than the page size, we've reached the end.
@@ -99,6 +104,7 @@ Se debe crear una nueva función en `src/lib/supabase-functions.ts` para llamar 
 **Archivo a modificar:** `src/lib/supabase-functions.ts`
 
 **Añadir esta función:**
+
 ```typescript
 export const getPaginatedConversations = async (pageSize: number, pageOffset: number) => {
   const { data, error } = await supabase.rpc('get_conversations_with_details_rpc', {
@@ -122,6 +128,7 @@ Se debe modificar `ChatsPage.tsx` y `ChatSidebar.tsx` para usar el nuevo hook in
 **Archivo a modificar:** `src/pages/ChatsPage.tsx`
 
 **Cambios:**
+
 - Actualizar la llamada al hook:
   `const { data: conversationsData, error: conversationsError, isLoading: conversationsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useConversationsQuery();`
 - Aplanar los datos:
@@ -132,4 +139,5 @@ Se debe modificar `ChatsPage.tsx` y `ChatSidebar.tsx` para usar el nuevo hook in
 **Archivo a modificar:** `src/components/Chat/ChatSidebar.tsx`
 
 **Cambios:**
+
 - Añadir un `div` observable al final de la lista de conversaciones. Cuando este `div` se haga visible en la pantalla, se llamará a `fetchNextPage`. Se puede usar la librería `react-intersection-observer` para esto.

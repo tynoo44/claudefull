@@ -84,10 +84,10 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollContainerRef.current) return;
-      
+
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
       const scrolledToBottom = scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD;
-      
+
       if (scrolledToBottom && visibleItems < sortedLeads.length) {
         setVisibleItems(prev => Math.min(prev + ITEMS_PER_PAGE, sortedLeads.length));
       }
@@ -119,7 +119,9 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
   }
 
   return (
-    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden h-full flex flex-col`}>
+    <div
+      className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden h-full flex flex-col`}
+    >
       <div className="overflow-x-auto">
         <table className="min-w-full">
           <LeadsListHeader
@@ -130,13 +132,16 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
           />
         </table>
       </div>
-      
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-auto"
-      >
+
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto">
         <table className="min-w-full">
-          <tbody className={darkMode ? 'bg-gray-700 divide-y divide-gray-600' : 'bg-white divide-y divide-gray-200'}>
+          <tbody
+            className={
+              darkMode
+                ? 'bg-gray-700 divide-y divide-gray-600'
+                : 'bg-white divide-y divide-gray-200'
+            }
+          >
             {visibleLeads.map(lead => (
               <LeadTableRow
                 key={lead.id}
@@ -149,7 +154,7 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
             ))}
           </tbody>
         </table>
-        
+
         {visibleItems < sortedLeads.length && (
           <div className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <div className="animate-pulse">Cargando más leads...</div>

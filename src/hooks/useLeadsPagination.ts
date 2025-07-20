@@ -31,8 +31,7 @@ export const useLeadsPagination = () => {
       setError(null);
 
       // Use optimized RPC to get all leads with metadata
-      const { data, error: rpcError } = await supabase
-        .rpc('get_all_leads_optimized');
+      const { data, error: rpcError } = await supabase.rpc('get_all_leads_optimized');
 
       if (rpcError) throw rpcError;
 
@@ -56,14 +55,14 @@ export const useLeadsPagination = () => {
 
       setLeads(transformedLeads);
       setTotalCount(transformedLeads.length);
-      
+
       // Initially show only first page
       setVisibleLeads(transformedLeads.slice(0, LEADS_PER_PAGE));
       currentPage.current = 1;
-      
+
       // Update loaded IDs
       transformedLeads.forEach((lead: LeadWithMetadata) => loadedLeadIds.current.add(lead.id));
-      
+
       return transformedLeads;
     } catch (err) {
       console.error('Error loading leads:', err);
@@ -90,10 +89,10 @@ export const useLeadsPagination = () => {
     const startIndex = currentPage.current * LEADS_PER_PAGE;
     const endIndex = startIndex + LEADS_PER_PAGE;
     const nextPageLeads = leadsRef.current.slice(0, endIndex);
-    
+
     setVisibleLeads(nextPageLeads);
     currentPage.current += 1;
-    
+
     if (endIndex >= totalCount) {
       setHasMore(false);
     }
@@ -126,19 +125,18 @@ export const useLeadsPagination = () => {
       // Apply search filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(lead =>
-          lead.username.toLowerCase().includes(term) ||
-          lead.full_name?.toLowerCase().includes(term) ||
-          lead.notes?.toLowerCase().includes(term) ||
-          lead.tags?.some(tag => tag.toLowerCase().includes(term))
+        filtered = filtered.filter(
+          lead =>
+            lead.username.toLowerCase().includes(term) ||
+            lead.full_name?.toLowerCase().includes(term) ||
+            lead.notes?.toLowerCase().includes(term) ||
+            lead.tags?.some(tag => tag.toLowerCase().includes(term)),
         );
       }
 
       // Apply tag filter
       if (selectedTags.length > 0) {
-        filtered = filtered.filter(lead =>
-          selectedTags.some(tag => lead.tags?.includes(tag))
-        );
+        filtered = filtered.filter(lead => selectedTags.some(tag => lead.tags?.includes(tag)));
       }
 
       // Apply status filter
@@ -181,7 +179,7 @@ export const useLeadsPagination = () => {
       setTotalCount(filtered.length);
       currentPage.current = 1;
       setHasMore(filtered.length > LEADS_PER_PAGE);
-      
+
       // Store filtered leads for pagination
       setLeads(filtered);
     },
@@ -191,18 +189,14 @@ export const useLeadsPagination = () => {
   // Update specific lead
   const updateLead = useCallback(async (leadId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', leadId)
-        .single();
+      const { data, error } = await supabase.from('leads').select('*').eq('id', leadId).single();
 
       if (error) throw error;
 
       // Update in both lists
       const updateFn = (prev: LeadWithMetadata[]) =>
-        prev.map(lead => lead.id === leadId ? { ...lead, ...data } : lead);
-      
+        prev.map(lead => (lead.id === leadId ? { ...lead, ...data } : lead));
+
       setLeads(updateFn);
       setVisibleLeads(updateFn);
     } catch (err) {
@@ -213,7 +207,7 @@ export const useLeadsPagination = () => {
   // Initialize on mount
   const initialize = useCallback(async () => {
     if (isInitialized.current) return;
-    
+
     isInitialized.current = true;
     await loadAllLeads();
   }, [loadAllLeads]);
@@ -241,27 +235,23 @@ export const useLeadsPagination = () => {
     // Subscribe to lead changes
     const leadsChannel = supabase
       .channel('leads-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'leads' },
-        async payload => {
-          if (payload.eventType === 'INSERT') {
-            // New lead - reload all
-            await refresh();
-          } else if (payload.eventType === 'UPDATE') {
-            // Lead updated - update specific
-            await updateLead(payload.new.id);
-          } else if (payload.eventType === 'DELETE') {
-            // Lead deleted - remove from lists
-            const removeFn = (prev: LeadWithMetadata[]) => 
-              prev.filter(lead => lead.id !== payload.old.id);
-            setLeads(removeFn);
-            setVisibleLeads(removeFn);
-            loadedLeadIds.current.delete(payload.old.id);
-            setTotalCount(prev => prev - 1);
-          }
-        },
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, async payload => {
+        if (payload.eventType === 'INSERT') {
+          // New lead - reload all
+          await refresh();
+        } else if (payload.eventType === 'UPDATE') {
+          // Lead updated - update specific
+          await updateLead(payload.new.id);
+        } else if (payload.eventType === 'DELETE') {
+          // Lead deleted - remove from lists
+          const removeFn = (prev: LeadWithMetadata[]) =>
+            prev.filter(lead => lead.id !== payload.old.id);
+          setLeads(removeFn);
+          setVisibleLeads(removeFn);
+          loadedLeadIds.current.delete(payload.old.id);
+          setTotalCount(prev => prev - 1);
+        }
+      })
       .subscribe();
 
     realtimeSubscriptions.current = [leadsChannel];

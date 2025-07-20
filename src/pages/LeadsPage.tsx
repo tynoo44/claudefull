@@ -5,6 +5,8 @@ import { LeadsHeader } from '../components/Leads/LeadsHeader';
 import { VirtualizedLeadsKanban } from '../components/Leads/VirtualizedLeadsKanban';
 import { VirtualizedLeadsList } from '../components/Leads/VirtualizedLeadsList';
 import { LeadModal } from '../components/Leads/LeadModal';
+import { LeadInfoModal } from '../components/Chat/LeadInfoModal';
+import { LeadCardSkeleton, LeadTableRowSkeleton } from '../components/common/SkeletonLoaders';
 
 interface LeadsPageProps {
   darkMode: boolean;
@@ -22,15 +24,17 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     refresh,
     allTags,
   } = useLeadsVirtualization();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedProcedence, setSelectedProcedence] = useState<string>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters] = useState(true); // Always show filters
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Apply filters whenever filter state changes
   useEffect(() => {
@@ -40,7 +44,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
       statusFilter: selectedStatus,
       procedenceFilter: selectedProcedence,
       sortBy: 'updated',
-      sortAscending: false
+      sortAscending: false,
     });
   }, [searchTerm, selectedTags, selectedStatus, selectedProcedence, applyFilters]);
 
@@ -117,17 +121,70 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
 
   if (loading && filteredLeads.length === 0) {
     return (
-      <div
-        className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
-      >
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="h-screen flex flex-col">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+            <LeadsHeader
+              darkMode={darkMode}
+              totalLeads={0}
+              viewMode={viewMode}
+              showFilters={showFilters}
+              onViewModeChange={setViewMode}
+              onToggleFilters={() => {}}
+              onAddLead={() => {
+                setEditingLead(null);
+                setShowModal(true);
+              }}
+              searchTerm={searchTerm}
+              selectedTags={selectedTags}
+              selectedStatus={selectedStatus}
+              selectedProcedence={selectedProcedence}
+              availableTags={allTags}
+              onSearchChange={setSearchTerm}
+              onTagToggle={handleTagToggle}
+              onStatusChange={setSelectedStatus}
+              onProcedenceChange={setSelectedProcedence}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
+
+          <div className="flex-1 overflow-hidden p-6">
+            {viewMode === 'kanban' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <LeadCardSkeleton key={i} darkMode={darkMode} />
+                ))}
+              </div>
+            ) : (
+              <div
+                className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden`}
+              >
+                <table className="min-w-full">
+                  <tbody
+                    className={
+                      darkMode
+                        ? 'bg-gray-700 divide-y divide-gray-600'
+                        : 'bg-white divide-y divide-gray-200'
+                    }
+                  >
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <LeadTableRowSkeleton key={i} darkMode={darkMode} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div
+        className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
+      >
         <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           <p className="text-lg mb-2">Error al cargar los leads</p>
           <p className="text-sm mb-4">{error}</p>
@@ -152,7 +209,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
             viewMode={viewMode}
             showFilters={showFilters}
             onViewModeChange={setViewMode}
-            onToggleFilters={() => setShowFilters(!showFilters)}
+            onToggleFilters={() => {}}
             onAddLead={() => {
               setEditingLead(null);
               setShowModal(true);
@@ -184,8 +241,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
                 darkMode={darkMode}
                 leads={filteredLeads}
                 onEditLead={lead => {
-                  setEditingLead(lead);
-                  setShowModal(true);
+                  setSelectedLead(lead);
+                  setShowInfoModal(true);
                 }}
                 onDeleteLead={handleDeleteLead}
                 onUpdateLead={refresh}
@@ -204,6 +261,22 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
           }}
           onSave={editingLead ? handleEditLead : handleAddLead}
         />
+
+        {selectedLead && (
+          <LeadInfoModal
+            darkMode={darkMode}
+            isOpen={showInfoModal}
+            lead={selectedLead}
+            onClose={() => {
+              setShowInfoModal(false);
+              setSelectedLead(null);
+            }}
+            onUpdate={updatedLead => {
+              refresh();
+              setSelectedLead(updatedLead);
+            }}
+          />
+        )}
       </div>
     </div>
   );

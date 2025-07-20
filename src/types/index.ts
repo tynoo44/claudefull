@@ -125,7 +125,7 @@ export interface Conversation {
   lead_id: string;
   opened_at: string;
   updated_at: string;
-  
+
   // Merged from conversation_memory
   current_phase: number;
   qualification_score: {

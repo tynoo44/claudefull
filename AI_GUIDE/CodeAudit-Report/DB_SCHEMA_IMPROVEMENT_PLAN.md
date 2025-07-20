@@ -80,7 +80,9 @@ DROP TABLE IF EXISTS public.prompt_analytics;
 ## Fase 3: Actualizar el Código de la Aplicación
 
 ### 3.1. Actualizar Lógica de la Aplicación
+
 Revisar todo el código que hacía referencia a `conversation_memory` (principalmente en `src/lib/conversation-state-manager.ts`) y modificarlo para que ahora consulte la tabla `conversations` fusionada.
 
 ### 3.2. Eliminar Código Obsoleto
+
 Eliminar cualquier referencia a `conversation_memory`, `objection_handlers`, y `prompt_analytics` en el frontend y los scripts.

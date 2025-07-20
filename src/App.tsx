@@ -40,7 +40,10 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/auth" element={isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />} />
+      <Route
+        path="/auth"
+        element={isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage darkMode={darkMode} />}
+      />
       <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
 
       <Route element={<ProtectedRoute />}>

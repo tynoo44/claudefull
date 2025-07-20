@@ -30,14 +30,14 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
 
   const { error: conversationsError } = useConversationsQuery();
   const { data: templatesData, error: templatesError } = useTemplatesQuery();
-  const { 
-    messages, 
-    error: messagesError, 
+  const {
+    messages,
+    error: messagesError,
     isLoading: messagesLoading,
     hasMore: hasMoreMessages,
     isFetchingNextPage: isFetchingMoreMessages,
     loadMoreMessages,
-    totalCount: totalMessages
+    totalCount: totalMessages,
   } = useMessagesPagination(selectedChat?.id || null);
 
   const allTemplates = templatesData?.pages.flatMap(page => page.data) || [];
@@ -85,7 +85,11 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   if (error) {
     return (
       <div className={`h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <ErrorState darkMode={darkMode} error={error.message} onRetry={() => queryClient.invalidateQueries()} />
+        <ErrorState
+          darkMode={darkMode}
+          error={error.message}
+          onRetry={() => queryClient.invalidateQueries()}
+        />
       </div>
     );
   }
@@ -127,7 +131,12 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
 
           <ChatTemplatesView
             darkMode={darkMode}
-            templates={allTemplates.map(t => ({...t, uses: t.usage_count || 0, conversionRate: t.conversion_rate || 0, isFavorite: t.is_favorite || false}))}
+            templates={allTemplates.map(t => ({
+              ...t,
+              uses: t.usage_count || 0,
+              conversionRate: t.conversion_rate || 0,
+              isFavorite: t.is_favorite || false,
+            }))}
             onTemplateInsert={insertTemplate}
             onTemplateDelete={handleTemplateDelete}
             onToggleFavorite={handleToggleFavorite}

@@ -6,13 +6,13 @@ Personal MVP platform for professional appointment setting with AI-powered conve
 
 **CURRENT PRIORITY:** Fix critical issues and optimize for personal use (functionality over security).
 
-**AUDIT STATUS (2025-07-07):**
+**AUDIT STATUS (2025-07-20):**
 
-- ✅ Comprehensive 3-phase audit completed
-- 📋 Detailed PRD created with prioritized improvements
-- 🚨 3 critical fixes identified (30 min work)
-- 🔴 Major performance bottlenecks found
-- 🟡 Architecture improvements needed
+- ✅ Source code verification completed - TaskMaster tracking corrected
+- 🚨 **CRITICAL**: 18 ESLint errors + 3 TypeScript errors (MUST FIX)
+- 🔴 Chat virtualization claimed but NOT implemented in MessageList.tsx
+- ✅ Database schema optimized, routing & testing framework complete
+- ⚠️ TaskMaster shows 9/30 done, reality is 12/30 with 3 incorrectly tracked
 
 **Core Features:**
 
@@ -30,59 +30,60 @@ Personal MVP platform for professional appointment setting with AI-powered conve
 - **Auth**: Supabase Auth (User ID: `4435e069-4294-4e44-8fd3-25840e5a3aa0`)
 - **Styling**: Tailwind CSS 3.4.17
 - **Dev Tools**: ESLint + Prettier + Husky
-- **Testing**: Vitest + React Testing Library (TO BE ADDED)
+- **Testing**: Vitest + React Testing Library ✅
 
-## Key Files & Structure
+## Key Files & Structure (UPDATED)
 
 ```
 src/
 ├── lib/
-│   ├── gemini.ts              # AI response generation (NEEDS: leadId fix)
-│   ├── prompt-manager.ts      # Hierarchical prompts (NEEDS: refactor)
-│   ├── response-validator.ts  # Script validation (0.0-1.0 scoring)
-│   └── supabase.ts           # Database client
-├── components/
-│   ├── Chat/
-│   │   ├── AIChatSidebar.tsx  # Main AI assistant (NEEDS: props fix)
-│   │   └── ChatInterface.tsx  # Chat UI (NEEDS: virtualization)
-│   └── Leads/                 # Lead management
+│   ├── gemini.ts              # AI response generation ✅
+│   ├── conversation-analyzer.ts # AI conversation analysis ✅  
+│   ├── prompt-manager.ts      # Basic prompt handling (basic implementation)
+│   └── supabase.ts           # Database client ✅
+├── components/Chat/
+│   ├── AIChatSidebar.tsx      # Main AI assistant ✅
+│   ├── MessageList.tsx        # Chat UI (⚠️ MISSING virtualization)
+│   └── ResizableLayout.tsx    # Layout management ✅
 ├── contexts/
-│   └── AppContext.tsx         # Monolithic context (NEEDS: splitting)
-├── hooks/                     # Custom hooks (NEEDS: pagination)
-├── pages/
-│   └── ChatsPage.tsx          # Main chat page (NEEDS: props fix)
-└── types/index.ts            # TypeScript interfaces
+│   ├── AuthContext.tsx        # ✅ Authentication (59 lines)
+│   └── ThemeContext.tsx       # ✅ Theme management (43 lines)
+├── hooks/
+│   ├── useMessagesPagination.ts # ✅ TanStack Query pagination
+│   ├── useLeadsPagination.ts    # ✅ 20 items/page + prefetch
+│   └── useLeadsVirtualization.ts # ✅ Leads virtualization
+├── pages/ # ✅ React Router implemented
+└── test/ # ✅ Vitest + RTL configured + actual tests
 ```
 
 **Config Files:**
 
 - `.taskmaster/config.json` - AI models configuration
 - `.taskmaster/docs/prd.txt` - Product requirements
-- `.taskmaster/tasks/tasks.json` - Development tasks (18/27 completed)
+- `.taskmaster/tasks/tasks.json` - Development tasks (NEEDS AUDIT: claims 9/30, reality ~12/30)
 - `AI_GUIDE/COMPREHENSIVE_PRD.md` - Complete improvement roadmap
+- `AI_GUIDE/4-2025-07-20-COMPLETE-AUDIT.md` - Latest comprehensive audit
 
-## Database Schema (11 tables total)
+## Database Schema (8 tables total - UPDATED 2025-07-20)
 
 ```sql
 -- AI System
-prompts (id, prompt_type, role_definition, content, active)
-script_templates (id, phase, lead_type, content, variables)
-few_shot_examples (id, phase, example_input, example_output)
-objection_handlers (id, objection_type, response_template, phase)
-prompt_analytics (id, prompt_id, response_quality, execution_time)
+prompts (id, prompt_type, role_definition, content, active, metadata)
+script_templates (id, phase, lead_type, content, variables, priority)
+few_shot_examples (id, phase, scenario, lead_message, setter_response)
 
--- Business Logic
-leads (id, instagram_id, username, status, procedence)
-conversations (id, lead_id, current_phase, qualification_score, history)
-messages (id, conversation_id, content, sender, timestamp)
-message_templates (id, name, content, category, conversion_rate)
-conversation_memory (id, lead_id, conversation_id, current_phase, qualification_score) # CRITICAL: Only 1 record!
+-- Business Logic  
+leads (id, instagram_id, username, status, procedence, user_id) # 287 records
+conversations (id, lead_id, current_phase, qualification_score, conversation_state, phase_history) # 287 records - ENHANCED
+messages (id, conversation_id, sender_type, text, platform_message_id) # 1,670 records
+message_templates (id, name, content, category, tone, variables) # 3 records
 
 -- Users
-users (id, email, name, created_at)
+users (id, email, full_name, avatar_url, created_at) # 0 records
 ```
 
-**⚠️ KNOWN ISSUE**: conversation_memory has only 1 record despite 194 conversations (see Priority 0 fixes)
+**✅ MAJOR UPDATE**: `conversation_memory` merged into `conversations` (2025-07-20)
+**✅ REMOVED**: `objection_handlers`, `prompt_analytics` (unused tables)
 
 ## Development Commands
 
@@ -225,31 +226,36 @@ MAIN TASK: [Objective]
 - Key Outcomes: [Results]
 ```
 
-## Current Status (Updated 2025-07-07)
+## Current Status (Updated 2025-07-20)
 
-### 🚨 CRITICAL FIXES NEEDED (Priority 0 - 30 minutes)
+### 🚨 CRITICAL FIXES NEEDED (Priority 0 - IMMEDIATE)
 
-1. **ChatsPage.tsx**: Add `conversationId` and `leadId` props to AIChatSidebar
-2. **AIChatSidebar.tsx**: Pass `conversationId` and `leadId` to generateAIResponse
-3. **gemini.ts**: Replace hardcoded empty `leadId` with actual parameter
+**BLOCKING DEVELOPMENT:**
 
-### 🔴 Performance Bottlenecks (Priority 1)
+1. **18 ESLint Errors** (lexical declarations, undefined variables, unused vars)
+2. **3 TypeScript Errors** (LeadsPage.tsx - missing `onToggleFilters` prop)  
+3. **Chat Virtualization Missing** - MessageList.tsx uses basic scrolling despite claims
+4. **54 'any' Types** - Replace with proper TypeScript interfaces
 
-- **ChatInterface**: Implement virtual scrolling (TanStack Virtual)
-- **useLeads/useTemplates**: Add pagination (20-50 items)
-- **Database**: Add indexes and foreign key constraints
+### ✅ VERIFIED IMPLEMENTATIONS
 
-### 🟡 Architecture Improvements (Priority 2)
+- **Router & Navigation**: ✅ React Router fully implemented in App.tsx  
+- **Context Architecture**: ✅ Already split (AuthContext + ThemeContext)
+- **Testing Framework**: ✅ Vitest + RTL configured with actual tests
+- **Database Pagination**: ✅ TanStack Query with 20 items/page
+- **Conversation Tracking**: ✅ Props flow correctly implemented
+- **Database Schema**: ✅ Optimized with foreign keys and indexes
 
-- Split monolithic AppContext into domain contexts
-- Refactor AI prompt engine with phase-based logic
-- Implement React Router for proper navigation
+### 🔍 TASK AUDIT NEEDED
 
-### 📊 Task Progress
+**TaskMaster Status Inconsistencies:**
+- Claims: 9/30 complete → Reality: ~12/30 complete
+- Tasks 42-46 (Context Split): Already done, incorrectly tracked
+- Task 37 (Testing): Complete, marked in-progress  
+- Task 47 (Router): Complete, marked pending
+- Tasks 31-32 (Chat Virtualization): Marked done, NOT implemented
 
-- **Completed**: 18/27 main tasks
-- **Critical Gap**: No testing framework
-- **Deferred**: Task 3 (RLS policies) - acceptable for local use
+**See**: `AI_GUIDE/4-2025-07-20-COMPLETE-AUDIT.md` for detailed verification
 
 ## Environment Variables
 
@@ -260,10 +266,10 @@ VITE_SUPABASE_ANON_KEY=[your_key]
 VITE_USER_ID=4435e069-4294-4e44-8fd3-25840e5a3aa0
 ```
 
-## Essential Rules Summary
+## Essential Rules Summary (UPDATED 2025-07-20)
 
 1. **Always use English** for technical work
-2. **Plan before acting** - no improvisation
+2. **Plan before acting** - no improvisation  
 3. **Log everything** in task files
 4. **Stop on errors** - analyze before fixing
 5. **Get confirmation** for changes
@@ -272,28 +278,36 @@ VITE_USER_ID=4435e069-4294-4e44-8fd3-25840e5a3aa0
 8. **Follow templates** for communication
 9. **Check audit findings** in `AI_GUIDE/` before making changes
 10. **Prioritize functionality** over security (local use)
+11. **NEW: Fix all errors before new features** - Zero tolerance for ESLint/TS errors
+12. **NEW: Always plan multiple options** - Consider alternatives before implementing
+13. **NEW: Update CLAUDE.md every 2 weeks** - Keep documentation current
+14. **NEW: Request approval for error fixes** - Collaborate on solutions
+15. **NEW: Run lint + type-check before commits** - Mandatory quality gates
 
 **FAILURE TO FOLLOW = STOP & REPLAN**
 
-## Audit-Based Development Guidelines (NEW)
+## Audit-Based Development Guidelines (UPDATED 2025-07-20)
 
-### From Global Audit (AI_GUIDE/1-GLOBAL-AUDIT/)
+### From Source Code Verification (2025-07-20)
 
-- **Critical Performance**: Chat virtualization, database pagination MUST be implemented
-- **Architecture Debt**: Tasks 6-12 pending, prioritize before new features
-- **Code Organization**: Follow `src/lib/`, `src/hooks/`, `src/contexts/` structure
+- **CRITICAL**: Code quality issues block development (18 ESLint + 3 TS errors)
+- **MAJOR GAP**: Chat virtualization claimed complete but MessageList.tsx uses basic scrolling
+- **COMPLETED**: Router, contexts, testing framework, database pagination all working
+- **TASK TRACKING**: TaskMaster significantly out of sync with reality
 
-### From Workflow Audit (AI_GUIDE/2-WORKFLOW-AUDIT/)
+### Updated Priority Matrix
 
-- **Integration Gaps**: 3 simple prop-passing fixes restore conversation tracking
-- **Testing Required**: Verify conversation_memory population after fixes
-- **Success Metrics**: 194 conversations should have tracking data
+```
+PHASE 0 (IMMEDIATE): Fix 21 code errors + implement missing chat virtualization
+PHASE 1 (1 WEEK): Audit & correct TaskMaster tracking + complete AI engine
+PHASE 2 (2-3 WEEKS): Advanced features + performance optimization  
+PHASE 3 (4+ WEEKS): New features based on updated roadmap
+```
 
-### From Tasks Audit (AI_GUIDE/3-tasks_audit.md)
-
-- **Testing Gap**: Add Vitest + React Testing Library immediately
-- **Security Acceptable**: RLS deferred for local use is OK
-- **Complexity Warning**: Don't over-engineer, stick to PRD priorities
+**Key References:**
+- Full verification details: `AI_GUIDE/4-2025-07-20-COMPLETE-AUDIT.md`
+- Current task status: Check TaskMaster vs actual source code
+- Development priorities: Focus on missing virtualization + error resolution
 
 ## Database Operational Guidelines
 

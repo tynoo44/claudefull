@@ -221,8 +221,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
           className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
             isResizing === -1 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
           }`}
-          onMouseDown={(e) => {
-			e.stopPropagation();
+          onMouseDown={e => {
+            e.stopPropagation();
             setIsResizing(-1);
           }}
         />
@@ -241,7 +241,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
           isResizing === 0 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
         }`}
-        onMouseDown={(e) => {
+        onMouseDown={e => {
           e.stopPropagation();
           setIsResizing(0);
         }}
@@ -260,7 +260,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         className={`w-1 h-full cursor-col-resize hover:bg-blue-500 transition-colors flex-shrink-0 ${
           isResizing === 1 ? 'bg-blue-500' : darkMode ? 'bg-gray-700' : 'bg-gray-300'
         }`}
-        onMouseDown={(e) => {
+        onMouseDown={e => {
           e.stopPropagation();
           setIsResizing(1);
         }}

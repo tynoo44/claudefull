@@ -211,9 +211,7 @@ class ConversationTrackingTester {
         1.0,
       );
 
-      const ourConversation = highScoreConversations.find(
-        conv => conv.id === TEST_CONVERSATION_ID,
-      );
+      const ourConversation = highScoreConversations.find(conv => conv.id === TEST_CONVERSATION_ID);
       if (!ourConversation) {
         throw new Error('Test conversation not found in high score results');
       }

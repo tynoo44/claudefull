@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, MessageCircle, Trash2, Clock, Hash, User, Edit3 } from 'lucide-react';
+import { ChevronDown, MessageCircle, Trash2, Clock, Hash, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Lead, LeadStatus, LeadProcedence, updateLead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
@@ -120,7 +120,10 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
   };
 
   return (
-    <tr className={`transition-colors ${darkMode ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50'}`}>
+    <tr
+      onClick={() => onEditLead(lead)}
+      className={`transition-colors cursor-pointer ${darkMode ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50'}`}
+    >
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center space-x-3">
           <div
@@ -186,7 +189,8 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="relative" ref={statusRef}>
           <button
-            onClick={() => {
+            onClick={e => {
+              e.stopPropagation();
               setShowStatusDropdown(!showStatusDropdown);
               setShowProcedenceDropdown(false);
             }}
@@ -236,7 +240,8 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="relative" ref={procedenceRef}>
           <button
-            onClick={() => {
+            onClick={e => {
+              e.stopPropagation();
               setShowProcedenceDropdown(!showProcedenceDropdown);
               setShowStatusDropdown(false);
             }}
@@ -323,7 +328,10 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center space-x-2">
           <button
-            onClick={handleChatClick}
+            onClick={e => {
+              e.stopPropagation();
+              handleChatClick();
+            }}
             className={`p-2 rounded-lg transition-colors ${
               darkMode
                 ? 'hover:bg-gray-700 text-gray-400 hover:text-blue-400'
@@ -335,19 +343,10 @@ export const LeadTableRow: React.FC<LeadTableRowProps> = ({
           </button>
 
           <button
-            onClick={() => onEditLead(lead)}
-            className={`p-2 rounded-lg transition-colors ${
-              darkMode
-                ? 'hover:bg-gray-700 text-gray-400 hover:text-green-400'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-green-600'
-            }`}
-            title="Editar lead"
-          >
-            <Edit3 className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => onDeleteLead(lead.id)}
+            onClick={e => {
+              e.stopPropagation();
+              onDeleteLead(lead.id);
+            }}
             className={`p-2 rounded-lg transition-colors ${
               darkMode
                 ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400'

@@ -39,31 +39,33 @@ const fetchConversations = async ({ pageParam = 0 }) => {
   }
 
   // Transform the optimized data to match the expected format
-  const transformedData: ConversationWithLastMessage[] = (data as ConversationOptimized[]).map(conv => ({
-    id: conv.id,
-    lead_id: conv.lead_id,
-    opened_at: conv.opened_at,
-    updated_at: conv.updated_at,
-    last_message_text: conv.last_message_text,
-    last_message_created_at: conv.last_message_created_at,
-    last_message_sender_type: conv.last_message_sender_type as 'Lead' | 'Setter' | null,
-    leads: {
-      id: conv.lead_id,
-      username: conv.lead_username || '',
-      full_name: conv.lead_full_name,
-      profile_pic: conv.lead_profile_pic,
-      status: conv.lead_status || 'Open',
-      tags: conv.lead_tags || [],
-      notes: conv.lead_notes,
-      followers_count: conv.lead_followers_count,
-    },
-    unreadCount: conv.unread_count,
-  }));
+  const transformedData: ConversationWithLastMessage[] = (data as ConversationOptimized[]).map(
+    conv => ({
+      id: conv.id,
+      lead_id: conv.lead_id,
+      opened_at: conv.opened_at,
+      updated_at: conv.updated_at,
+      last_message_text: conv.last_message_text,
+      last_message_created_at: conv.last_message_created_at,
+      last_message_sender_type: conv.last_message_sender_type as 'Lead' | 'Setter' | null,
+      leads: {
+        id: conv.lead_id,
+        username: conv.lead_username || '',
+        full_name: conv.lead_full_name,
+        profile_pic: conv.lead_profile_pic,
+        status: conv.lead_status || 'Open',
+        tags: conv.lead_tags || [],
+        notes: conv.lead_notes,
+        followers_count: conv.lead_followers_count,
+      },
+      unreadCount: conv.unread_count,
+    }),
+  );
 
-  return { 
-    data: transformedData, 
-    count: count || 0, 
-    nextPage: pageParam + 1 
+  return {
+    data: transformedData,
+    count: count || 0,
+    nextPage: pageParam + 1,
   };
 };
 

@@ -4,7 +4,12 @@ import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
 import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageTemplate, createMessageTemplate, updateMessageTemplate, deleteMessageTemplate } from '../lib/supabase';
+import {
+  MessageTemplate,
+  createMessageTemplate,
+  updateMessageTemplate,
+  deleteMessageTemplate,
+} from '../lib/supabase';
 import { Template } from '../types';
 
 interface TemplatesPageProps {
@@ -26,7 +31,11 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
 
   const categories = [
     'all',
-    ...new Set((data?.pages.flatMap(page => page.data) || []).map(t => t.category).filter(Boolean) as string[]),
+    ...new Set(
+      (data?.pages.flatMap(page => page.data) || [])
+        .map(t => t.category)
+        .filter(Boolean) as string[],
+    ),
   ];
 
   const allTemplates = data?.pages.flatMap(page => page.data) || [];
@@ -149,9 +158,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   }
 
   return (
-    <div
-      className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
-    >
+    <div className={`min-h-screen transition-colors ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className={`transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <TemplatesHeader
           darkMode={darkMode}

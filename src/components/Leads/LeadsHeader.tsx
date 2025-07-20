@@ -4,7 +4,6 @@ import {
   Plus,
   Grid3X3,
   List,
-  Filter,
   Download,
   BarChart3,
   Search,
@@ -22,7 +21,6 @@ interface LeadsHeaderProps {
   viewMode: 'list' | 'kanban';
   showFilters: boolean;
   onViewModeChange: (mode: 'list' | 'kanban') => void;
-  onToggleFilters: () => void;
   onAddLead: () => void;
   // Filter props
   searchTerm?: string;
@@ -66,7 +64,6 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
   viewMode,
   showFilters,
   onViewModeChange,
-  onToggleFilters,
   onAddLead,
   // Filter props
   searchTerm = '',
@@ -337,24 +334,6 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
               <List className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Filter Button - Compact with indicator */}
-          <button
-            onClick={onToggleFilters}
-            className={`relative px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-sm font-medium ${
-              showFilters
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20'
-                : darkMode
-                  ? 'bg-gray-800/70 text-gray-300 hover:bg-gray-700'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filtros</span>
-            {showFilters && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-            )}
-          </button>
 
           {/* Analytics Button */}
           <button

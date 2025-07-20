@@ -1,6 +1,7 @@
 # Solución CORS para Supabase
 
 ## Opción 1: Forzar Puerto 5173 (YA IMPLEMENTADO)
+
 ```bash
 # 1. Detener servidor actual
 Ctrl+C
@@ -37,10 +38,13 @@ export default defineConfig({
       '/supabase': {
         target: 'https://awyslztbkykhjhhykacf.supabase.co',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/supabase/, ''),
+        rewrite: path => path.replace(/^\/supabase/, ''),
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            proxyReq.setHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3eXNsenRia3lraGpoaHlrYWNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNzEyNjEsImV4cCI6MjA2NTc0NzI2MX0.chmGUF4NxbsE8D3tujYzDC7Xm0zEQP7j6_L0VGrqyVc');
+            proxyReq.setHeader(
+              'apikey',
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3eXNsenRia3lraGpoaHlrYWNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNzEyNjEsImV4cCI6MjA2NTc0NzI2MX0.chmGUF4NxbsE8D3tujYzDC7Xm0zEQP7j6_L0VGrqyVc',
+            );
           });
         },
       },
@@ -52,7 +56,9 @@ export default defineConfig({
 Y actualizar el cliente Supabase para usar el proxy en desarrollo.
 
 ## Verificación
+
 Después de aplicar cualquier solución, deberías ver:
+
 - Sin errores CORS en la consola
 - Las conversaciones cargan correctamente
 - Network tab muestra respuestas 200 OK

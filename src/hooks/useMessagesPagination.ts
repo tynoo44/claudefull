@@ -19,29 +19,46 @@ export const useMessagesPagination = (conversationId: string | null) => {
   const realtimeSubscription = useRef<RealtimeChannel | null>(null);
 
   // Use infinite query for pagination
-  const {
-    data,
-    error,
-    isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey: ['messages', conversationId],
-    initialPageParam: 0,
-    queryFn: async ({ pageParam = 0 }: { pageParam?: number }) => {
-      if (!conversationId) {
-        return { messages: [], totalCount: 0, hasMore: false };
-      }
+  const { data, error, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: ['messages', conversationId],
+      initialPageParam: 0,
+      queryFn: async ({ pageParam = 0 }: { pageParam?: number }) => {
+        if (!conversationId) {
+          return { messages: [], totalCount: 0, hasMore: false };
+        }
 
-      // For initial load, use optimized RPC
-      if (pageParam === 0) {
-        const { data, error } = await supabase
-          .rpc('get_initial_messages', {
+        // For initial load, use optimized RPC
+        if (pageParam === 0) {
+          const { data, error } = await supabase.rpc('get_initial_messages', {
             p_conversation_id: conversationId,
             p_limit: MESSAGES_PER_PAGE,
           });
+
+          if (error) throw error;
+
+          const messages = data.map((row: any) => ({
+            id: row.id,
+            conversation_id: row.conversation_id,
+            sender_type: row.sender_type,
+            text: row.text,
+            platform_message_id: row.platform_message_id,
+            created_at: row.created_at,
+          }));
+
+          return {
+            messages,
+            totalCount: data[0]?.total_count || 0,
+            hasMore: data[0]?.has_more || false,
+          };
+        }
+
+        // For subsequent pages, use paginated RPC
+        const { data, error } = await supabase.rpc('get_messages_paginated', {
+          p_conversation_id: conversationId,
+          p_limit: MESSAGES_PER_PAGE,
+          p_offset: pageParam,
+        });
 
         if (error) throw error;
 
@@ -54,51 +71,28 @@ export const useMessagesPagination = (conversationId: string | null) => {
           created_at: row.created_at,
         }));
 
+        const totalCount = data[0]?.total_count || 0;
+        const hasMore = pageParam + MESSAGES_PER_PAGE < totalCount;
+
         return {
           messages,
-          totalCount: data[0]?.total_count || 0,
-          hasMore: data[0]?.has_more || false,
+          totalCount,
+          hasMore,
         };
-      }
+      },
+      getNextPageParam: (lastPage: any, allPages: any[]) => {
+        if (!lastPage.hasMore) return undefined;
 
-      // For subsequent pages, use paginated RPC
-      const { data, error } = await supabase
-        .rpc('get_messages_paginated', {
-          p_conversation_id: conversationId,
-          p_limit: MESSAGES_PER_PAGE,
-          p_offset: pageParam,
-        });
-
-      if (error) throw error;
-
-      const messages = data.map((row: any) => ({
-        id: row.id,
-        conversation_id: row.conversation_id,
-        sender_type: row.sender_type,
-        text: row.text,
-        platform_message_id: row.platform_message_id,
-        created_at: row.created_at,
-      }));
-
-      const totalCount = data[0]?.total_count || 0;
-      const hasMore = pageParam + MESSAGES_PER_PAGE < totalCount;
-
-      return {
-        messages,
-        totalCount,
-        hasMore,
-      };
-    },
-    getNextPageParam: (lastPage: any, allPages: any[]) => {
-      if (!lastPage.hasMore) return undefined;
-      
-      // Calculate offset based on all loaded messages
-      const loadedCount = allPages.reduce((sum: number, page: any) => sum + page.messages.length, 0);
-      return loadedCount;
-    },
-    enabled: !!conversationId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+        // Calculate offset based on all loaded messages
+        const loadedCount = allPages.reduce(
+          (sum: number, page: any) => sum + page.messages.length,
+          0,
+        );
+        return loadedCount;
+      },
+      enabled: !!conversationId,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
 
   // Combine all pages into a single array
   useEffect(() => {
@@ -130,9 +124,9 @@ export const useMessagesPagination = (conversationId: string | null) => {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
+        payload => {
           const newMessage = payload.new as Message;
-          
+
           // Add new message to the end of the list
           setAllMessages(prev => {
             // Check if message already exists (avoid duplicates)
@@ -141,7 +135,7 @@ export const useMessagesPagination = (conversationId: string | null) => {
             }
             return [...prev, newMessage];
           });
-        }
+        },
       )
       .subscribe();
 

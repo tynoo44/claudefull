@@ -114,12 +114,14 @@ export const useConversationPagination = () => {
               notes: conv.lead_notes,
               followers_count: conv.lead_followers_count,
             },
-            lastMessage: conv.last_message_text ? {
-              id: 'temp-' + conv.id, // RPC doesn't return message ID
-              text: conv.last_message_text,
-              created_at: conv.last_message_created_at,
-              sender_type: conv.last_message_sender_type,
-            } : null,
+            lastMessage: conv.last_message_text
+              ? {
+                  id: 'temp-' + conv.id, // RPC doesn't return message ID
+                  text: conv.last_message_text,
+                  created_at: conv.last_message_created_at,
+                  sender_type: conv.last_message_sender_type,
+                }
+              : null,
             unreadCount: conv.unread_count || 0,
             hasUnansweredMessages,
           };

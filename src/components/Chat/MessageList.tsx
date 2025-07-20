@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Message } from '../../lib/supabase';
+import { MessageSkeleton } from '../common/SkeletonLoaders';
 
 interface MessageListProps {
   darkMode: boolean;
@@ -10,13 +11,13 @@ interface MessageListProps {
   onLoadMoreMessages?: () => void;
 }
 
-export const MessageList: React.FC<MessageListProps> = ({ 
-  darkMode, 
-  messages, 
+export const MessageList: React.FC<MessageListProps> = ({
+  darkMode,
+  messages,
   loading,
   hasMoreMessages,
   isFetchingMoreMessages,
-  onLoadMoreMessages 
+  onLoadMoreMessages,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -48,8 +49,8 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   if (loading) {
     return (
-      <div className="flex-1 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="flex-1">
+        <MessageSkeleton darkMode={darkMode} />
       </div>
     );
   }
@@ -72,7 +73,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
         </div>
       )}
-      
+
       {/* Messages list */}
       <div className="space-y-4">
         {messages.map((msg, index) => (

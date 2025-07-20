@@ -330,10 +330,7 @@ export class ConversationStateManager {
    */
   static async deleteConversationMemory(conversationId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('id', conversationId);
+      const { error } = await supabase.from('conversations').delete().eq('id', conversationId);
 
       if (error) {
         console.error('Error deleting conversation memory:', error);
@@ -346,7 +343,6 @@ export class ConversationStateManager {
       return false;
     }
   }
-
 }
 
 export default ConversationStateManager;

@@ -7,6 +7,7 @@ import { ChatSidebarSearch } from './ChatSidebarSearch';
 import { ChatSidebarFilters } from './ChatSidebarFilters';
 import { ChatListItem } from './ChatListItem';
 import { ChatSidebarCollapsed } from './ChatSidebarCollapsed';
+import { ChatSidebarSkeleton } from '../common/SkeletonLoaders';
 
 interface ChatSidebarProps {
   darkMode: boolean;
@@ -223,6 +224,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
       {/* Chat List */}
       <div ref={chatListRef} className="overflow-y-auto flex-1">
+        {/* Initial loading state */}
+        {loading && chats.length === 0 && <ChatSidebarSkeleton darkMode={darkMode} />}
+
         {chats.map((chat, index) => {
           if (index === chats.length - 5) {
             checkAndLoadMore(index);

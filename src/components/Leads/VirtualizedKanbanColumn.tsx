@@ -102,10 +102,10 @@ export const VirtualizedKanbanColumn: React.FC<VirtualizedKanbanColumnProps> = (
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollContainerRef.current || isMinimized) return;
-      
+
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
       const scrolledToBottom = scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD;
-      
+
       if (scrolledToBottom && visibleItems < leads.length) {
         setVisibleItems(prev => Math.min(prev + ITEMS_PER_PAGE, leads.length));
       }
@@ -174,10 +174,7 @@ export const VirtualizedKanbanColumn: React.FC<VirtualizedKanbanColumnProps> = (
 
       {/* Content */}
       {!isMinimized && (
-        <div
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto p-2 space-y-2"
-        >
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-2 space-y-2">
           {visibleLeads.map(lead => (
             <KanbanCard
               key={lead.id}
@@ -186,7 +183,7 @@ export const VirtualizedKanbanColumn: React.FC<VirtualizedKanbanColumnProps> = (
               onClick={() => onLeadClick(lead)}
             />
           ))}
-          
+
           {visibleItems < leads.length && (
             <div className={`text-center py-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               <div className="animate-pulse text-sm">Cargando más...</div>
