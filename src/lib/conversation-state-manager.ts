@@ -7,7 +7,7 @@ export interface ConversationState {
   last_ai_response: string;
   last_update: string;
   total_messages: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PhaseInfo {
@@ -17,7 +17,7 @@ export interface PhaseInfo {
   obstacles?: string[];
   offer_presented?: boolean;
   appointment_interest?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface AppendConversationMemoryParams {
@@ -303,12 +303,13 @@ export class ConversationStateManager {
       // Process phase statistics
       const stats: { [key: string]: number } = {};
 
-      data.forEach((record: any) => {
+      data.forEach((record: Record<string, unknown>) => {
         const phaseKey = `current_phase_${record.current_phase}`;
         stats[phaseKey] = (stats[phaseKey] || 0) + 1;
 
         // Score range statistics
-        const score = record.qualification_score || 0;
+        const score =
+          typeof record.qualification_score === 'number' ? record.qualification_score : 0;
         if (score >= 0.8) stats['high_score'] = (stats['high_score'] || 0) + 1;
         else if (score >= 0.5) stats['medium_score'] = (stats['medium_score'] || 0) + 1;
         else stats['low_score'] = (stats['low_score'] || 0) + 1;

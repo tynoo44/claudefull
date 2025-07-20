@@ -111,7 +111,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         id: leadData.id,
         procedence: leadData.procedence as LeadProcedence,
         tags: leadData?.tags || [],
-      } as any,
+      } as Chat['leadData'],
       unreadCount: conv.unreadCount || 0,
       hasUnansweredMessages: conv.hasUnansweredMessages,
       openedAt: conv.opened_at,

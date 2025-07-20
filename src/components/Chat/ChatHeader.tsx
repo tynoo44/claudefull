@@ -5,6 +5,7 @@ import { LeadInfoModal } from './LeadInfoModal';
 import { updateLead } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
 import { LeadStatus, LeadProcedence } from '../../types';
+import { Lead } from '../../lib/supabase';
 
 interface ChatHeaderProps {
   darkMode: boolean;
@@ -251,7 +252,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat, 
       {selectedChat.leadData && (
         <LeadInfoModal
           darkMode={darkMode}
-          lead={selectedChat.leadData as any}
+          lead={selectedChat.leadData as unknown as Lead}
           isOpen={showLeadModal}
           onClose={() => setShowLeadModal(false)}
           onUpdate={updatedLead => {
@@ -263,7 +264,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat, 
                 leadData: {
                   ...selectedChat.leadData,
                   ...updatedLead,
-                } as any,
+                  procedence: updatedLead.procedence,
+                  tags: updatedLead.tags,
+                },
               });
             }
           }}

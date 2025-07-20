@@ -41,8 +41,8 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
   // Sort leads locally for the table view
   const sortedLeads = useMemo(() => {
     return [...leads].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number | null | undefined;
+      let bValue: string | number | null | undefined;
 
       switch (sortField) {
         case 'name':
@@ -68,6 +68,11 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
         default:
           return 0;
       }
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
 
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;

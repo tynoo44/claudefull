@@ -1,6 +1,28 @@
 import { supabase } from './supabase';
 import { ConversationWithLastMessage } from '../types';
 
+interface ConversationWithLead {
+  lead_id: string;
+  leads: {
+    instagram_id: string;
+  } | null;
+}
+
+interface MessagePayload {
+  id: string;
+  conversation_id: string;
+  sender_type: 'Lead' | 'Setter';
+  text: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ConversationPayload {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: Record<string, unknown>;
+  old: Record<string, unknown>;
+}
+
 // Funciones mejoradas para la gestión de chats con manejo de errores robusto
 
 export async function getConversationsWithDetails() {
@@ -86,6 +108,8 @@ export async function sendMessageToConversation(
         throw new Error(`Error al obtener conversación: ${convError.message}`);
       }
 
+      const typedConversation = conversation as unknown as ConversationWithLead;
+
       // Send HTTP request to webhook
       const webhookUrl =
         'https://n8n.srv802330.hstgr.cloud/webhook/8217af76-a02c-4766-8396-a47cd0cd6f1a';
@@ -95,7 +119,7 @@ export async function sendMessageToConversation(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          instagram_id: (conversation.leads as any)?.instagram_id,
+          instagram_id: typedConversation.leads?.instagram_id,
           message: text,
         }),
       });
@@ -188,7 +212,10 @@ export async function createConversationForLead(leadId: string) {
 }
 
 // Funciones de tiempo real
-export function subscribeToMessages(conversationId: string, callback: (message: any) => void) {
+export function subscribeToMessages(
+  conversationId: string,
+  callback: (message: MessagePayload) => void,
+) {
   const channel = supabase
     .channel(`messages:${conversationId}`)
     .on(
@@ -200,7 +227,7 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
         filter: `conversation_id=eq.${conversationId}`,
       },
       payload => {
-        callback(payload.new);
+        callback(payload.new as MessagePayload);
       },
     )
     .subscribe();
@@ -210,7 +237,7 @@ export function subscribeToMessages(conversationId: string, callback: (message: 
   };
 }
 
-export function subscribeToConversations(callback: (conversation: any) => void) {
+export function subscribeToConversations(callback: (conversation: ConversationPayload) => void) {
   const channel = supabase
     .channel('conversations')
     .on(
@@ -221,7 +248,7 @@ export function subscribeToConversations(callback: (conversation: any) => void) 
         table: 'conversations',
       },
       payload => {
-        callback(payload);
+        callback(payload as ConversationPayload);
       },
     )
     .subscribe();

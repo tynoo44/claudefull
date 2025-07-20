@@ -153,7 +153,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
                     ...selectedChat,
                     messages: messages || [],
                   }
-                : null
+                : undefined
             }
             conversationId={selectedChat?.id}
             leadId={selectedChat?.leadId}

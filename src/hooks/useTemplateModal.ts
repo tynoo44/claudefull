@@ -51,7 +51,7 @@ export const useTemplateModal = () => {
     setVariableInput('');
   };
 
-  const updateTemplate = (field: string, value: any) => {
+  const updateTemplate = (field: string, value: unknown) => {
     setNewTemplate(prev => ({ ...prev, [field]: value }));
   };
 

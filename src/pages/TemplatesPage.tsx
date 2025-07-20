@@ -116,7 +116,9 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
   const handleTemplateSave = async (template: Template) => {
     const messageTemplate = convertToMessageTemplate(template);
     if (isCreateMode) {
-      await createMessageTemplate(messageTemplate as any);
+      await createMessageTemplate(
+        messageTemplate as Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'>,
+      );
     } else {
       await updateMessageTemplate(template.id, messageTemplate);
     }

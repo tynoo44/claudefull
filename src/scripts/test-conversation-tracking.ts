@@ -19,13 +19,13 @@ interface TestResult {
   testName: string;
   passed: boolean;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 class ConversationTrackingTester {
   private results: TestResult[] = [];
 
-  private addResult(testName: string, passed: boolean, error?: string, data?: any) {
+  private addResult(testName: string, passed: boolean, error?: string, data?: unknown) {
     this.results.push({ testName, passed, error, data });
     console.log(`${passed ? '✅' : '❌'} ${testName}${error ? `: ${error}` : ''}`);
   }

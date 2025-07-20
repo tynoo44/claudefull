@@ -1,5 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+
+interface MessageRow {
+  id: number;
+  conversation_id: string;
+  sender_type: 'Lead' | 'Setter';
+  text: string;
+  platform_message_id: string | null;
+  created_at: string;
+}
+
+interface MessagePage {
+  messages: Message[];
+  hasMore: boolean;
+  totalCount: number;
+}
 import { supabase } from '../lib/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -37,7 +52,7 @@ export const useMessagesPagination = (conversationId: string | null) => {
 
           if (error) throw error;
 
-          const messages = data.map((row: any) => ({
+          const messages = data.map((row: MessageRow) => ({
             id: row.id,
             conversation_id: row.conversation_id,
             sender_type: row.sender_type,
@@ -62,7 +77,7 @@ export const useMessagesPagination = (conversationId: string | null) => {
 
         if (error) throw error;
 
-        const messages = data.map((row: any) => ({
+        const messages = data.map((row: MessageRow) => ({
           id: row.id,
           conversation_id: row.conversation_id,
           sender_type: row.sender_type,
@@ -80,12 +95,12 @@ export const useMessagesPagination = (conversationId: string | null) => {
           hasMore,
         };
       },
-      getNextPageParam: (lastPage: any, allPages: any[]) => {
+      getNextPageParam: (lastPage: MessagePage, allPages: MessagePage[]) => {
         if (!lastPage.hasMore) return undefined;
 
         // Calculate offset based on all loaded messages
         const loadedCount = allPages.reduce(
-          (sum: number, page: any) => sum + page.messages.length,
+          (sum: number, page: MessagePage) => sum + page.messages.length,
           0,
         );
         return loadedCount;
@@ -97,7 +112,7 @@ export const useMessagesPagination = (conversationId: string | null) => {
   // Combine all pages into a single array
   useEffect(() => {
     if (data) {
-      const messages = data.pages.flatMap((page: any) => page.messages);
+      const messages = data.pages.flatMap((page: MessagePage) => page.messages);
       // Sort by created_at ascending for display
       messages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       setAllMessages(messages);
@@ -156,7 +171,7 @@ export const useMessagesPagination = (conversationId: string | null) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Get total count from first page
-  const totalCount = (data?.pages[0] as any)?.totalCount || 0;
+  const totalCount = (data?.pages[0] as MessagePage)?.totalCount || 0;
 
   return {
     messages: allMessages,

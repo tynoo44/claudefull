@@ -4,6 +4,16 @@ import { promptManager, PromptComponents } from './prompt-manager';
 import { responseValidator, ValidationConfig } from './response-validator';
 import { ConversationStateManager } from './conversation-state-manager';
 
+interface PhaseInfo {
+  business_type?: string;
+  business_age?: string;
+  pain_identified?: boolean;
+  goals_defined?: boolean;
+  obstacles_identified?: boolean;
+  offer_discussed?: boolean;
+  [key: string]: unknown;
+}
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
@@ -15,7 +25,7 @@ export const GEMINI_MODELS = {
 
 export type GeminiModel = keyof typeof GEMINI_MODELS;
 
-interface AIMessage {
+export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
@@ -250,8 +260,8 @@ export const generateAIResponse = async ({
 };
 
 // Helper functions for conversation analysis
-const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): any => {
-  const phaseInfo: any = {};
+const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): PhaseInfo => {
+  const phaseInfo: PhaseInfo = {};
 
   // Extract information based on current phase
   const conversationText = messages

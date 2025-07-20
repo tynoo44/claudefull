@@ -35,22 +35,22 @@ export const useLeadsPagination = () => {
 
       if (rpcError) throw rpcError;
 
-      const transformedLeads = (data || []).map((lead: any) => ({
-        id: lead.id,
-        username: lead.username,
-        full_name: lead.full_name,
-        profile_pic: lead.profile_pic,
-        instagram_id: lead.instagram_id,
+      const transformedLeads = (data || []).map((lead: Record<string, unknown>) => ({
+        id: String(lead.id),
+        username: String(lead.username),
+        full_name: lead.full_name ? String(lead.full_name) : null,
+        profile_pic: lead.profile_pic ? String(lead.profile_pic) : null,
+        instagram_id: String(lead.instagram_id),
         followers_count: Number(lead.followers_count) || 0, // Convert bigint to number
-        user_id: lead.user_id,
-        created_at: lead.created_at,
-        updated_at: lead.updated_at,
-        tags: lead.tags || [],
-        notes: lead.notes,
-        status: lead.status || 'Open',
-        procedence: lead.procedence,
-        conversation_count: lead.conversation_count || 0,
-        last_message_date: lead.last_message_date,
+        user_id: String(lead.user_id),
+        created_at: String(lead.created_at),
+        updated_at: String(lead.updated_at),
+        tags: Array.isArray(lead.tags) ? (lead.tags as string[]) : [],
+        notes: lead.notes ? String(lead.notes) : null,
+        status: String(lead.status || 'Open'),
+        procedence: lead.procedence ? String(lead.procedence) : null,
+        conversation_count: Number(lead.conversation_count) || 0,
+        last_message_date: lead.last_message_date ? String(lead.last_message_date) : null,
       }));
 
       setLeads(transformedLeads);

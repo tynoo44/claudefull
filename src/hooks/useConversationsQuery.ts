@@ -8,7 +8,7 @@ interface ConversationOptimized {
   opened_at: string;
   updated_at: string;
   current_phase: number;
-  qualification_score: any;
+  qualification_score: number | null;
   last_message_text: string | null;
   last_message_created_at: string | null;
   last_message_sender_type: string | null;

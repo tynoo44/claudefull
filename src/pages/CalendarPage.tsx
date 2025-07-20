@@ -206,10 +206,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
                 </div>
 
                 <div className="flex space-x-2">
-                  {['month', 'week', 'day'].map(viewType => (
+                  {(['month', 'week', 'day'] as const).map(viewType => (
                     <button
                       key={viewType}
-                      onClick={() => setView(viewType as any)}
+                      onClick={() => setView(viewType)}
                       className={`px-3 py-1 rounded-lg text-sm ${
                         view === viewType
                           ? 'bg-blue-600 text-white'

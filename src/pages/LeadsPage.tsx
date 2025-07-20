@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLeadsVirtualization } from '../hooks/useLeadsVirtualization';
-import { Lead, createLead, updateLead, deleteLead } from '../lib/supabase';
+import {
+  Lead,
+  LeadStatus,
+  LeadProcedence,
+  createLead,
+  updateLead,
+  deleteLead,
+} from '../lib/supabase';
 import { LeadsHeader } from '../components/Leads/LeadsHeader';
 import { VirtualizedLeadsKanban } from '../components/Leads/VirtualizedLeadsKanban';
 import { VirtualizedLeadsList } from '../components/Leads/VirtualizedLeadsList';
@@ -10,6 +17,23 @@ import { LeadCardSkeleton, LeadTableRowSkeleton } from '../components/common/Ske
 
 interface LeadsPageProps {
   darkMode: boolean;
+}
+
+interface AddLeadFormData {
+  username: string;
+  full_name?: string;
+  notes?: string;
+  tags: string[];
+  status: LeadStatus;
+  procedence?: LeadProcedence;
+}
+
+interface EditLeadFormData {
+  full_name?: string;
+  notes?: string;
+  tags: string[];
+  status: LeadStatus;
+  procedence?: LeadProcedence;
 }
 
 export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
@@ -47,7 +71,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     });
   }, [searchTerm, selectedTags, selectedStatus, selectedProcedence, applyFilters]);
 
-  const handleAddLead = async (formData: any) => {
+  const handleAddLead = async (formData: AddLeadFormData) => {
     try {
       const leadData = {
         username: formData.username,
@@ -59,7 +83,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         followers_count: null,
         user_id: null,
         status: formData.status,
-        procedence: formData.procedence || null,
+        procedence: formData.procedence || undefined,
       };
 
       await createLead(leadData);
@@ -71,7 +95,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     }
   };
 
-  const handleEditLead = async (formData: any) => {
+  const handleEditLead = async (formData: EditLeadFormData) => {
     if (!editingLead) return;
 
     try {
@@ -80,7 +104,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
         notes: formData.notes || null,
         tags: formData.tags,
         status: formData.status,
-        procedence: formData.procedence || null,
+        procedence: formData.procedence || undefined,
       };
 
       await updateLead(editingLead.id, leadData);
@@ -258,7 +282,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
             setShowModal(false);
             setEditingLead(null);
           }}
-          onSave={editingLead ? handleEditLead : handleAddLead}
+          onSave={
+            editingLead
+              ? (handleEditLead as (leadData: Partial<Lead>) => void)
+              : (handleAddLead as (leadData: Partial<Lead>) => void)
+          }
         />
 
         {selectedLead && (

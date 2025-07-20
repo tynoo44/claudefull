@@ -85,50 +85,54 @@ export const useConversationPagination = () => {
         }
 
         // Filtrar conversaciones ya cargadas
-        const newConversations = conversationsData.filter((conv: any) => !existingIds.has(conv.id));
+        const newConversations = conversationsData.filter(
+          (conv: Record<string, unknown>) => !existingIds.has(String(conv.id)),
+        );
 
         // Transformar datos del RPC al formato esperado
-        const conversationsWithDetails = newConversations.map((conv: any) => {
+        const conversationsWithDetails = newConversations.map((conv: Record<string, unknown>) => {
           // Verificar si hay mensajes sin responder
           let hasUnansweredMessages = false;
-          if (conv.last_message_sender_type === 'Lead' && conv.unread_count > 0) {
+          if (conv.last_message_sender_type === 'Lead' && Number(conv.unread_count) > 0) {
             hasUnansweredMessages = true;
           }
 
           return {
-            id: conv.id,
-            lead_id: conv.lead_id,
-            opened_at: conv.opened_at,
-            updated_at: conv.updated_at,
-            current_phase: conv.current_phase,
-            qualification_score: conv.qualification_score,
+            id: String(conv.id),
+            lead_id: String(conv.lead_id),
+            opened_at: String(conv.opened_at),
+            updated_at: String(conv.updated_at),
+            current_phase: Number(conv.current_phase),
+            qualification_score: Number(conv.qualification_score),
             leads: {
-              id: conv.lead_id,
-              username: conv.lead_username,
-              full_name: conv.lead_full_name,
-              profile_pic: conv.lead_profile_pic,
-              status: conv.lead_status,
-              instagram_id: conv.lead_instagram_id,
-              procedence: conv.lead_procedence,
-              tags: conv.lead_tags || [],
-              notes: conv.lead_notes,
-              followers_count: conv.lead_followers_count,
+              id: String(conv.lead_id),
+              username: String(conv.lead_username),
+              full_name: conv.lead_full_name ? String(conv.lead_full_name) : null,
+              profile_pic: conv.lead_profile_pic ? String(conv.lead_profile_pic) : null,
+              status: String(conv.lead_status),
+              instagram_id: String(conv.lead_instagram_id),
+              procedence: conv.lead_procedence ? String(conv.lead_procedence) : null,
+              tags: Array.isArray(conv.lead_tags) ? (conv.lead_tags as string[]) : [],
+              notes: conv.lead_notes ? String(conv.lead_notes) : null,
+              followers_count: conv.lead_followers_count ? Number(conv.lead_followers_count) : null,
             },
             lastMessage: conv.last_message_text
               ? {
-                  id: 'temp-' + conv.id, // RPC doesn't return message ID
-                  text: conv.last_message_text,
-                  created_at: conv.last_message_created_at,
-                  sender_type: conv.last_message_sender_type,
+                  id: 'temp-' + String(conv.id), // RPC doesn't return message ID
+                  text: String(conv.last_message_text),
+                  created_at: String(conv.last_message_created_at),
+                  sender_type: String(conv.last_message_sender_type),
                 }
               : null,
-            unreadCount: conv.unread_count || 0,
+            unreadCount: Number(conv.unread_count) || 0,
             hasUnansweredMessages,
           };
         });
 
         // Actualizar IDs cargados
-        conversationsWithDetails.forEach((conv: any) => loadedConversationIds.current.add(conv.id));
+        conversationsWithDetails.forEach((conv: ConversationWithDetails) =>
+          loadedConversationIds.current.add(conv.id),
+        );
 
         // Verificar si hay más páginas
         if (conversationsData.length < CONVERSATIONS_PER_PAGE) {

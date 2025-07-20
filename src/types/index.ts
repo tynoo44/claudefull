@@ -64,7 +64,7 @@ export interface Chat {
   unreadCount?: number;
   hasUnansweredMessages?: boolean;
   openedAt?: string;
-  messages?: any[]; // Messages loaded from the conversation
+  messages?: Message[]; // Messages loaded from the conversation
 }
 
 export interface Message {
@@ -136,10 +136,10 @@ export interface Conversation {
       info_completeness: number;
     };
   };
-  conversation_state: Record<string, any>; // JSONB
-  phase_history: Record<string, any>[]; // JSONB
-  phase_info: Record<string, any>; // JSONB
-  lead_profile: Record<string, any>; // JSONB
+  conversation_state: Record<string, unknown>; // JSONB
+  phase_history: Record<string, unknown>[]; // JSONB
+  phase_info: Record<string, unknown>; // JSONB
+  lead_profile: Record<string, unknown>; // JSONB
   conversation_summary: string;
   next_steps: string[];
   last_analysis_timestamp: string;

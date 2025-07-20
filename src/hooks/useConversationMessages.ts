@@ -34,7 +34,12 @@ export const useConversationMessages = (
         setMessages(data);
 
         // Subscribe to new messages
-        unsubscribe = subscribeToMessages(conversationId, (newMessage: Message) => {
+        unsubscribe = subscribeToMessages(conversationId, messagePayload => {
+          // Convert MessagePayload to Message format
+          const newMessage: Message = {
+            ...messagePayload,
+            platform_message_id: null, // This field is required by Message interface
+          };
           setMessages(prev => [...prev, newMessage]);
         });
       } catch (error) {

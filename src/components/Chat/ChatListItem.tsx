@@ -3,6 +3,10 @@ import { Hash } from 'lucide-react';
 import { Chat } from '@/types';
 import { getStatusClasses } from '../../utils/statusUtils';
 
+interface ChatWithUnreadCount extends Chat {
+  unreadCount?: number;
+}
+
 interface ChatListItemProps {
   chat: Chat;
   darkMode: boolean;
@@ -136,7 +140,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
             </div>
             {chat.unread && (
               <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-full ml-2 flex-shrink-0 shadow-lg animate-pulse">
-                {(chat as any).unreadCount || '•'}
+                {(chat as ChatWithUnreadCount).unreadCount || '•'}
               </span>
             )}
           </div>

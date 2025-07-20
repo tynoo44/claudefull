@@ -14,6 +14,7 @@ import {
   generateQuickActions,
   GEMINI_MODELS,
   type GeminiModel,
+  type AIMessage as GeminiAIMessage,
 } from '../../lib/gemini';
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
@@ -22,7 +23,7 @@ import { ConversationStateIndicator } from './ConversationStateIndicator';
 interface AIChatSidebarProps {
   darkMode: boolean;
   conversationContext?: string;
-  currentConversation?: any; // Replace with actual conversation type
+  currentConversation?: Record<string, unknown>; // Conversation data with messages
   conversationId?: string;
   leadId?: string;
   isAnalyzing?: boolean;
@@ -69,10 +70,10 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     try {
       // Build conversation context if available
       let fullContext = conversationContext || '';
-      if (currentConversation?.messages && currentConversation.messages.length > 0) {
-        const conversationMessages = currentConversation.messages
+      if (currentConversation?.messages && Array.isArray(currentConversation.messages)) {
+        const conversationMessages = (currentConversation.messages as Record<string, unknown>[])
           .map(
-            (msg: any) =>
+            msg =>
               `${msg.sender_type === 'Setter' ? 'Setter' : 'Lead'}: ${msg.text || msg.content || ''}`,
           )
           .join('\n');
@@ -123,13 +124,14 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     setIsTyping(true);
 
     // Convert current conversation to AI messages format
-    const conversationMessages: AIMessage[] =
-      currentConversation?.messages?.map((msg: any) => ({
-        role: msg.sender_type === 'Setter' ? 'assistant' : 'user',
-        content: msg.text || msg.content || '',
-      })) || [];
+    const conversationMessages: GeminiAIMessage[] = Array.isArray(currentConversation?.messages)
+      ? (currentConversation.messages as Record<string, unknown>[]).map(msg => ({
+          role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
+          content: String(msg.text || msg.content || ''),
+        }))
+      : [];
 
-    if (!currentConversation.messages || conversationMessages.length === 0) {
+    if (!Array.isArray(currentConversation?.messages) || conversationMessages.length === 0) {
       setConversationError('Esta conversación no tiene mensajes');
       setIsTyping(false);
       return;
@@ -338,7 +340,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         {/* Render ConversationStateIndicator at the top of messages */}
         {(currentConversation?.id || leadId) && (
           <ConversationStateIndicator
-            conversationId={currentConversation?.id}
+            conversationId={String(currentConversation?.id || '')}
             leadId={leadId}
             darkMode={darkMode}
             isAnalyzing={isAnalyzing}
