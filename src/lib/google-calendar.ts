@@ -201,7 +201,10 @@ export class GoogleCalendarService {
         is_all_day: eventData.is_all_day || false,
         status: data.status || 'confirmed',
         visibility: data.visibility || 'default',
-        attendees: eventData.attendees || [],
+        attendees: eventData.attendees?.map(att => ({
+          ...att,
+          response_status: 'needsAction' as const
+        })) || [],
         reminders: eventData.reminders || [],
         recurrence: eventData.recurrence,
         color_id: data.colorId,
@@ -269,27 +272,40 @@ export class GoogleCalendarService {
       const { data, error } = await supabase.functions.invoke('update-google-calendar-event-v2', {
         body: {
           providerToken: providerToken,
-          calendarId: existingEvent.google_calendar_id || 'primary',
-          eventId: existingEvent.google_event_id,
+          calendarId: calendarId || 'primary',
+          eventId: eventId,
           event: googleEvent,
         },
       });
 
       if (error) throw error;
 
-      // Update local database
-      const { data: updatedEvent, error: updateError } = await supabase
-        .from('calendar_events')
-        .update({
-          ...eventData,
-          updated_at: new Date().toISOString(),
-          last_synced_at: new Date().toISOString(),
-        })
-        .eq('id', eventData.id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
+      // Transform response to our format
+      const updatedEvent: CalendarEvent = {
+        id: eventId,
+        user_id: session.user.id,
+        google_calendar_id: calendarId,
+        google_event_id: eventId,
+        title: data.summary || eventData.title || '',
+        description: data.description || eventData.description,
+        location: data.location || eventData.location,
+        start_datetime: data.start?.dateTime || data.start?.date || eventData.start_datetime || '',
+        end_datetime: data.end?.dateTime || data.end?.date || eventData.end_datetime || '',
+        is_all_day: eventData.is_all_day || false,
+        status: data.status || 'confirmed',
+        visibility: data.visibility || 'default',
+        attendees: eventData.attendees?.map(att => ({
+          ...att,
+          response_status: 'needsAction' as const
+        })) || [],
+        reminders: eventData.reminders || [],
+        recurrence: eventData.recurrence,
+        color_id: data.colorId,
+        created_at: data.created || new Date().toISOString(),
+        updated_at: data.updated || new Date().toISOString(),
+        last_synced_at: new Date().toISOString(),
+        sync_status: 'synced',
+      };
 
       return updatedEvent;
     } catch (error) {
@@ -299,7 +315,7 @@ export class GoogleCalendarService {
   }
 
   // Delete event from Google Calendar
-  async deleteEvent(eventId: string, calendarId: string = 'primary'): Promise<void> {
+  async deleteEvent(calendarId: string, eventId: string): Promise<void> {
     try {
       const {
         data: { session },
@@ -312,37 +328,16 @@ export class GoogleCalendarService {
         throw new Error('No Google provider token found. Please re-authenticate.');
       }
 
-      // Get the event to get the google_event_id
-      const { data: existingEvent } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .eq('id', eventId)
-        .single();
+      // Call edge function to delete event from Google Calendar
+      const { error } = await supabase.functions.invoke('delete-google-calendar-event-v2', {
+        body: {
+          providerToken: providerToken,
+          calendarId: calendarId || 'primary',
+          eventId: eventId,
+        },
+      });
 
-      if (!existingEvent) {
-        throw new Error('Event not found');
-      }
-
-      // If it's a Google Calendar event, delete it from Google
-      if (existingEvent.google_event_id) {
-        const { error } = await supabase.functions.invoke('delete-google-calendar-event-v2', {
-          body: {
-            providerToken: providerToken,
-            calendarId: existingEvent.google_calendar_id || calendarId,
-            eventId: existingEvent.google_event_id,
-          },
-        });
-
-        if (error) throw error;
-      }
-
-      // Delete from local database
-      const { error: deleteError } = await supabase
-        .from('calendar_events')
-        .delete()
-        .eq('id', eventId);
-
-      if (deleteError) throw deleteError;
+      if (error) throw error;
     } catch (error) {
       console.error('Error deleting event:', error);
       throw error;

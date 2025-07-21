@@ -358,7 +358,7 @@ class ConversationAnalysisService {
       }
 
       return {
-        message_id: msg.id,
+        message_id: msg.id || 'unknown',
         score,
         emotion,
       };
@@ -408,41 +408,54 @@ class ConversationAnalysisService {
       };
     }
 
-    const prompt = `
-Analiza esta conversación de ventas y proporciona un análisis PROFESIONAL y ACCIONABLE.
+    const prompt = `Analiza esta conversación de ventas y responde ÚNICAMENTE con un objeto JSON válido.
 
 CONVERSACIÓN:
 ${messages.map(m => `${m.sender_type}: ${m.text}`).join('\n')}
 
-ANÁLISIS BASE:
+CONTEXTO:
 - Fase actual: ${conversation.current_phase}
-- Cualificación: ${conversationMemory.qualification_score?.score || 0}
-- Intención detectada: ${intent?.primaryIntent || 'general'}
-- Perfil del lead: ${leadProfile?.type || 'unknown'}
+- Score: ${conversationMemory.qualification_score?.score || 0}
+- Intención: ${intent?.primaryIntent || 'general'}
+- Perfil: ${leadProfile?.type || 'unknown'}
 
-NECESITO:
+Responde SOLO con este JSON (sin texto adicional antes o después):
 
-1. PROGRESO POR FASE (información REAL extraída, no genérica):
-   - Qué información específica obtuvimos
-   - Qué falta por obtener
-   - Próximo paso concreto
-
-2. KEY INSIGHTS (máximo 5, solo los importantes):
-   - Información crítica para cerrar la venta
-   - Puntos de dolor específicos mencionados
-   - Señales de compra detectadas
-
-3. WARNINGS (solo si son relevantes):
-   - Objeciones no resueltas
-   - Competencia mencionada
-   - Señales de pérdida de interés
-
-4. ACTION THREADS (hilos para explotar):
-   - Temas mencionados que podemos profundizar
-   - Preguntas sin responder
-   - Oportunidades detectadas
-
-Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
+{
+  "analysis_data": {
+    "summary": "Resumen ejecutivo de la conversación en 1-2 líneas",
+    "current_phase": ${conversation.current_phase},
+    "phase_details": {
+      "1": {"name": "Situación Actual", "status": "completed", "progress": 100, "information_gathered": ["info1"], "next_steps": ["step1"]},
+      "2": {"name": "Dolor", "status": "in_progress", "progress": 50, "information_gathered": ["info2"], "next_steps": ["step2"]},
+      "3": {"name": "Situación Deseada", "status": "not_started", "progress": 0, "information_gathered": [], "next_steps": []},
+      "4": {"name": "Obstáculo", "status": "not_started", "progress": 0, "information_gathered": [], "next_steps": []},
+      "5": {"name": "Oferta", "status": "not_started", "progress": 0, "information_gathered": [], "next_steps": []}
+    },
+    "sentiment_timeline": [],
+    "overall_sentiment": "neutral",
+    "key_moments": []
+  },
+  "phase_progress": {
+    "1": {"completed": true, "progress": 100, "key_info": ["información obtenida"], "missing_info": []},
+    "2": {"completed": false, "progress": 50, "key_info": ["algo detectado"], "missing_info": ["falta esto"]},
+    "3": {"completed": false, "progress": 0, "key_info": [], "missing_info": ["objetivos del lead"]},
+    "4": {"completed": false, "progress": 0, "key_info": [], "missing_info": ["obstáculos"]},
+    "5": {"completed": false, "progress": 0, "key_info": [], "missing_info": ["presentar oferta"]}
+  },
+  "key_insights": [
+    "Insight específico 1 extraído de la conversación real",
+    "Dolor concreto mencionado por el lead",
+    "Señal de compra detectada"
+  ],
+  "warnings": [
+    "Advertencia específica solo si es relevante"
+  ],
+  "action_threads": [
+    "Tema específico para profundizar",
+    "Pregunta pendiente de responder"
+  ]
+}`;
 
     try {
       console.log('About to call generateAIResponse with DEFAULT_MODEL:', DEFAULT_MODEL);
@@ -458,10 +471,21 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
         model: DEFAULT_MODEL, // Use Gemini-2.5-Pro as default
       });
 
-      console.log('generateAIResponse returned:', response ? 'response received' : 'no response');
+      console.log('generateAIResponse returned:', response ? `response received (${response.length} chars)` : 'no response');
+      console.log('Raw response preview:', response?.substring(0, 200) + '...');
+
+      // Try to extract JSON from response if it's not pure JSON
+      let jsonContent = response;
+      
+      // Look for JSON pattern in the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
+        console.log('Extracted JSON from response, length:', jsonContent.length);
+      }
 
       // Parsear la respuesta JSON
-      const parsed = JSON.parse(response);
+      const parsed = JSON.parse(jsonContent);
       console.log('Successfully parsed AI response');
       return parsed;
     } catch (error) {
@@ -473,10 +497,10 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
 
   // Generar análisis básico como fallback
   private generateBasicAnalysis(
-    messages: unknown[],
-    conversation: unknown,
-    conversationMemory: unknown,
-  ): unknown {
+    messages: any[],
+    conversation: any,
+    conversationMemory: any,
+  ): any {
     return {
       analysis_data: {
         summary: `Conversación en fase ${conversation.current_phase}`,
@@ -487,15 +511,15 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
         key_moments: [],
       },
       phase_progress: this.generatePhaseProgress(messages, conversation.current_phase),
-      key_insights: [],
-      warnings: [],
-      action_threads: [],
+      key_insights: ['Análisis básico generado como fallback'],
+      warnings: ['Análisis AI no disponible'],
+      action_threads: ['Revisar manualmente la conversación'],
     };
   }
 
   // Generar detalles de fases
   private generatePhaseDetails(
-    messages: unknown[],
+    messages: any[],
     currentPhase: number,
   ): Record<number, PhaseDetail> {
     const phases: Record<number, PhaseDetail> = {};
@@ -514,8 +538,8 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
   }
 
   // Generar progreso de fases
-  private generatePhaseProgress(messages: unknown[], currentPhase: number): unknown {
-    const progress: unknown = {};
+  private generatePhaseProgress(messages: any[], currentPhase: number): any {
+    const progress: any = {};
 
     for (let i = 1; i <= 5; i++) {
       progress[i] = {
@@ -606,7 +630,10 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
 
       // Actualizar el lead si hay cambios
       if (Object.keys(updates).length > 0) {
-        await supabase.from('leads').update(updates).eq('id', leadId);
+        const { error: updateError } = await supabase.from('leads').update(updates).eq('id', leadId);
+        if (updateError) {
+          console.error('Error updating lead:', updateError);
+        }
       }
     } catch (error) {
       console.error('Error updating lead from analysis:', error);

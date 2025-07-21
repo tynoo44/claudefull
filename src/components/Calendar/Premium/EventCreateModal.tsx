@@ -192,7 +192,7 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
         result = await calendarService.updateEvent(
           formData.calendarId,
           existingEvent.id,
-          eventData,
+          { id: existingEvent.id, ...eventData },
         );
         onEventUpdated({
           ...existingEvent,
