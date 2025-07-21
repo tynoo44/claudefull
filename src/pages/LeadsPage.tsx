@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLeadsVirtualization } from '../hooks/useLeadsVirtualization';
+import { useTagFilter } from '../hooks/useTags';
 import {
   Lead,
   LeadStatus,
@@ -48,8 +49,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     allTags,
   } = useLeadsVirtualization();
 
+  const { selectedTags, toggleTag, clearTags } = useTagFilter();
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedProcedence, setSelectedProcedence] = useState<string>('all');
   const [showFilters] = useState(true); // Always show filters
@@ -129,13 +131,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
     }
   };
 
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
-  };
-
   const handleClearFilters = () => {
     setSearchTerm('');
-    setSelectedTags([]);
+    clearTags();
     setSelectedStatus('all');
     setSelectedProcedence('all');
   };
@@ -164,7 +162,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
               selectedProcedence={selectedProcedence}
               availableTags={allTags}
               onSearchChange={setSearchTerm}
-              onTagToggle={handleTagToggle}
+              onTagToggle={toggleTag}
               onStatusChange={setSelectedStatus}
               onProcedenceChange={setSelectedProcedence}
               onClearFilters={handleClearFilters}
@@ -244,7 +242,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
             selectedProcedence={selectedProcedence}
             availableTags={allTags}
             onSearchChange={setSearchTerm}
-            onTagToggle={handleTagToggle}
+            onTagToggle={toggleTag}
             onStatusChange={setSelectedStatus}
             onProcedenceChange={setSelectedProcedence}
             onClearFilters={handleClearFilters}

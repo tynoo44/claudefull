@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Hash } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Chat } from '@/types';
 import { LeadInfoModal } from './LeadInfoModal';
 import { updateLead } from '../../lib/supabase';
@@ -107,28 +107,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({ darkMode, selectedChat, 
           </div>
 
           <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {selectedChat.leadName}
-              </h3>
-
-              {/* Tags */}
-              {selectedChat.tags && selectedChat.tags.length > 0 && (
-                <div className="flex items-center gap-1">
-                  {selectedChat.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                        darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      <Hash className="w-3 h-3" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              {selectedChat.leadName}
+            </h3>
           </div>
         </div>
 
