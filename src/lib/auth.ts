@@ -30,9 +30,29 @@ export class AuthService {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
+        },
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Solicitar permisos específicos de Google Calendar
+  static async requestCalendarPermissions() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+          include_granted_scopes: 'true',
         },
       },
     });

@@ -30,28 +30,27 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
   const {
     currentDate,
     view,
+    selectedCalendarId,
+    hasGoogleAccess,
     calendars,
     events,
     upcomingEvents,
     calendarsLoading,
     eventsLoading,
-    isConnecting,
-    isSyncing,
     isCreating,
     isUpdating,
     isDeleting,
     setView,
+    setSelectedCalendarId,
     navigateDate,
     goToToday,
     goToDate,
     getEventsForDate,
-    connectGoogle,
     syncCalendars,
+    syncEvents,
     createEvent,
     updateEvent,
     deleteEvent,
-    connectError,
-    syncError,
     eventError
   } = useCalendar();
 
@@ -59,21 +58,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | undefined>();
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-
-  // Handle auth callback from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    
-    if (code && window.location.pathname === '/calendar') {
-      // Handle Google OAuth callback here if needed
-      // The hook should handle this automatically
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
@@ -110,7 +98,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      await deleteEvent(eventId);
+      await deleteEvent({ eventId, calendarId: selectedCalendarId });
       setShowEventModal(false);
       setSelectedEvent(undefined);
     } catch (error) {
@@ -118,25 +106,19 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
     }
   };
 
-  const handleConnectGoogle = () => {
-    connectGoogle();
-  };
-
-  const handleSyncCalendars = () => {
-    if (calendars.length > 0) {
-      // Sync the first calendar account
-      // In a real app, you might want to sync all accounts
-      syncCalendars(calendars[0].calendar_account_id);
+  const handleSyncCalendars = async () => {
+    setIsSyncing(true);
+    try {
+      await syncCalendars();
+      await syncEvents();
+    } finally {
+      setIsSyncing(false);
     }
   };
 
-  const handleToggleCalendar = (calendarId: string, visible: boolean) => {
-    // This would update the calendar visibility in the database
-    // For now, we'll skip this implementation
-    console.log('Toggle calendar visibility:', calendarId, visible);
+  const handleSelectCalendar = (calendarId: string) => {
+    setSelectedCalendarId(calendarId);
   };
-
-  const isConnected = calendars.length > 0;
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} p-6`}>
@@ -168,7 +150,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
               
               <button
                 onClick={handleCreateEvent}
-                disabled={!isConnected}
+                disabled={!hasGoogleAccess}
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Plus className="h-4 w-4" />
@@ -190,10 +172,10 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
         </div>
 
         {/* Error Messages */}
-        {(connectError || syncError || eventError) && (
+        {eventError && (
           <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
             <p className="text-red-800 dark:text-red-200 text-sm">
-              {connectError?.message || syncError?.message || eventError?.message}
+              {eventError?.message}
             </p>
           </div>
         )}
@@ -204,13 +186,13 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
             <div className="lg:col-span-1 order-first lg:order-none">
               <GoogleCalendarConnect
                 calendars={calendars}
-                isConnected={isConnected}
-                isConnecting={isConnecting}
+                hasGoogleAccess={hasGoogleAccess}
+                isLoading={calendarsLoading}
                 isSyncing={isSyncing}
                 darkMode={darkMode}
-                onConnect={handleConnectGoogle}
                 onSync={handleSyncCalendars}
-                onToggleCalendar={handleToggleCalendar}
+                onSelectCalendar={handleSelectCalendar}
+                selectedCalendarId={selectedCalendarId}
               />
             </div>
           )}
@@ -319,7 +301,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
         calendars={calendars}
         darkMode={darkMode}
         defaultDate={selectedDate || undefined}
-        defaultCalendarId={calendars[0]?.id}
+        defaultCalendarId={selectedCalendarId}
       />
     </div>
   );

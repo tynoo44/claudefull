@@ -1,56 +1,73 @@
 import React from 'react';
-import { Calendar, RefreshCw, Plus, Settings } from 'lucide-react';
+import { Calendar, RefreshCw, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { AuthService } from '../../lib/auth';
 import type { GoogleCalendar } from '../../types/calendar';
 
 interface GoogleCalendarConnectProps {
   calendars: GoogleCalendar[];
-  isConnected: boolean;
-  isConnecting: boolean;
+  hasGoogleAccess: boolean;
+  isLoading: boolean;
   isSyncing: boolean;
   darkMode: boolean;
-  onConnect: () => void;
   onSync: () => void;
-  onToggleCalendar: (calendarId: string, visible: boolean) => void;
+  onSelectCalendar: (calendarId: string) => void;
+  selectedCalendarId: string;
 }
 
 export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
   calendars,
-  isConnected,
-  isConnecting,
+  hasGoogleAccess,
+  isLoading,
   isSyncing,
   darkMode,
-  onConnect,
   onSync,
-  onToggleCalendar
+  onSelectCalendar,
+  selectedCalendarId
 }) => {
-  if (!isConnected) {
+  const handleReAuth = async () => {
+    try {
+      // First sign out
+      await AuthService.signOut();
+      // Then sign in again with Calendar scopes
+      await AuthService.signInWithGoogle();
+    } catch (error) {
+      console.error('Error re-authenticating:', error);
+    }
+  };
+
+  if (!hasGoogleAccess) {
     return (
       <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
         <div className="text-center">
-          <Calendar className={`h-12 w-12 mx-auto mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+          <Shield className={`h-12 w-12 mx-auto mb-4 text-yellow-500`} />
           <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Conectar Google Calendar
+            Permisos de Calendar Requeridos
           </h3>
-          <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Conecta tu cuenta de Google para sincronizar tus calendarios y eventos
+          <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Necesitas volver a autorizar tu cuenta de Google para acceder al calendario.
           </p>
           <button
-            onClick={onConnect}
-            disabled={isConnecting}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg flex items-center gap-2 mx-auto transition-colors"
+            onClick={handleReAuth}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-3"
           >
-            {isConnecting ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Conectando...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Conectar Google Calendar
-              </>
-            )}
+            Re-autorizar con Google
           </button>
+          <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+            Se abrirá la ventana de Google para autorizar permisos de Calendar
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+        <div className="flex items-center justify-center">
+          <RefreshCw className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+          <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Cargando calendarios...
+          </span>
         </div>
       </div>
     );
@@ -92,11 +109,16 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
           {calendars.map(calendar => (
             <div
               key={calendar.id}
-              className={`flex items-center justify-between p-3 border rounded-lg ${
-                darkMode 
-                  ? 'border-gray-700 bg-gray-700' 
-                  : 'border-gray-200 bg-gray-50'
+              className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
+                selectedCalendarId === calendar.google_calendar_id
+                  ? darkMode 
+                    ? 'border-blue-500 bg-blue-900/20' 
+                    : 'border-blue-500 bg-blue-50'
+                  : darkMode 
+                    ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' 
+                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
               }`}
+              onClick={() => onSelectCalendar(calendar.google_calendar_id)}
             >
               <div className="flex items-center gap-3">
                 <div 
@@ -121,6 +143,9 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
+                {selectedCalendarId === calendar.google_calendar_id && (
+                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                )}
                 <span className={`text-xs px-2 py-1 rounded ${
                   calendar.access_role === 'owner' 
                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -128,21 +153,25 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
                 }`}>
                   {calendar.access_role}
                 </span>
-                
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={calendar.is_visible}
-                    onChange={(e) => onToggleCalendar(calendar.id, e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                </label>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <div className={`mt-6 p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+        <div className="flex items-start gap-2">
+          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+          <div>
+            <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Conectado con Google Calendar
+            </p>
+            <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Los cambios se sincronizan automáticamente con tu cuenta de Google
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

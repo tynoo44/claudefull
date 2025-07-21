@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { googleCalendarService } from '../lib/google-calendar';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,79 +11,54 @@ export const useCalendar = () => {
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('month');
-  const [selectedCalendars, setSelectedCalendars] = useState<string[]>([]);
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
+
+  // Check if user has Google Calendar access
+  const { data: hasAccess } = useQuery({
+    queryKey: ['hasGoogleAccess', user?.id],
+    queryFn: () => googleCalendarService.hasGoogleAccess(),
+    enabled: !!user?.id
+  });
 
   // Get date range based on current view
   const getDateRange = useCallback(() => {
     switch (view) {
       case 'month':
         return {
-          start: format(startOfWeek(startOfMonth(currentDate)), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
-          end: format(endOfWeek(endOfMonth(currentDate)), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx')
+          start: format(startOfWeek(startOfMonth(currentDate)), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
+          end: format(endOfWeek(endOfMonth(currentDate)), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         };
       case 'week':
         return {
-          start: format(startOfWeek(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
-          end: format(endOfWeek(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx')
+          start: format(startOfWeek(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
+          end: format(endOfWeek(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         };
       case 'day':
         return {
-          start: format(startOfDay(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
-          end: format(endOfDay(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx')
+          start: format(startOfDay(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
+          end: format(endOfDay(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         };
       default:
         return {
-          start: format(startOfMonth(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
-          end: format(endOfMonth(currentDate), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx')
+          start: format(startOfMonth(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
+          end: format(endOfMonth(currentDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
         };
     }
   }, [currentDate, view]);
 
   // Fetch user calendars
-  const { data: calendars, isLoading: calendarsLoading } = useQuery({
+  const { data: calendars = [], isLoading: calendarsLoading, refetch: refetchCalendars } = useQuery({
     queryKey: ['calendars', user?.id],
-    queryFn: () => googleCalendarService.getUserCalendars(user!.id),
-    enabled: !!user?.id
+    queryFn: () => googleCalendarService.getUserCalendars(),
+    enabled: !!user?.id && !!hasAccess
   });
 
   // Fetch events
   const { start, end } = getDateRange();
-  const { data: events, isLoading: eventsLoading } = useQuery({
-    queryKey: ['events', user?.id, start, end],
-    queryFn: () => googleCalendarService.getEvents(user!.id, start, end),
-    enabled: !!user?.id
-  });
-
-  // Google auth mutations
-  const connectGoogleMutation = useMutation({
-    mutationFn: () => {
-      const authUrl = googleCalendarService.getAuthUrl();
-      window.location.href = authUrl;
-      return Promise.resolve();
-    }
-  });
-
-  const handleAuthCallbackMutation = useMutation({
-    mutationFn: (code: string) => googleCalendarService.handleAuthCallback(code, user!.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendars'] });
-    }
-  });
-
-  // Sync mutations
-  const syncCalendarsMutation = useMutation({
-    mutationFn: (accountId: string) => googleCalendarService.syncCalendars(accountId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendars'] });
-    }
-  });
-
-  const syncEventsMutation = useMutation({
-    mutationFn: ({ calendarId, timeMin, timeMax }: { calendarId: string; timeMin?: string; timeMax?: string }) =>
-      googleCalendarService.syncEvents(calendarId, timeMin, timeMax),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-    }
+  const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
+    queryKey: ['events', user?.id, selectedCalendarId, start, end],
+    queryFn: () => googleCalendarService.getEvents(selectedCalendarId, start, end),
+    enabled: !!user?.id && !!hasAccess && !!selectedCalendarId
   });
 
   // Event CRUD mutations
@@ -102,7 +77,8 @@ export const useCalendar = () => {
   });
 
   const deleteEventMutation = useMutation({
-    mutationFn: (eventId: string) => googleCalendarService.deleteEvent(eventId),
+    mutationFn: ({ eventId, calendarId }: { eventId: string; calendarId: string }) => 
+      googleCalendarService.deleteEvent(eventId, calendarId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
     }
@@ -135,61 +111,60 @@ export const useCalendar = () => {
     setCurrentDate(date);
   }, []);
 
-  // Filter events by selected calendars
-  const filteredEvents = events?.filter(event => 
-    selectedCalendars.length === 0 || selectedCalendars.includes(event.google_calendar_id)
-  ) || [];
-
   // Get events for specific date
   const getEventsForDate = useCallback((date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return filteredEvents.filter(event => {
+    return events.filter(event => {
       const eventDate = format(new Date(event.start_datetime), 'yyyy-MM-dd');
       return eventDate === dateStr;
     });
-  }, [filteredEvents]);
+  }, [events]);
 
   // Get upcoming events (next 7 days)
-  const upcomingEvents = filteredEvents
+  const upcomingEvents = events
     .filter(event => new Date(event.start_datetime) >= new Date())
     .sort((a, b) => new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime())
     .slice(0, 10);
+
+  // Sync functions
+  const syncCalendars = useCallback(async () => {
+    await refetchCalendars();
+  }, [refetchCalendars]);
+
+  const syncEvents = useCallback(async () => {
+    await refetchEvents();
+  }, [refetchEvents]);
 
   return {
     // State
     currentDate,
     view,
-    selectedCalendars,
+    selectedCalendarId,
+    hasGoogleAccess: hasAccess || false,
     
     // Data
-    calendars: calendars || [],
-    events: filteredEvents,
+    calendars,
+    events,
     upcomingEvents,
     
     // Loading states
     calendarsLoading,
     eventsLoading,
-    isConnecting: connectGoogleMutation.isPending,
-    isSyncing: syncCalendarsMutation.isPending || syncEventsMutation.isPending,
     isCreating: createEventMutation.isPending,
     isUpdating: updateEventMutation.isPending,
     isDeleting: deleteEventMutation.isPending,
     
     // Actions
     setView,
-    setSelectedCalendars,
+    setSelectedCalendarId,
     navigateDate,
     goToToday,
     goToDate,
     getEventsForDate,
     
-    // Google auth
-    connectGoogle: connectGoogleMutation.mutate,
-    handleAuthCallback: handleAuthCallbackMutation.mutate,
-    
     // Sync
-    syncCalendars: syncCalendarsMutation.mutate,
-    syncEvents: syncEventsMutation.mutate,
+    syncCalendars,
+    syncEvents,
     
     // Event CRUD
     createEvent: createEventMutation.mutate,
@@ -197,8 +172,6 @@ export const useCalendar = () => {
     deleteEvent: deleteEventMutation.mutate,
     
     // Error states
-    connectError: connectGoogleMutation.error,
-    syncError: syncCalendarsMutation.error || syncEventsMutation.error,
     eventError: createEventMutation.error || updateEventMutation.error || deleteEventMutation.error
   };
 };
