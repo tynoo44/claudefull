@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import type {
   PremiumCalendarContextType,
   CalendarUIState,
@@ -7,6 +14,8 @@ import type {
   DateRange,
 } from '../../../../types/premium-calendar';
 import type { CalendarEvent, GoogleCalendar } from '../../../../types/calendar';
+import { calendarCache } from '../../../../lib/calendar-cache';
+import { GoogleCalendarService } from '../../../../lib/google-calendar';
 
 // =============================================================================
 // CONTEXT DEFINITION
@@ -25,6 +34,12 @@ interface PremiumCalendarState {
   events: Map<string, CalendarEvent>;
   viewportEvents: Set<string>;
   loadedDateRange: DateRange;
+  cacheStatus: {
+    lastSync: Date | null;
+    isOnline: boolean;
+    needsRefresh: boolean;
+    syncInProgress: boolean;
+  };
 }
 
 type PremiumCalendarAction =
@@ -41,7 +56,9 @@ type PremiumCalendarAction =
   | { type: 'SET_ERROR'; payload: string | undefined }
   | { type: 'UPDATE_VIEWPORT'; payload: Set<string> }
   | { type: 'TOGGLE_SIDEBAR'; payload?: boolean }
-  | { type: 'SET_DETAIL_PANEL'; payload: string | null };
+  | { type: 'SET_DETAIL_PANEL'; payload: string | null }
+  | { type: 'LOAD_FROM_CACHE'; payload: { events: CalendarEvent[]; calendars: GoogleCalendar[] } }
+  | { type: 'UPDATE_CACHE_STATUS'; payload: { lastSync: Date; needsRefresh: boolean } };
 
 // =============================================================================
 // INITIAL STATE
@@ -75,6 +92,12 @@ const createInitialState = (): PremiumCalendarState => ({
   loadedDateRange: {
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+  },
+  cacheStatus: {
+    lastSync: null,
+    isOnline: navigator.onLine,
+    needsRefresh: true,
+    syncInProgress: false,
   },
 });
 
@@ -238,6 +261,38 @@ const premiumCalendarReducer = (
         },
       };
 
+    case 'LOAD_FROM_CACHE': {
+      const cachedCalendars = new Map<string, GoogleCalendar>();
+      action.payload.calendars.forEach(calendar => {
+        cachedCalendars.set(calendar.id, calendar);
+      });
+
+      const cachedEvents = new Map<string, CalendarEvent>();
+      action.payload.events.forEach(event => {
+        cachedEvents.set(event.id, event);
+      });
+
+      return {
+        ...state,
+        calendars: cachedCalendars,
+        events: cachedEvents,
+        uiState: {
+          ...state.uiState,
+          isLoading: false,
+        },
+      };
+    }
+
+    case 'UPDATE_CACHE_STATUS':
+      return {
+        ...state,
+        cacheStatus: {
+          ...state.cacheStatus,
+          lastSync: action.payload.lastSync,
+          needsRefresh: action.payload.needsRefresh,
+        },
+      };
+
     default:
       return state;
   }
@@ -259,6 +314,113 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
   initialDate = new Date(),
 }) => {
   const [state, dispatch] = useReducer(premiumCalendarReducer, createInitialState());
+  const googleCalendarService = useRef(new GoogleCalendarService());
+  const isInitialized = useRef(false);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // =============================================================================
+  // INSTANT CACHE LOADING ON MOUNT
+  // =============================================================================
+  useEffect(() => {
+    const loadCacheInstantly = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+
+      try {
+        // Load from cache INSTANTLY for immediate UI
+        const cachedEvents = calendarCache.getAllEvents();
+        const cachedCalendars = calendarCache.getAllCalendars();
+
+        console.log(
+          `📱 INSTANT LOAD: ${cachedEvents.length} events, ${cachedCalendars.length} calendars`,
+        );
+
+        dispatch({
+          type: 'LOAD_FROM_CACHE',
+          payload: { events: cachedEvents, calendars: cachedCalendars },
+        });
+
+        // Start background refresh if needed
+        if (calendarCache.needsRefresh()) {
+          console.log('🔄 Starting background sync...');
+          startBackgroundSync();
+        }
+      } catch (error) {
+        console.error('Cache load error:', error);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to load calendar cache' });
+      }
+    };
+
+    if (!isInitialized.current) {
+      loadCacheInstantly();
+      isInitialized.current = true;
+    }
+  }, []);
+
+  // =============================================================================
+  // BACKGROUND SYNC SYSTEM
+  // =============================================================================
+  const startBackgroundSync = useCallback(async () => {
+    if (syncTimeoutRef.current) return; // Already syncing
+
+    try {
+      dispatch({
+        type: 'UPDATE_CACHE_STATUS',
+        payload: { lastSync: new Date(), needsRefresh: true },
+      });
+
+      // Get fresh data from Google Calendar
+      const [calendars, events] = await Promise.all([
+        googleCalendarService.current.getUserCalendars(),
+        googleCalendarService.current.getEvents(
+          'primary',
+          new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+          new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days ahead
+        ),
+      ]);
+
+      // Update cache
+      calendars.forEach(cal => calendarCache.cacheCalendar(cal));
+      calendarCache.cacheEvents(events);
+      calendarCache.markAsSynced();
+
+      // Update UI with fresh data
+      dispatch({ type: 'SET_CALENDARS', payload: calendars });
+      dispatch({ type: 'SET_EVENTS', payload: events });
+
+      console.log(`✅ SYNC COMPLETE: ${events.length} events, ${calendars.length} calendars`);
+
+      dispatch({
+        type: 'UPDATE_CACHE_STATUS',
+        payload: { lastSync: new Date(), needsRefresh: false },
+      });
+    } catch (error) {
+      console.error('Background sync failed:', error);
+      dispatch({ type: 'SET_ERROR', payload: 'Background sync failed' });
+    } finally {
+      syncTimeoutRef.current = null;
+    }
+  }, []);
+
+  // =============================================================================
+  // CACHE UPDATE LISTENER
+  // =============================================================================
+  useEffect(() => {
+    const unsubscribe = calendarCache.subscribe(update => {
+      switch (update.type) {
+        case 'background-sync':
+          if (update.needsRefresh) {
+            startBackgroundSync();
+          }
+          break;
+        case 'cache-cleared':
+          dispatch({ type: 'SET_EVENTS', payload: [] });
+          dispatch({ type: 'SET_CALENDARS', payload: [] });
+          break;
+      }
+    });
+
+    return unsubscribe;
+  }, [startBackgroundSync]);
 
   // Initialize with custom values
   useEffect(() => {
@@ -269,6 +431,17 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
       dispatch({ type: 'SET_DATE', payload: initialDate });
     }
   }, [initialView, initialDate, state.uiState.currentView, state.uiState.currentDate]);
+
+  // =============================================================================
+  // CLEANUP ON UNMOUNT
+  // =============================================================================
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // =============================================================================
   // CONTEXT METHODS
@@ -324,45 +497,103 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
     console.log('updateCalendarSettings:', calendarId, settings);
   }, []);
 
-  // Event operations (placeholder implementations)
-  const createEvent = useCallback(async (event: Partial<CalendarEvent>): Promise<CalendarEvent> => {
-    // TODO: Integrate with GoogleCalendarService
-    const newEvent: CalendarEvent = {
-      id: `temp-${Date.now()}`,
-      user_id: 'current-user',
-      google_calendar_id: 'primary',
-      title: event.title || 'Nuevo Evento',
-      start_datetime: event.start_datetime || new Date().toISOString(),
-      end_datetime: event.end_datetime || new Date(Date.now() + 3600000).toISOString(),
-      is_all_day: event.is_all_day || false,
-      status: 'confirmed',
-      visibility: 'default',
-      attendees: event.attendees || [],
-      reminders: event.reminders || [],
-      sync_status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ...event,
-    } as CalendarEvent;
+  // Event operations with Google Calendar integration
+  const createEvent = useCallback(
+    async (eventData: Partial<CalendarEvent>): Promise<CalendarEvent> => {
+      try {
+        // Create event via Google Calendar service
+        const newEvent = await googleCalendarService.current.createEvent(
+          eventData.google_calendar_id || 'primary',
+          {
+            title: eventData.title || 'Nuevo Evento',
+            description: eventData.description,
+            location: eventData.location,
+            start_datetime: eventData.start_datetime || new Date().toISOString(),
+            end_datetime: eventData.end_datetime || new Date(Date.now() + 3600000).toISOString(),
+            is_all_day: eventData.is_all_day || false,
+            attendees: eventData.attendees,
+            reminders: eventData.reminders,
+          },
+        );
 
-    dispatch({ type: 'ADD_EVENT', payload: newEvent });
-    return newEvent;
-  }, []);
+        // Cache the new event
+        calendarCache.cacheEvent(newEvent);
+
+        // Update local state
+        dispatch({ type: 'ADD_EVENT', payload: newEvent });
+
+        console.log('✅ Event created successfully:', newEvent.title);
+        return newEvent;
+      } catch (error) {
+        console.error('Failed to create event:', error);
+        throw error;
+      }
+    },
+    [],
+  );
 
   const updateEvent = useCallback(
     async (eventId: string, updates: Partial<CalendarEvent>): Promise<CalendarEvent> => {
-      // TODO: Integrate with GoogleCalendarService
-      dispatch({ type: 'UPDATE_EVENT', payload: { eventId, updates } });
-      const updatedEvent = state.events.get(eventId);
-      return updatedEvent!;
+      try {
+        const existingEvent = state.events.get(eventId);
+        if (!existingEvent) {
+          throw new Error(`Event ${eventId} not found`);
+        }
+
+        // Update via Google Calendar API
+        const updatedEvent = await googleCalendarService.current.updateEvent(
+          existingEvent.google_calendar_id,
+          eventId,
+          {
+            title: updates.title,
+            description: updates.description,
+            location: updates.location,
+            start_datetime: updates.start_datetime,
+            end_datetime: updates.end_datetime,
+            is_all_day: updates.is_all_day,
+            attendees: updates.attendees,
+            reminders: updates.reminders,
+          },
+        );
+
+        // Update cache
+        calendarCache.cacheEvent(updatedEvent);
+
+        // Update local state
+        dispatch({ type: 'UPDATE_EVENT', payload: { eventId, updates: updatedEvent } });
+
+        console.log('✅ Event updated successfully:', updatedEvent.title);
+        return updatedEvent;
+      } catch (error) {
+        console.error('Failed to update event:', error);
+        throw error;
+      }
     },
     [state.events],
   );
 
-  const deleteEvent = useCallback(async (eventId: string): Promise<void> => {
-    // TODO: Integrate with GoogleCalendarService
-    dispatch({ type: 'DELETE_EVENT', payload: eventId });
-  }, []);
+  const deleteEvent = useCallback(
+    async (eventId: string): Promise<void> => {
+      try {
+        const existingEvent = state.events.get(eventId);
+        if (!existingEvent) {
+          throw new Error(`Event ${eventId} not found`);
+        }
+
+        // Delete via Google Calendar API
+        await googleCalendarService.current.deleteEvent(existingEvent.google_calendar_id, eventId);
+
+        // Update local state
+        dispatch({ type: 'DELETE_EVENT', payload: eventId });
+
+        console.log('✅ Event deleted successfully:', eventId);
+      } catch (error) {
+        console.error('Failed to delete event:', error);
+        throw error;
+      }
+    },
+    [state.events],
+  );
 
   const duplicateEvent = useCallback(
     async (eventId: string): Promise<CalendarEvent> => {

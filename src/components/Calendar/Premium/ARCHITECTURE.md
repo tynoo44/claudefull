@@ -77,22 +77,22 @@ interface PremiumCalendarContext {
   currentView: CalendarView;
   currentDate: Date;
   selectedDateRange: { start: Date; end: Date };
-  
+
   // Calendar management
   activeCalendars: Map<string, GoogleCalendar>;
   calendarVisibility: Map<string, boolean>;
   calendarColors: Map<string, string>;
-  
+
   // Event management
   events: Map<string, CalendarEvent>;
   selectedEvents: Set<string>;
   eventFilters: EventFilters;
-  
+
   // UI state
   sidebarOpen: boolean;
   detailPanelEvent: string | null;
   dragState: DragState | null;
-  
+
   // Performance
   viewportEvents: Set<string>;
   loadedDateRange: { start: Date; end: Date };
@@ -138,10 +138,7 @@ export const useEventDragDrop = () => {
 };
 
 // Calendar virtualization
-export const useCalendarVirtualization = (
-  dateRange: DateRange,
-  events: CalendarEvent[]
-) => {
+export const useCalendarVirtualization = (dateRange: DateRange, events: CalendarEvent[]) => {
   // Viewport calculation
   // Event visibility optimization
   // Memory management
@@ -184,19 +181,16 @@ export class PremiumGoogleCalendarService extends GoogleCalendarService {
   async batchCreateEvents(events: CreateEventRequest[]): Promise<CalendarEvent[]>;
   async batchUpdateEvents(updates: UpdateEventRequest[]): Promise<CalendarEvent[]>;
   async batchDeleteEvents(eventIds: string[]): Promise<void>;
-  
+
   // Advanced querying
   async getEventsInRange(
     calendarIds: string[],
     dateRange: DateRange,
-    filters?: EventFilters
+    filters?: EventFilters,
   ): Promise<CalendarEvent[]>;
-  
+
   // Conflict detection
-  async detectConflicts(
-    event: CalendarEvent,
-    calendars: string[]
-  ): Promise<ConflictResult[]>;
+  async detectConflicts(event: CalendarEvent, calendars: string[]): Promise<ConflictResult[]>;
 }
 
 // Contact photo service
@@ -210,7 +204,10 @@ export class ContactPhotoService {
 export class EventTemplateService {
   async getTemplates(category?: string): Promise<EventTemplate[]>;
   async createTemplate(template: CreateTemplateRequest): Promise<EventTemplate>;
-  async applyTemplate(templateId: string, overrides?: Partial<CreateEventRequest>): Promise<CreateEventRequest>;
+  async applyTemplate(
+    templateId: string,
+    overrides?: Partial<CreateEventRequest>,
+  ): Promise<CreateEventRequest>;
 }
 
 // Analytics service
@@ -285,12 +282,9 @@ export class EventCacheService {
   private indexedDBCache: IDBDatabase;
   private queryCache = new Map<string, CacheEntry>();
 
-  async getCachedEvents(
-    calendarIds: string[],
-    dateRange: DateRange
-  ): Promise<CalendarEvent[]> {
+  async getCachedEvents(calendarIds: string[], dateRange: DateRange): Promise<CalendarEvent[]> {
     const cacheKey = this.generateCacheKey(calendarIds, dateRange);
-    
+
     // Level 1: Memory cache
     if (this.queryCache.has(cacheKey)) {
       const entry = this.queryCache.get(cacheKey)!;
@@ -298,14 +292,14 @@ export class EventCacheService {
         return entry.events;
       }
     }
-    
+
     // Level 2: IndexedDB cache
     const cachedEvents = await this.getFromIndexedDB(cacheKey);
     if (cachedEvents && !this.isExpired(cachedEvents)) {
       this.queryCache.set(cacheKey, cachedEvents);
       return cachedEvents.events;
     }
-    
+
     // Level 3: Network request
     return this.fetchAndCache(calendarIds, dateRange);
   }
@@ -365,7 +359,7 @@ describe('PremiumCalendarGrid', () => {
   it('should virtualize large date ranges efficiently', async () => {
     const events = generateMockEvents(1000);
     const dateRange = { start: startOfYear(new Date()), end: endOfYear(new Date()) };
-    
+
     render(
       <PremiumCalendarGrid
         events={events}
@@ -373,23 +367,23 @@ describe('PremiumCalendarGrid', () => {
         view="month"
       />
     );
-    
+
     // Should only render visible cells
     expect(screen.getAllByTestId('calendar-cell')).toHaveLength(42); // 6 weeks
-    
+
     // Should handle scrolling efficiently
     const scrollContainer = screen.getByTestId('calendar-scroll-container');
     fireEvent.scroll(scrollContainer, { target: { scrollTop: 1000 } });
-    
+
     await waitFor(() => {
       expect(screen.getAllByTestId('calendar-cell')).toHaveLength(42);
     });
   });
-  
+
   it('should handle drag and drop operations', async () => {
     const events = [createMockEvent()];
     const onEventUpdate = jest.fn();
-    
+
     render(
       <PremiumCalendarGrid
         events={events}
@@ -397,12 +391,12 @@ describe('PremiumCalendarGrid', () => {
         view="week"
       />
     );
-    
+
     const eventElement = screen.getByTestId(`event-${events[0].id}`);
     const dropTarget = screen.getByTestId('drop-zone-monday-10am');
-    
+
     await userEvent.drag(eventElement, dropTarget);
-    
+
     expect(onEventUpdate).toHaveBeenCalledWith({
       ...events[0],
       start_datetime: expect.stringMatching(/10:00/)
@@ -419,20 +413,20 @@ describe('Premium Calendar Integration', () => {
   it('should sync multiple calendars and handle conflicts', async () => {
     const mockCalendars = [
       createMockCalendar({ id: 'cal1', name: 'Work' }),
-      createMockCalendar({ id: 'cal2', name: 'Personal' })
+      createMockCalendar({ id: 'cal2', name: 'Personal' }),
     ];
-    
+
     mockGoogleCalendarService.getUserCalendars.mockResolvedValue(mockCalendars);
-    mockGoogleCalendarService.getEvents.mockImplementation((calId) => {
+    mockGoogleCalendarService.getEvents.mockImplementation(calId => {
       return Promise.resolve(getEventsForCalendar(calId));
     });
-    
+
     const { result } = renderHook(() => usePremiumCalendar());
-    
+
     await act(async () => {
       await result.current.syncMultipleCalendars(['cal1', 'cal2']);
     });
-    
+
     expect(result.current.activeCalendars.size).toBe(2);
     expect(result.current.conflicts).toHaveLength(1); // Overlapping event detected
   });

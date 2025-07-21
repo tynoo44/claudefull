@@ -46,7 +46,7 @@ export function TagsDropdown({
   };
 
   return (
-    <div className={cn("relative", className)} ref={dropdownRef}>
+    <div className={cn('relative', className)} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -55,10 +55,12 @@ export function TagsDropdown({
         <span className="text-sm text-gray-700 dark:text-gray-300">
           {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Filtrar por tags'}
         </span>
-        <ChevronDown className={cn(
-          "w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform',
+            isOpen && 'rotate-180',
+          )}
+        />
       </button>
 
       {selectedTags.length > 0 && (
@@ -127,8 +129,8 @@ export function TagsDropdown({
                   <input
                     type="text"
                     value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddNewTag()}
+                    onChange={e => setNewTag(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddNewTag()}
                     placeholder="Nuevo tag..."
                     className="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                     autoFocus

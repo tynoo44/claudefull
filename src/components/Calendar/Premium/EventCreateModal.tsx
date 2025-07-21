@@ -189,11 +189,10 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
       let result;
       if (isEditMode) {
         // Update existing event
-        result = await calendarService.updateEvent(
-          formData.calendarId,
-          existingEvent.id,
-          { id: existingEvent.id, ...eventData },
-        );
+        result = await calendarService.updateEvent(formData.calendarId, existingEvent.id, {
+          id: existingEvent.id,
+          ...eventData,
+        });
         onEventUpdated({
           ...existingEvent,
           ...eventData,

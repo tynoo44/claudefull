@@ -13,30 +13,31 @@ export const TagInput: React.FC<TagInputProps> = ({
   tags,
   onTagsChange,
   darkMode,
-  placeholder = 'Agregar etiqueta...'
+  placeholder = 'Agregar etiqueta...',
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: allTags = [] } = useAllTags();
-  
+
   // Filter suggestions based on input
   const suggestions = allTags
-    .filter(({ tag }) => 
-      tag.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !tags.includes(tag) &&
-      inputValue.length > 0
+    .filter(
+      ({ tag }) =>
+        tag.toLowerCase().includes(inputValue.toLowerCase()) &&
+        !tags.includes(tag) &&
+        inputValue.length > 0,
     )
     .slice(0, 10); // Limit to 10 suggestions
-  
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        suggestionsRef.current && 
+        suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node) &&
         inputRef.current &&
         !inputRef.current.contains(event.target as Node)
@@ -48,17 +49,17 @@ export const TagInput: React.FC<TagInputProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   const addTag = (tag: string) => {
     const trimmedTag = tag.trim();
-    
+
     // Validate tag (max 4 words)
     const words = trimmedTag.split(/\s+/);
     if (words.length > 4) {
       alert('Las etiquetas deben tener máximo 4 palabras');
       return;
     }
-    
+
     if (trimmedTag && !tags.includes(trimmedTag)) {
       onTagsChange([...tags, trimmedTag]);
       setInputValue('');
@@ -66,15 +67,15 @@ export const TagInput: React.FC<TagInputProps> = ({
       setSelectedSuggestionIndex(-1);
     }
   };
-  
+
   const removeTag = (tagToRemove: string) => {
     onTagsChange(tags.filter(tag => tag !== tagToRemove));
   };
-  
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      
+
       if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
         addTag(suggestions[selectedSuggestionIndex].tag);
       } else if (inputValue.trim()) {
@@ -82,18 +83,16 @@ export const TagInput: React.FC<TagInputProps> = ({
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedSuggestionIndex(prev => 
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      );
+      setSelectedSuggestionIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+      setSelectedSuggestionIndex(prev => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
       setSelectedSuggestionIndex(-1);
     }
   };
-  
+
   return (
     <div className="space-y-2">
       {/* Current tags */}
@@ -118,18 +117,20 @@ export const TagInput: React.FC<TagInputProps> = ({
           </span>
         ))}
       </div>
-      
+
       {/* Tag input */}
       <div className="relative">
         <div className="relative">
-          <Hash className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-            darkMode ? 'text-gray-400' : 'text-gray-500'
-          }`} />
+          <Hash
+            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+              darkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          />
           <input
             ref={inputRef}
             type="text"
             value={inputValue}
-            onChange={(e) => {
+            onChange={e => {
               setInputValue(e.target.value);
               setShowSuggestions(true);
               setSelectedSuggestionIndex(-1);
@@ -159,7 +160,7 @@ export const TagInput: React.FC<TagInputProps> = ({
             <Plus className="w-4 h-4" />
           </button>
         </div>
-        
+
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div
@@ -184,15 +185,15 @@ export const TagInput: React.FC<TagInputProps> = ({
                         : 'hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`flex items-center gap-2 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-700'
-                  }`}>
+                  <span
+                    className={`flex items-center gap-2 ${
+                      darkMode ? 'text-gray-200' : 'text-gray-700'
+                    }`}
+                  >
                     <Hash className="w-3 h-3" />
                     {tag}
                   </span>
-                  <span className={`text-xs ${
-                    darkMode ? 'text-gray-500' : 'text-gray-400'
-                  }`}>
+                  <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                     {usage_count} uso{usage_count !== 1 ? 's' : ''}
                   </span>
                 </button>
@@ -201,7 +202,7 @@ export const TagInput: React.FC<TagInputProps> = ({
           </div>
         )}
       </div>
-      
+
       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         Las etiquetas deben tener máximo 4 palabras. Se preferirán las etiquetas existentes.
       </p>

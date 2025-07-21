@@ -93,20 +93,33 @@ class CalendarCacheManager {
           const parsed = JSON.parse(stored);
           this.cache = { ...this.cache, ...parsed };
           this.cleanExpiredEntries();
+          console.log('💾 Cache loaded from localStorage:', {
+            events: Object.keys(this.cache.events).length,
+            calendars: Object.keys(this.cache.calendars).length,
+            lastSync: new Date(this.cache.metadata.lastSync),
+          });
+        } else {
+          console.log('🆆 No calendar cache found in localStorage');
         }
       }
     } catch (error) {
-      console.warn('Failed to load calendar cache from storage:', error);
+      console.error('❌ Failed to load calendar cache from storage:', error);
     }
   }
 
   private saveToStorage(): void {
     try {
       if (this.config.storageType === 'localStorage') {
-        localStorage.setItem('calendar-cache', JSON.stringify(this.cache));
+        const cacheData = JSON.stringify(this.cache);
+        localStorage.setItem('calendar-cache', cacheData);
+        console.log('💾 Cache saved to localStorage:', {
+          events: Object.keys(this.cache.events).length,
+          calendars: Object.keys(this.cache.calendars).length,
+          size: Math.round(cacheData.length / 1024) + 'KB',
+        });
       }
     } catch (error) {
-      console.warn('Failed to save calendar cache to storage:', error);
+      console.error('❌ Failed to save calendar cache to storage:', error);
     }
   }
 
@@ -119,7 +132,7 @@ class CalendarCacheManager {
    */
   cacheEvent(event: CalendarEvent, ttl?: number): void {
     const expiration = Date.now() + (ttl || this.config.maxAge);
-    
+
     this.cache.events[event.id] = {
       data: event,
       timestamp: Date.now(),
@@ -179,7 +192,7 @@ class CalendarCacheManager {
   getEventsInRange(startDate: Date, endDate: Date): CalendarEvent[] {
     const rangeKey = this.generateRangeKey(startDate, endDate);
     const rangeEntry = this.cache.dateRanges[rangeKey];
-    
+
     if (rangeEntry && Date.now() <= rangeEntry.expires) {
       return rangeEntry.data;
     }
@@ -197,7 +210,7 @@ class CalendarCacheManager {
    */
   cacheEventsForRange(startDate: Date, endDate: Date, events: CalendarEvent[]): void {
     const rangeKey = this.generateRangeKey(startDate, endDate);
-    
+
     this.cache.dateRanges[rangeKey] = {
       data: events,
       timestamp: Date.now(),
@@ -351,9 +364,9 @@ class CalendarCacheManager {
 
     this.syncTimer = setInterval(() => {
       this.cleanExpiredEntries();
-      this.notifyListeners({ 
+      this.notifyListeners({
         type: 'background-sync',
-        needsRefresh: this.needsRefresh()
+        needsRefresh: this.needsRefresh(),
       });
     }, this.config.syncInterval);
   }

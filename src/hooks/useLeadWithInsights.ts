@@ -44,10 +44,12 @@ export function useLeadWithInsights(leadId?: string) {
 
       const { data, error } = await supabase
         .from('leads')
-        .select(`
+        .select(
+          `
           *,
           lead_insights (*)
-        `)
+        `,
+        )
         .eq('id', leadId)
         .single();
 

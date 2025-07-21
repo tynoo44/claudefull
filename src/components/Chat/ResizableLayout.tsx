@@ -298,7 +298,11 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
     <div ref={containerRef} className="flex h-full w-full overflow-hidden">
       {/* Sidebar - Resizable width */}
       <div
-        style={{ width: `${actualSidebarWidth}px`, minWidth: `${actualSidebarWidth}px`, maxWidth: `${actualSidebarWidth}px` }}
+        style={{
+          width: `${actualSidebarWidth}px`,
+          minWidth: `${actualSidebarWidth}px`,
+          maxWidth: `${actualSidebarWidth}px`,
+        }}
         className="flex-shrink-0 h-full overflow-hidden transition-all duration-300"
       >
         {children[0]}

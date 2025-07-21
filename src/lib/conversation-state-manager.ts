@@ -65,7 +65,7 @@ export class ConversationStateManager {
     try {
       // Validate UUIDs
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      
+
       if (!params.conversationId || !uuidRegex.test(params.conversationId)) {
         console.error('[ConversationStateManager] Invalid conversationId:', params.conversationId);
         return {
@@ -140,24 +140,24 @@ export class ConversationStateManager {
         };
       }
 
-      console.log('[ConversationStateManager] RPC response:', { 
-        hasData: !!data, 
+      console.log('[ConversationStateManager] RPC response:', {
+        hasData: !!data,
         hasError: !!error,
         dataType: typeof data,
         isArray: Array.isArray(data),
-        dataLength: Array.isArray(data) ? data.length : 'N/A'
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
       });
 
       // RPC functions return arrays, get first element
       const result = Array.isArray(data) ? data[0] : data;
-      
+
       console.log('[ConversationStateManager] RPC result extracted:', {
         hasResult: !!result,
         resultType: typeof result,
         resultKeys: result ? Object.keys(result) : [],
         success: result?.success,
         error: result?.error,
-        fullResult: result
+        fullResult: result,
       });
 
       // Check if we got a valid result

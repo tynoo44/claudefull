@@ -114,14 +114,14 @@ export class ConversationAnalyzer {
         currentPhase: analysis.currentPhase,
         hasLeadProfile: !!analysis.leadProfile,
         hasLastUserMessage: !!analysis.lastUserMessage,
-        hasSummary: !!analysis.summary
+        hasSummary: !!analysis.summary,
       });
-      
+
       console.log('[ConversationAnalyzer] Phase info being sent:', {
         leadProfileKeys: Object.keys(analysis.leadProfile || {}),
-        leadProfileSample: JSON.stringify(analysis.leadProfile).substring(0, 200)
+        leadProfileSample: JSON.stringify(analysis.leadProfile).substring(0, 200),
       });
-      
+
       const result = await ConversationStateManager.updateConversationState({
         conversationId,
         leadId,
@@ -140,7 +140,7 @@ export class ConversationAnalyzer {
           isNewAnalysis: false,
         };
       }
-      
+
       console.log('[ConversationAnalyzer] Analysis stored successfully');
 
       // Get the updated memory record
@@ -267,7 +267,10 @@ Responde SOLO con el JSON, sin explicaciones adicionales.`;
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        console.error('[ConversationAnalyzer] No JSON found in response:', response.substring(0, 200));
+        console.error(
+          '[ConversationAnalyzer] No JSON found in response:',
+          response.substring(0, 200),
+        );
         throw new Error('No valid JSON found in AI response');
       }
 
@@ -277,7 +280,7 @@ Responde SOLO con el JSON, sin explicaciones adicionales.`;
         hasCurrentPhase: !!analysis.currentPhase,
         hasLeadProfile: !!analysis.leadProfile,
         hasQualificationScore: !!analysis.qualificationScore,
-        currentPhase: analysis.currentPhase
+        currentPhase: analysis.currentPhase,
       });
 
       // Validate and enhance the analysis
@@ -314,14 +317,14 @@ Responde SOLO con el JSON, sin explicaciones adicionales.`;
         conversationMomentum: analysis.conversationMomentum || 'estancado',
         estimatedCloseProbability: analysis.estimatedCloseProbability || 0,
       };
-      
+
       console.log('[ConversationAnalyzer] Final analysis result:', {
         currentPhase: result.currentPhase,
         summaryLength: result.summary?.length,
         lastUserMessageLength: result.lastUserMessage?.length,
-        detectedIntent: result.detectedIntent
+        detectedIntent: result.detectedIntent,
       });
-      
+
       return result;
     } catch (error) {
       console.error('[ConversationAnalyzer] Error generating AI analysis:', error);

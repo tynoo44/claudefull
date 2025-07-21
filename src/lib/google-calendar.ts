@@ -201,10 +201,11 @@ export class GoogleCalendarService {
         is_all_day: eventData.is_all_day || false,
         status: data.status || 'confirmed',
         visibility: data.visibility || 'default',
-        attendees: eventData.attendees?.map(att => ({
-          ...att,
-          response_status: 'needsAction' as const
-        })) || [],
+        attendees:
+          eventData.attendees?.map(att => ({
+            ...att,
+            response_status: 'needsAction' as const,
+          })) || [],
         reminders: eventData.reminders || [],
         recurrence: eventData.recurrence,
         color_id: data.colorId,
@@ -222,7 +223,11 @@ export class GoogleCalendarService {
   }
 
   // Update event in Google Calendar
-  async updateEvent(calendarId: string, eventId: string, eventData: UpdateEventRequest): Promise<CalendarEvent> {
+  async updateEvent(
+    calendarId: string,
+    eventId: string,
+    eventData: UpdateEventRequest,
+  ): Promise<CalendarEvent> {
     try {
       const {
         data: { session },
@@ -294,10 +299,11 @@ export class GoogleCalendarService {
         is_all_day: eventData.is_all_day || false,
         status: data.status || 'confirmed',
         visibility: data.visibility || 'default',
-        attendees: eventData.attendees?.map(att => ({
-          ...att,
-          response_status: 'needsAction' as const
-        })) || [],
+        attendees:
+          eventData.attendees?.map(att => ({
+            ...att,
+            response_status: 'needsAction' as const,
+          })) || [],
         reminders: eventData.reminders || [],
         recurrence: eventData.recurrence,
         color_id: data.colorId,

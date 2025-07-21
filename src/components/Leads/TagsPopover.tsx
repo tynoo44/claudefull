@@ -7,20 +7,16 @@ interface TagsPopoverProps {
   maxVisible?: number;
 }
 
-export const TagsPopover: React.FC<TagsPopoverProps> = ({ 
-  tags, 
-  darkMode, 
-  maxVisible = 3 
-}) => {
+export const TagsPopover: React.FC<TagsPopoverProps> = ({ tags, darkMode, maxVisible = 3 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  
+
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        popoverRef.current && 
+        popoverRef.current &&
         !popoverRef.current.contains(event.target as Node) &&
         buttonRef.current &&
         !buttonRef.current.contains(event.target as Node)
@@ -60,19 +56,19 @@ export const TagsPopover: React.FC<TagsPopoverProps> = ({
           {tag}
         </span>
       ))}
-      
+
       {/* Show more button */}
       {hasMore && (
         <>
           <button
             ref={buttonRef}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
             className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 transition-colors ${
-              darkMode 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+              darkMode
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -85,9 +81,7 @@ export const TagsPopover: React.FC<TagsPopoverProps> = ({
             <div
               ref={popoverRef}
               className={`absolute top-full mt-2 left-0 z-50 p-3 rounded-lg shadow-lg border ${
-                darkMode 
-                  ? 'bg-gray-800 border-gray-700' 
-                  : 'bg-white border-gray-200'
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               } max-w-sm w-max`}
             >
               <div className="flex flex-wrap gap-1 max-h-48 overflow-y-auto">
@@ -103,9 +97,9 @@ export const TagsPopover: React.FC<TagsPopoverProps> = ({
                   </span>
                 ))}
               </div>
-              
+
               {/* Small arrow pointing to button */}
-              <div 
+              <div
                 className={`absolute -top-2 left-4 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[8px] ${
                   darkMode ? 'border-b-gray-800' : 'border-b-white'
                 }`}

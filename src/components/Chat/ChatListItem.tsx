@@ -66,7 +66,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
             >
               {chat.leadName}
             </h3>
-            
+
             {/* Badges y fecha */}
             <div className="flex items-center gap-1.5 ml-2">
               {/* Procedencia */}

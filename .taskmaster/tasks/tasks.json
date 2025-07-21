@@ -451,15 +451,136 @@
         "description": "Corrección automática de todos los errores de Prettier identificados en el lint. Son 311 errores de los 507 totales, todos auto-corregibles.",
         "details": "1. Ejecutar `npm run lint -- --fix` para auto-corrección\n2. Ejecutar `npm run format` para formateo adicional  \n3. Verificar reducción de errores con `npm run lint`\n4. Commit cambios con mensaje descriptivo\n5. Crear log detallado de errores corregidos\n\nESPERADO: Reducir de 507 a ~196 errores lint restantes.",
         "testStrategy": "Verificación mediante `npm run lint | wc -l` antes y después. Debe mostrar reducción significativa de errores (~60% menos).",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 93,
+        "title": "FASE 0.2: Fix TypeScript Calendar Interfaces (45+ errores)",
+        "description": "Corregir las interfaces TypeScript críticas del sistema Calendar que están causando la mayoría de errores TS. Enfoque en CalendarEvent, EventReminder y SearchResult interfaces.",
+        "details": "1. Crear/corregir interface CalendarEvent con propiedades faltantes:\n   - start: { dateTime: string; date?: string }\n   - end: { dateTime: string; date?: string }  \n   - calendarId: string\n   \n2. Definir EventReminder interface correcta:\n   - method: 'popup' | 'email'\n   - minutes: number\n\n3. Implementar SearchResult interface completa:\n   - facets: SearchFacets (definir)\n   - suggestions: string[]\n\n4. Corregir MonthView.tsx, EventCreateModal.tsx errores de propiedades\n\nCRÍTICO: Esto resolverá ~45 errores TypeScript del Calendar Premium.",
+        "testStrategy": "Ejecutar `npm run type-check` antes y después. Verificar que errores relacionados con Calendar se eliminen completamente.",
+        "status": "pending",
+        "dependencies": [
+          92
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 94,
+        "title": "FASE 0.3: Remove Unused Variables and Imports (73 errores)",
+        "description": "Eliminar todas las variables no utilizadas e imports obsoletos identificados en el análisis. Principalmente en componentes Calendar Premium.",
+        "details": "Eliminar imports/variables no usados en:\n\n1. AgendaView.tsx:\n   - import { isSameDay } from 'date-fns'\n   - import { Search } from 'lucide-react'\n   - const compactView (variable no usada)\n\n2. DayView.tsx:\n   - import { addHours } from 'date-fns'  \n   - import { CalendarIcon } from 'lucide-react'\n\n3. EventCreateModal.tsx y EventDetailModal.tsx:\n   - Multiple unused icon imports (Clock, Repeat, AlignLeft, Copy, Globe, etc.)\n\n4. MonthView.tsx:\n   - import { isWithinInterval, endOfDay } from 'date-fns'\n   - import es from 'date-fns/locale/es'\n   - showWeekNumbers variable\n\nOBJETIVO: Limpiar 73 errores de variables/imports no utilizados.",
+        "testStrategy": "Verificar con `npm run lint` que desaparezcan los warnings \"@typescript-eslint/no-unused-vars\" en los archivos modificados.",
+        "status": "pending",
+        "dependencies": [
+          92
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 95,
+        "title": "FASE 0.4: Fix Case Declarations and No-undef Errors",
+        "description": "Corregir los errores de case declarations restantes (ya se arregló PremiumCalendarProvider.tsx) y errores no-undef como el uso de 'process' y 'require'.",
+        "details": "1. ✅ PremiumCalendarProvider.tsx - YA CORREGIDO (lexical declarations)\n\n2. PremiumCalendarGrid.tsx - Corregir error 'process' no definido:\n   - Línea 132: Problema con process.env o similar\n   - Reemplazar con import.meta.env (Vite syntax)\n\n3. test/ai-functions.test.ts - Corregir require() statements:\n   - 6 errores de require() no permitidos \n   - Convertir a import statements ES6\n   - Líneas: 379, 382, 405, 495, 528\n\n4. Verificar otros case declarations si quedan\n\nOBJETIVO: Eliminar errores no-undef y case declarations restantes.",
+        "testStrategy": "Ejecutar `npm run lint` y verificar que desaparezcan errores \"no-case-declarations\" y \"no-undef\".",
+        "status": "pending",
+        "dependencies": [
+          92
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 96,
+        "title": "FASE 0.5: Replace 'any' Types with Proper TypeScript (79 warnings)",
+        "description": "Eliminar todos los tipos 'any' y reemplazarlos con interfaces TypeScript específicas. Son 79 warnings que comprometen la type safety.",
+        "details": "Reemplazar 'any' types en archivos principales:\n\n1. PremiumCalendarProvider.tsx (ya mejorado, verificar restantes):\n   - Revisar que no queden 'any' types después de las correcciones\n\n2. AgendaView.tsx (7 warnings any):\n   - event: any → CalendarEvent\n   - props: any → definir interfaces específicas\n\n3. DayView.tsx (4 warnings any):\n   - event: any → CalendarEvent  \n   - timeSlot: any → TimeSlot interface\n\n4. EventCreateModal.tsx y EventDetailModal.tsx:\n   - form: any → EventFormData interface\n   - validation: any → ValidationResult interface\n\n5. test/ai-functions.test.ts:\n   - Mock objects con any → interfaces específicas\n\nOBJETIVO: Crear interfaces específicas y eliminar los 79 'any' types.",
+        "testStrategy": "Ejecutar `npm run lint` y verificar que desaparezcan los warnings \"@typescript-eslint/no-explicit-any\".",
+        "status": "pending",
+        "dependencies": [
+          93
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 97,
+        "title": "FASE 1.1: Consolidate Calendar Modal Components",
+        "description": "Refactorizar EventCreateModal.tsx y EventDetailModal.tsx en un BaseEventModal.tsx reutilizable para eliminar ~400 líneas de código duplicado.",
+        "details": "1. Crear BaseEventModal.tsx con lógica común:\n   - Form validation unificada\n   - Google Calendar API calls compartidos\n   - Estado modal común\n   - Error handling unificado\n\n2. Definir interfaces compartidas:\n   - EventFormData interface\n   - ModalMode: 'create' | 'edit' | 'view'\n   - ValidationErrors interface\n\n3. Refactorizar componentes existentes:\n   - EventCreateModal → usar BaseEventModal con mode='create'\n   - EventDetailModal → usar BaseEventModal con mode='view'\n   - Mantener APIs públicas existentes\n\n4. Testing:\n   - Verificar que toda funcionalidad sigue funcionando\n   - No romper integraciones existentes\n\nOBJETIVO: Eliminar 60-70% código duplicado en modales Calendar.",
+        "testStrategy": "Probar creación, edición y visualización de eventos. Verificar que Google Calendar API sigue funcionando correctamente.",
+        "status": "pending",
+        "dependencies": [
+          96
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 98,
+        "title": "FASE 1.2: Create Generic Virtualization Hook",
+        "description": "Crear hook genérico useVirtualizedList para reutilizar la lógica de virtualización entre MessageList, VirtualizedLeadsList y VirtualizedLeadsKanban.",
+        "details": "1. Crear hooks/shared/useVirtualizedList.ts:\n   - Lógica TanStack Virtual genérica\n   - Configuración flexible (estimateSize, overscan, etc.)\n   - Scroll handling optimizado\n   - Prefetch triggers configurables\n\n2. Refactorizar componentes existentes:\n   - MessageList.tsx → usar useVirtualizedList\n   - VirtualizedLeadsList.tsx → usar useVirtualizedList  \n   - VirtualizedLeadsKanban.tsx → usar useVirtualizedList\n\n3. Definir interfaces genéricas:\n   - VirtualizationOptions<T>\n   - VirtualizedItemProps<T>\n   - ScrollCallbacks interface\n\n4. Mantener performance existente:\n   - No degradar rendimiento actual\n   - Mantener funcionalidades específicas por componente\n\nOBJETIVO: Eliminar ~200 líneas de código duplicado en virtualización.",
+        "testStrategy": "Probar scrolling performance en listas grandes (1000+ items). Verificar que prefetch sigue funcionando correctamente.",
+        "status": "pending",
+        "dependencies": [
+          96
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 99,
+        "title": "FASE 2.1: Optimize Supabase N+1 Query Problems",
+        "description": "Crear RPCs optimizados para eliminar los N+1 query problems identificados en conversaciones y mensajes no leídos.",
+        "details": "1. Crear RPC get_conversations_with_unread_counts:\n   - Single query para conversaciones + last message + unread count\n   - Reemplazar getConversationsWithLastMessage function\n   - Eliminar N+1 problem en unread count calculation\n\n2. Implementar batch operations RPC:\n   - bulk_update_leads para actualizaciones masivas\n   - increment_template_usage atómico\n\n3. Optimizar queries existentes:\n   - Añadir índices necesarios (messages_conversation_created, etc.)\n   - Revisar queries con joins complejos\n\n4. Update client-side code:\n   - supabase-functions.ts → usar nuevos RPCs\n   - Mantener compatibilidad con TanStack Query cache\n\nOBJETIVO: Eliminar 2-3 N+1 problems → queries 10-20x más rápidas.",
+        "testStrategy": "Medir tiempo queries antes/después. Verificar que conversaciones cargan <100ms vs >1s actual.",
+        "status": "pending",
+        "dependencies": [
+          96
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 100,
+        "title": "FASE 2.2: Implement Route-based Code Splitting",
+        "description": "Implementar code splitting por rutas principales para reducir bundle inicial en ~450KB (~24%).",
+        "details": "1. Refactorizar App.tsx con lazy loading:\n   - PremiumCalendarAdvanced → lazy import (~200KB)\n   - LeadsPage → lazy import (~100KB)  \n   - ChatsPage → lazy import (~150KB)\n   - Otros componentes grandes\n\n2. Implementar Suspense boundaries:\n   - Loading states para cada ruta\n   - Error boundaries para failed chunks\n   - Progressive loading indicators\n\n3. Configurar Vite bundling:\n   - Manual chunks configuration\n   - Vendor chunk separation\n   - Dynamic import optimization\n\n4. Preload strategies:\n   - Link prefetching para rutas probables\n   - Module preload hints\n\nOBJETIVO: Bundle inicial: 2.1MB → 1.6MB (-24%).",
+        "testStrategy": "Analizar bundle size con `npm run build` y herramientas como webpack-bundle-analyzer. Medir tiempo inicial load.",
+        "status": "pending",
+        "dependencies": [
+          97
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 101,
+        "title": "FASE 0.6: Verification and Final Cleanup",
+        "description": "Verificación final de que todos los errores críticos están corregidos y el código está limpio para desarrollo futuro.",
+        "details": "1. Ejecutar auditoría completa:\n   - `npm run lint` → Objetivo: 0 errores\n   - `npm run type-check` → Objetivo: 0 errores TS\n   - `npm run test` → Verificar que tests siguen pasando\n\n2. Verificar funcionalidad crítica:\n   - Premium Calendar todas las vistas funcionando\n   - Mensajes virtualizados sin problemas\n   - Google Calendar API operativo\n   - Leads pagination funcionando\n\n3. Performance verification:\n   - Medir load times antes/después\n   - Verificar que no hay regresiones performance\n   - Memory usage stable\n\n4. Crear summary report:\n   - Errores corregidos por categoría\n   - Performance improvements logrados  \n   - Código duplicado eliminado\n\nOBJETIVO: 507 errores → 0 errores, 142 TS errors → 0 errors.",
+        "testStrategy": "Suite completa de verificación: lint, type-check, test, manual testing de funcionalidades críticas.",
+        "status": "pending",
+        "dependencies": [
+          92,
+          93,
+          94,
+          95,
+          96
+        ],
         "priority": "high",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-21T10:35:12.693Z",
+      "updated": "2025-07-21T10:39:17.910Z",
       "description": "Tasks for master context"
     }
   }

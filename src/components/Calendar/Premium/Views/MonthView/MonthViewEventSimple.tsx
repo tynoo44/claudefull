@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
-import { Clock, MapPin, Users, AlertTriangle, Move, RotateCcw, RotateCw } from 'lucide-react';
+import { Clock, MapPin, Users, AlertTriangle, Move } from 'lucide-react';
 import type { CalendarEvent } from '../../../../../types/calendar';
 import { useSimpleDrag } from '../../../../../hooks/useSimpleDrag';
 
@@ -13,7 +13,6 @@ interface MonthViewEventProps {
   onHover: (eventId: string | null) => void;
   isDragDisabled?: boolean;
   onEventUpdate?: (eventId: string, updates: Partial<CalendarEvent>) => Promise<void>;
-  allEvents?: CalendarEvent[];
 }
 
 export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
@@ -25,7 +24,6 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
   onHover,
   isDragDisabled = false,
   onEventUpdate = async () => {},
-  allEvents = [],
 }) => {
   const eventRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -34,28 +32,31 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
   const handleEventMove = async (eventId: string, deltaX: number, deltaY: number) => {
     // Convert pixel movement to time/date changes
     const dayChange = Math.round(deltaX / 120); // 120px = 1 day
-    const hourChange = Math.round(deltaY / 40); // 40px = 1 hour
-
+    const hourChange = Math.round(deltaY / 40);  // 40px = 1 hour
+    
     const originalStart = new Date(event.start_datetime);
     const originalEnd = new Date(event.end_datetime);
-
+    
     // Calculate new dates
     const newStart = new Date(originalStart);
     newStart.setDate(newStart.getDate() + dayChange);
     newStart.setHours(newStart.getHours() + hourChange);
-
+    
     const newEnd = new Date(originalEnd);
     newEnd.setDate(newEnd.getDate() + dayChange);
     newEnd.setHours(newEnd.getHours() + hourChange);
-
+    
+    console.log(`📅 Moving event: ${dayChange} days, ${hourChange} hours`);
+    
     // Update the event
     await onEventUpdate(eventId, {
       start_datetime: newStart.toISOString(),
       end_datetime: newEnd.toISOString(),
     });
   };
-
+  
   const { dragState, handlers } = useSimpleDrag(handleEventMove);
+
   const getStatusIcon = () => {
     switch (event.status) {
       case 'tentative':
@@ -83,14 +84,7 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
     }
 
     const startTime = format(new Date(event.start_datetime), 'HH:mm');
-    const endTime = format(new Date(event.end_datetime), 'HH:mm');
-
-    // Show end time only if different from start time
-    if (startTime === endTime) {
-      return startTime;
-    }
-
-    return `${startTime}`;
+    return startTime;
   };
 
   const getEventClasses = () => {
@@ -98,11 +92,11 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
       'group w-full text-left text-xs rounded p-1 mb-1 transition-all duration-200 relative overflow-hidden';
 
     let classes = baseClasses;
-
+    
     // Drag cursor
     if (!isDragDisabled && !dragState.isDragging) {
       classes += ' cursor-move hover:cursor-move';
-    } else if (dragState.isDragging && dragState.draggedEvent?.id === event.id) {
+    } else if (dragState.isDragging && dragState.draggedEventId === event.id) {
       classes += ' cursor-grabbing';
     } else {
       classes += ' cursor-pointer';
@@ -116,8 +110,8 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
     }
 
     // Drag state styling
-    if (dragState.isDragging && dragState.draggedEvent?.id === event.id) {
-      classes += ' z-50 pointer-events-none';
+    if (dragState.isDragging && dragState.draggedEventId === event.id) {
+      classes += ' z-50 opacity-90 scale-105 ring-2 ring-blue-400';
     } else if (dragState.isDragging) {
       classes += ' opacity-70';
     }
@@ -129,11 +123,6 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
 
     if (isHovered && !isSelected && !dragState.isDragging) {
       classes += ' transform scale-102 shadow-lg z-10';
-    }
-
-    // Conflict highlighting
-    if (isConflicted && dragState.draggedEvent?.id === event.id) {
-      classes += ' ring-2 ring-red-400 ring-opacity-60';
     }
 
     // Visibility based on event importance
@@ -149,14 +138,14 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
 
   const getBackgroundStyle = () => {
     let baseOpacity = isHovered || isSelected ? 0.9 : 0.8;
-
+    
     // Apply drag visual feedback
-    const dragFeedback = getDragVisualFeedback(dragState);
     let style: React.CSSProperties = {};
-
-    if (dragState.isDragging && dragState.draggedEvent?.id === event.id && dragFeedback) {
-      style = { ...style, ...dragFeedback };
-      baseOpacity = (dragFeedback.opacity as number) || baseOpacity;
+    
+    if (dragState.isDragging && dragState.draggedEventId === event.id) {
+      style.transform = 'scale(1.05)';
+      style.boxShadow = '0 8px 16px rgba(59, 130, 246, 0.3)';
+      baseOpacity = 0.9;
     }
 
     if (event.status === 'cancelled') {
@@ -188,51 +177,47 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
     };
   };
 
-  // =============================================================================
-  // DRAG HANDLERS
-  // =============================================================================
-
+  // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isDragDisabled || e.button !== 0) return; // Only left click
-
+    
     e.preventDefault();
     isDragging.current = false;
-
+    
     const startPosition = { x: e.clientX, y: e.clientY };
-
+    
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isDragging.current) {
         const distance = Math.sqrt(
           Math.pow(moveEvent.clientX - startPosition.x, 2) +
-            Math.pow(moveEvent.clientY - startPosition.y, 2),
+          Math.pow(moveEvent.clientY - startPosition.y, 2)
         );
-
-        if (distance > 5) {
-          // Start drag after 5px movement
+        
+        if (distance > 5) { // Start drag after 5px movement
           isDragging.current = true;
-          handlers.onDragStart(event, 'move', startPosition);
+          handlers.startDrag(event.id, startPosition);
         }
       }
-
+      
       if (isDragging.current) {
-        handlers.onDragMove({ x: moveEvent.clientX, y: moveEvent.clientY });
+        handlers.updateDrag({ x: moveEvent.clientX, y: moveEvent.clientY });
       }
     };
-
-    const handleMouseUp = (upEvent: MouseEvent) => {
+    
+    const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-
+      
       if (isDragging.current) {
-        handlers.onDragEnd();
+        handlers.endDrag();
       } else {
         // It was a click, not a drag
         onClick(event, e);
       }
-
+      
       isDragging.current = false;
     };
-
+    
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -317,23 +302,13 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
       {isHovered && !isSelected && !dragState.isDragging && (
         <div className="absolute inset-0 bg-white bg-opacity-10 pointer-events-none" />
       )}
-
+      
       {/* Drag Preview Overlay */}
-      {dragState.isDragging && dragState.draggedEvent?.id === event.id && (
+      {dragState.isDragging && dragState.draggedEventId === event.id && (
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-blue-500 bg-opacity-20 animate-pulse" />
           <div className="absolute top-1 right-1">
             <Move className="h-3 w-3 text-blue-600 animate-bounce" />
-          </div>
-        </div>
-      )}
-
-      {/* Conflict Indicator */}
-      {isConflicted && dragState.draggedEvent?.id === event.id && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-red-500 bg-opacity-20 animate-pulse" />
-          <div className="absolute top-1 right-1">
-            <AlertTriangle className="h-3 w-3 text-red-600 animate-bounce" />
           </div>
         </div>
       )}

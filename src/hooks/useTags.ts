@@ -14,10 +14,7 @@ export function useTags() {
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('tags')
-        .not('tags', 'is', null);
+      const { data, error } = await supabase.from('leads').select('tags').not('tags', 'is', null);
 
       if (error) throw error;
 
@@ -80,11 +77,7 @@ export function useTagFilter() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
   const clearTags = () => setSelectedTags([]);

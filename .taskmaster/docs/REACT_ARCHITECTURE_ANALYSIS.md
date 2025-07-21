@@ -174,25 +174,25 @@ graph TD
     B --> C[AuthProvider - Supabase Session]
     C --> D[ThemeProvider - Local Storage]
     D --> E[App.tsx - BrowserRouter]
-    
+
     E --> F[GlobalNavbar - Always Loaded]
     E --> G[Protected Routes]
-    
+
     G --> H[LeadsPage]
     G --> I[ChatsPage]
     G --> J[PremiumCalendarAdvanced]
     G --> K[DashboardPage]
-    
+
     H --> L[useLeadsPagination Hook]
     L --> M[Supabase Realtime Subscription]
     L --> N[TanStack Query Cache]
     L --> O[VirtualizedLeadsList Component]
-    
+
     I --> P[useMessagesPagination Hook]
     P --> Q[Supabase RPCs: get_messages_paginated]
     P --> R[TanStack Query Infinite]
     P --> S[MessageList - TanStack Virtual]
-    
+
     J --> T[PremiumCalendarProvider Context]
     T --> U[Google Calendar API Integration]
     T --> V[Calendar Views: Month/Week/Day/Agenda]
@@ -202,6 +202,7 @@ graph TD
 ### 🚀 Patrón de Carga Optimizada
 
 #### **1. Initial Load Sequence**
+
 ```typescript
 1. main.tsx loads providers setup
 2. AuthContext checks Supabase session (localStorage + API)
@@ -212,6 +213,7 @@ graph TD
 ```
 
 #### **2. Data Fetching Patterns**
+
 ```typescript
 // Lead Data Loading
 useLeadsPagination:
@@ -220,7 +222,7 @@ useLeadsPagination:
 ├── Real-time: Supabase subscription updates
 └── Filtering: Local search + remote status filters
 
-// Message Data Loading  
+// Message Data Loading
 useMessagesPagination:
 ├── Initial Load: 50 messages per conversation
 ├── Infinite Scroll: Load older messages on scroll up
@@ -244,7 +246,7 @@ MessageList: TanStack Virtual
 - Estimated height calculation
 - Smooth scrolling with overscan
 
-VirtualizedLeadsList: TanStack Virtual  
+VirtualizedLeadsList: TanStack Virtual
 - Renders ~20 visible lead cards
 - Dynamic height estimation
 - Prefetch next page at threshold
@@ -252,7 +254,7 @@ VirtualizedLeadsList: TanStack Virtual
 // Caching Strategy
 TanStack Query:
 ├── Leads: 5-minute cache, stale-while-revalidate
-├── Messages: Infinite cache, real-time invalidation  
+├── Messages: Infinite cache, real-time invalidation
 ├── Calendar: 5-minute cache, background refetch
 └── Templates: 10-minute cache, manual invalidation
 ```
@@ -266,27 +268,27 @@ TanStack Query:
 ```mermaid
 graph LR
     A[App.tsx] --> B[AuthContext]
-    A --> C[ThemeContext]  
+    A --> C[ThemeContext]
     A --> D[QueryClientProvider]
     A --> E[GlobalNavbar]
-    
+
     F[LeadsPage] --> G[VirtualizedLeadsList]
     G --> H[useLeadsPagination]
     H --> I[Supabase Client]
-    
+
     J[ChatsPage] --> K[AIChatSidebar]
     J --> L[MessageList]
     K --> M[Gemini Service]
     L --> N[useMessagesPagination]
     N --> I
-    
+
     O[PremiumCalendarAdvanced] --> P[PremiumCalendarProvider]
     P --> Q[MonthView]
-    P --> R[WeekView] 
+    P --> R[WeekView]
     P --> S[DayView]
     P --> T[AgendaView]
     P --> U[Google Calendar Service]
-    
+
     V[EventCreateModal] --> W[Google Calendar API]
     X[EventDetailModal] --> W
 ```
@@ -340,13 +342,14 @@ graph LR
 ### ✅ **Virtualization Implementada**
 
 #### **1. MessageList.tsx - Chat Virtualization**
+
 ```typescript
 // TanStack Virtual Implementation
 const virtualizer = useVirtualizer({
   count: messages.length,
   getScrollElement: () => parentRef.current,
   estimateSize: () => 60,
-  overscan: 5
+  overscan: 5,
 });
 
 // Performance Impact:
@@ -356,13 +359,14 @@ const virtualizer = useVirtualizer({
 ```
 
 #### **2. VirtualizedLeadsList.tsx - Leads Virtualization**
+
 ```typescript
 // Advanced Virtualization with Dynamic Height
 const rowVirtualizer = useVirtualizer({
   count: leads.length,
   getScrollElement: () => parentRef.current,
   estimateSize: () => 120,
-  overscan: 5
+  overscan: 5,
 });
 
 // Performance Metrics:
@@ -374,19 +378,15 @@ const rowVirtualizer = useVirtualizer({
 ### 📊 **Lazy Loading Implementation**
 
 #### **1. TanStack Query Infinite Loading**
+
 ```typescript
 // Messages Pagination with Infinite Scroll
-const {
-  data,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage
-} = useInfiniteQuery({
+const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
   queryKey: ['messages', conversationId],
   queryFn: ({ pageParam = 0 }) => getMessagesPaginated(conversationId, pageParam),
   getNextPageParam: (lastPage, allPages) => {
     return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
-  }
+  },
 });
 
 // Performance Benefits:
@@ -396,6 +396,7 @@ const {
 ```
 
 #### **2. Leads Pagination with Prefetch**
+
 ```typescript
 // Smart Prefetch Strategy
 const prefetchThreshold = 5;
@@ -414,11 +415,13 @@ if (shouldPrefetch && hasNextPage && !isFetchingNextPage) {
 ### 🔧 **Bundle Splitting Status**
 
 #### **Current State:**
+
 - ❌ **No route-based code splitting implemented**
-- ❌ **No component-level lazy loading** 
+- ❌ **No component-level lazy loading**
 - ❌ **Single bundle includes all pages**
 
 #### **Optimization Opportunities:**
+
 ```typescript
 // Route-based splitting potential
 const PremiumCalendarAdvanced = lazy(() => import('./pages/PremiumCalendarAdvanced'));
@@ -427,7 +430,7 @@ const ChatsPage = lazy(() => import('./pages/ChatsPage'));
 
 // Bundle size reduction potential:
 // Calendar components: ~200KB
-// AI Chat components: ~150KB  
+// AI Chat components: ~150KB
 // Leads components: ~100KB
 // Total potential savings: ~450KB initial load
 ```
@@ -439,6 +442,7 @@ const ChatsPage = lazy(() => import('./pages/ChatsPage'));
 ### 🗄️ **Database Query Patterns**
 
 #### **1. Lead Queries - Highly Optimized**
+
 ```sql
 -- Custom RPC for pagination (leads table: 287 records)
 CREATE OR REPLACE FUNCTION get_leads_paginated(
@@ -456,7 +460,8 @@ RETURNS TABLE(leads_data JSON, total_count INTEGER);
 ```
 
 #### **2. Message Queries - Efficient Pagination**
-```sql  
+
+```sql
 -- Messages pagination RPC (messages table: 1,670 records)
 CREATE OR REPLACE FUNCTION get_messages_paginated(
   conversation_uuid UUID,
@@ -472,6 +477,7 @@ RETURNS SETOF messages;
 ```
 
 #### **3. Calendar Integration - External API**
+
 ```typescript
 // Google Calendar API calls
 const getCalendarEvents = async (calendarId: string, timeRange: DateRange) => {
@@ -481,7 +487,7 @@ const getCalendarEvents = async (calendarId: string, timeRange: DateRange) => {
     timeMax: timeRange.end.toISOString(),
     singleEvents: true,
     orderBy: 'startTime',
-    maxResults: 250
+    maxResults: 250,
   });
 };
 
@@ -494,16 +500,21 @@ const getCalendarEvents = async (calendarId: string, timeRange: DateRange) => {
 ### 📈 **Query Performance Analysis**
 
 #### **Current Database Performance**
+
 ```typescript
 // Real-time subscription efficiency
 const subscription = supabase
   .channel('leads-changes')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public', 
-    table: 'leads',
-    filter: `user_id=eq.${userId}`
-  }, handleLeadChange)
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'leads',
+      filter: `user_id=eq.${userId}`,
+    },
+    handleLeadChange,
+  )
   .subscribe();
 
 // Performance Metrics:
@@ -533,14 +544,14 @@ const batchQueries = async (leadIds: string[]) => {
 
 // 2. Computed Columns for Aggregates
 -- Instead of counting messages in hooks
-ALTER TABLE conversations 
+ALTER TABLE conversations
 ADD COLUMN message_count INTEGER DEFAULT 0;
 
 -- Trigger to maintain count
 CREATE OR REPLACE FUNCTION update_message_count()
 RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE conversations 
+  UPDATE conversations
   SET message_count = message_count + 1
   WHERE id = NEW.conversation_id;
   RETURN NEW;
@@ -549,7 +560,7 @@ $$ LANGUAGE plpgsql;
 
 // 3. Materialized Views for Analytics
 CREATE MATERIALIZED VIEW lead_analytics AS
-SELECT 
+SELECT
   status,
   procedence,
   COUNT(*) as count,
@@ -566,11 +577,12 @@ GROUP BY status, procedence;
 ### 🚨 **Duplicaciones Identificadas**
 
 #### **1. Modal Components - Similar Patterns**
+
 ```typescript
 // 📁 EventCreateModal.tsx vs EventDetailModal.tsx
 // Duplicated code patterns:
 - Form validation logic (85% similar)
-- Modal state management (90% similar) 
+- Modal state management (90% similar)
 - Google Calendar API calls (70% similar)
 - Error handling patterns (95% similar)
 
@@ -580,6 +592,7 @@ GROUP BY status, procedence;
 ```
 
 #### **2. Calendar Views - Repeated Layout Logic**
+
 ```typescript
 // 📁 MonthView.tsx, WeekView.tsx, DayView.tsx
 // Common patterns:
@@ -588,12 +601,13 @@ GROUP BY status, procedence;
 - Click/hover event handlers (90% similar)
 - Loading states management (95% similar)
 
-// 🔧 Refactor Opportunity: 
+// 🔧 Refactor Opportunity:
 // Extract shared hooks: useCalendarNavigation, useEventHandlers
 // Create BaseCalendarView component
 ```
 
 #### **3. Virtualized Components - Code Duplication**
+
 ```typescript
 // 📁 VirtualizedLeadsList.tsx vs VirtualizedLeadsKanban.tsx
 // Shared functionality:
@@ -608,6 +622,7 @@ GROUP BY status, procedence;
 ```
 
 #### **4. Pagination Hooks - Similar Patterns**
+
 ```typescript
 // 📁 useLeadsPagination.ts vs useMessagesPagination.ts
 // Common logic:
@@ -624,18 +639,20 @@ GROUP BY status, procedence;
 ### 📦 **Códigos Obsoletos Detectados**
 
 #### **1. Legacy Calendar Components**
+
 ```typescript
 // 📁 CalendarGrid.tsx - Obsoleto
 // ❌ Replaced by PremiumCalendarGrid
 // ❌ Basic functionality superseded
 // ❌ No longer used in routing
 
-// 📁 EventModal.tsx - Obsoleto  
+// 📁 EventModal.tsx - Obsoleto
 // ❌ Replaced by EventCreateModal + EventDetailModal
 // ❌ Limited functionality compared to premium modals
 ```
 
 #### **2. Unused Hook Dependencies**
+
 ```typescript
 // 📁 useCalendar.ts - Partially obsolete
 // ❌ Some functions replaced by PremiumCalendarProvider
@@ -644,9 +661,10 @@ GROUP BY status, procedence;
 ```
 
 #### **3. Legacy Chat Components**
+
 ```typescript
 // 📁 ChatInterface.tsx vs AIChatSidebar.tsx
-// ❌ ChatInterface seems underutilized  
+// ❌ ChatInterface seems underutilized
 // ✅ AIChatSidebar is the main implementation
 // 🔧 Consolidation opportunity
 ```
@@ -654,26 +672,41 @@ GROUP BY status, procedence;
 ### 🔄 **Funciones Similares para Consolidar**
 
 #### **1. Event Handling**
+
 ```typescript
 // Similar event handlers across calendar views
-const handleEventClick = (event) => { /* similar logic */ };
-const handleEventHover = (event) => { /* similar logic */ };
-const handleDateClick = (date) => { /* similar logic */ };
+const handleEventClick = event => {
+  /* similar logic */
+};
+const handleEventHover = event => {
+  /* similar logic */
+};
+const handleDateClick = date => {
+  /* similar logic */
+};
 
 // 🔧 Consolidation: useCalendarEventHandlers hook
 ```
 
 #### **2. Form Validation**
+
 ```typescript
 // Similar validation in multiple modals
-const validateEventForm = (data) => { /* similar patterns */ };
-const validateLeadForm = (data) => { /* similar patterns */ };
-const validateMessageForm = (data) => { /* similar patterns */ };
+const validateEventForm = data => {
+  /* similar patterns */
+};
+const validateLeadForm = data => {
+  /* similar patterns */
+};
+const validateMessageForm = data => {
+  /* similar patterns */
+};
 
 // 🔧 Consolidation: Generic useFormValidation hook
 ```
 
 #### **3. API Error Handling**
+
 ```typescript
 // Repeated error handling patterns
 try {
@@ -693,38 +726,33 @@ try {
 ### 🏗️ **FASE 1: Consolidación de Código Duplicado (Prioridad Alta)**
 
 #### **1.1 Crear Hooks Compartidos**
+
 ```typescript
 // 🆕 hooks/shared/useVirtualizedList.ts
-export const useVirtualizedList = <T>(
-  items: T[],
-  estimateSize: number,
-  overscan = 5
-) => {
+export const useVirtualizedList = <T>(items: T[], estimateSize: number, overscan = 5) => {
   // Lógica virtualización compartida
   // Reutilizable para leads, messages, calendar events
 };
 
-// 🆕 hooks/shared/usePaginatedQuery.ts  
+// 🆕 hooks/shared/usePaginatedQuery.ts
 export const usePaginatedQuery = <T>(
   queryKey: string[],
   queryFn: QueryFunction,
-  options: PaginationOptions
+  options: PaginationOptions,
 ) => {
   // Lógica paginación TanStack Query genérica
   // Realtime subscriptions incluidas
 };
 
 // 🆕 hooks/shared/useFormValidation.ts
-export const useFormValidation = <T>(
-  schema: ValidationSchema<T>,
-  onSubmit: SubmitHandler<T>
-) => {
+export const useFormValidation = <T>(schema: ValidationSchema<T>, onSubmit: SubmitHandler<T>) => {
   // Validación de formularios genérica
   // Error handling unificado
 };
 ```
 
 #### **1.2 Refactorizar Componentes Modales**
+
 ```typescript
 // 🔄 components/common/BaseModal.tsx
 export const BaseModal: React.FC<BaseModalProps> = ({
@@ -732,7 +760,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   isOpen,
   onClose,
   title,
-  size = 'md'
+  size = 'md',
 }) => {
   // Lógica común de modal
   // Estados, animaciones, keyboard handling
@@ -743,7 +771,7 @@ export const BaseEventModal: React.FC<BaseEventModalProps> = ({
   event,
   mode, // 'create' | 'edit' | 'view'
   onSave,
-  onDelete
+  onDelete,
 }) => {
   // Lógica compartida entre EventCreate/Detail modals
   // Form handling, Google Calendar integration
@@ -751,6 +779,7 @@ export const BaseEventModal: React.FC<BaseEventModalProps> = ({
 ```
 
 #### **1.3 Eliminar Componentes Obsoletos**
+
 ```typescript
 // ❌ Eliminar archivos legacy:
 // - CalendarGrid.tsx (reemplazado por PremiumCalendarGrid)
@@ -764,9 +793,10 @@ export const BaseEventModal: React.FC<BaseEventModalProps> = ({
 ### 🏗️ **FASE 2: Optimización de Queries y Performance (Prioridad Media)**
 
 #### **2.1 Database Query Optimization**
+
 ```sql
 -- 🔧 Índices adicionales para performance
-CREATE INDEX CONCURRENTLY idx_messages_conversation_created 
+CREATE INDEX CONCURRENTLY idx_messages_conversation_created
 ON messages (conversation_id, created_at DESC);
 
 CREATE INDEX CONCURRENTLY idx_leads_user_status_created
@@ -774,7 +804,7 @@ ON leads (user_id, status, created_at DESC);
 
 -- 🔧 Materialized View para analytics
 CREATE MATERIALIZED VIEW conversation_stats AS
-SELECT 
+SELECT
   c.id,
   COUNT(m.id) as message_count,
   MAX(m.created_at) as last_message_at,
@@ -785,9 +815,10 @@ GROUP BY c.id, c.qualification_score;
 ```
 
 #### **2.2 Bundle Optimization**
-```typescript  
+
+```typescript
 // 🔄 App.tsx - Route-based code splitting
-const PremiumCalendarAdvanced = lazy(() => 
+const PremiumCalendarAdvanced = lazy(() =>
   import('./pages/PremiumCalendarAdvanced')
 );
 const LeadsPage = lazy(() => import('./pages/LeadsPage'));
@@ -804,6 +835,7 @@ const ChatsPage = lazy(() => import('./pages/ChatsPage'));
 ```
 
 #### **2.3 Cache Strategy Refinement**
+
 ```typescript
 // 🔄 lib/query-client.ts - Configuración optimizada
 export const queryClient = new QueryClient({
@@ -816,15 +848,16 @@ export const queryClient = new QueryClient({
       retry: (failureCount, error) => {
         if (error.status === 404) return false;
         return failureCount < 2;
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
 ### 🏗️ **FASE 3: Arquitectura Escalable (Prioridad Media-Baja)**
 
 #### **3.1 Feature-based Organization**
+
 ```typescript
 // 🔄 Reorganización por features
 src/
@@ -837,7 +870,7 @@ src/
 │   │   └── index.ts
 │   │
 │   ├── leads/
-│   │   ├── components/  
+│   │   ├── components/
 │   │   ├── hooks/
 │   │   ├── services/
 │   │   └── index.ts
@@ -856,16 +889,14 @@ src/
 ```
 
 #### **3.2 Service Layer Abstraction**
+
 ```typescript
 // 🆕 services/api/BaseApiService.ts
 export abstract class BaseApiService {
   protected abstract baseUrl: string;
   protected abstract handleError(error: unknown): never;
-  
-  protected async request<T>(
-    endpoint: string, 
-    options?: RequestOptions
-  ): Promise<T> {
+
+  protected async request<T>(endpoint: string, options?: RequestOptions): Promise<T> {
     // Common request logic with error handling
     // Retry, authentication, logging
   }
@@ -874,11 +905,11 @@ export abstract class BaseApiService {
 // 🔄 services/api/GoogleCalendarService.ts
 export class GoogleCalendarService extends BaseApiService {
   protected baseUrl = 'https://www.googleapis.com/calendar/v3';
-  
+
   async createEvent(event: CalendarEvent): Promise<CalendarEvent> {
     return this.request('/events', {
       method: 'POST',
-      body: JSON.stringify(event)
+      body: JSON.stringify(event),
     });
   }
 }
@@ -887,13 +918,14 @@ export class GoogleCalendarService extends BaseApiService {
 ### 🏗️ **FASE 4: Testing y Documentation (Prioridad Baja)**
 
 #### **4.1 Expandir Test Coverage**
+
 ```typescript
 // 🆕 tests/integration/calendar.test.tsx
 describe('Premium Calendar Integration', () => {
   test('should handle month view navigation', async () => {
     // Integration test para calendar navigation
   });
-  
+
   test('should create events via Google Calendar API', async () => {
     // Test creación eventos con mock API
   });
@@ -908,6 +940,7 @@ describe('useVirtualizedList Hook', () => {
 ```
 
 #### **4.2 Architecture Documentation**
+
 ```typescript
 // 🆕 docs/ARCHITECTURE.md - Documentación actualizada
 // 🆕 docs/COMPONENT_LIBRARY.md - Storybook components
@@ -920,28 +953,30 @@ describe('useVirtualizedList Hook', () => {
 
 ### 🎯 **Objetivos de Performance**
 
-| Métrica | Actual | Objetivo Post-Refactorización | Mejora |
-|---------|---------|-------------------------------|---------|
-| **Bundle Size** | ~2.1MB | ~1.6MB | -24% |
-| **Initial Load Time** | ~1.2s | ~0.8s | -33% |
-| **Component Reusability** | 60% | 85% | +25% |
-| **Code Duplication** | ~25% | ~8% | -68% |
-| **Test Coverage** | 70% | 90% | +20% |
-| **Memory Usage (Leads Page)** | ~45MB | ~30MB | -33% |
-| **Render Time (Calendar)** | ~120ms | ~80ms | -33% |
+| Métrica                       | Actual | Objetivo Post-Refactorización | Mejora |
+| ----------------------------- | ------ | ----------------------------- | ------ |
+| **Bundle Size**               | ~2.1MB | ~1.6MB                        | -24%   |
+| **Initial Load Time**         | ~1.2s  | ~0.8s                         | -33%   |
+| **Component Reusability**     | 60%    | 85%                           | +25%   |
+| **Code Duplication**          | ~25%   | ~8%                           | -68%   |
+| **Test Coverage**             | 70%    | 90%                           | +20%   |
+| **Memory Usage (Leads Page)** | ~45MB  | ~30MB                         | -33%   |
+| **Render Time (Calendar)**    | ~120ms | ~80ms                         | -33%   |
 
 ### 🚀 **Beneficios Escalabilidad**
 
 #### **Antes de Refactorización:**
+
 - ❌ Código duplicado en múltiples componentes
-- ❌ Bundle monolítico sin code splitting  
+- ❌ Bundle monolítico sin code splitting
 - ❌ Hooks específicos no reutilizables
 - ❌ Componentes obsoletos aumentan bundle
 - ❌ Queries no optimizadas para escala
 
 #### **Después de Refactorización:**
+
 - ✅ Hooks genéricos reutilizables 85%+
-- ✅ Code splitting por rutas principales  
+- ✅ Code splitting por rutas principales
 - ✅ Componentes base compartidos
 - ✅ Eliminación código obsoleto
 - ✅ Database queries optimizadas con índices
@@ -953,24 +988,28 @@ describe('useVirtualizedList Hook', () => {
 ## 🎯 **Resumen Ejecutivo**
 
 ### ✅ **Estado Actual (Excelente)**
+
 - **Arquitectura Empresarial**: 8.5/10 - Muy bien estructurada
 - **Performance**: Optimizada con virtualización y caching
 - **Tecnologías**: Stack moderno (React 19, TanStack Query, TS)
 - **Funcionalidad**: 95% completa, sistema calendar premium operativo
 
 ### 🔧 **Áreas de Mejora Identificadas**
+
 1. **Código Duplicado**: ~25% (principalmente modales y hooks)
 2. **Bundle Size**: Oportunidad de optimización (-24%)
 3. **Componentes Obsoletos**: 3-4 archivos legacy para eliminar
 4. **Code Splitting**: Sin implementar aún
 
 ### 🚀 **Plan de Refactorización (4 Fases)**
+
 1. **Fase 1**: Consolidación código duplicado (Alta prioridad)
 2. **Fase 2**: Optimización queries y performance (Media prioridad)
-3. **Fase 3**: Arquitectura escalable (Media-baja prioridad)  
+3. **Fase 3**: Arquitectura escalable (Media-baja prioridad)
 4. **Fase 4**: Testing y documentación (Baja prioridad)
 
 ### 📊 **ROI Esperado**
+
 - **Performance**: -33% load time, -33% memory usage
 - **Maintainability**: +25% component reusability
 - **Developer Experience**: -68% código duplicado

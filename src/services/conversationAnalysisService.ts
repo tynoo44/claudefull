@@ -144,8 +144,10 @@ class ConversationAnalysisService {
         console.log('📭 No conversations need analysis at this time');
         return;
       }
-      
-      console.log(`📋 Processing ${conversationsNeedingAnalysis.length} conversations from normal queue`);
+
+      console.log(
+        `📋 Processing ${conversationsNeedingAnalysis.length} conversations from normal queue`,
+      );
 
       // Procesar conversaciones que no están en procesamiento
       for (const conv of conversationsNeedingAnalysis) {
@@ -294,8 +296,12 @@ class ConversationAnalysisService {
         warnings: enrichedAnalysis.warnings,
         action_threads: enrichedAnalysis.action_threads,
         urgency_score: Math.round(intent?.urgencyLevel || 5),
-        capacity_score: Math.round((conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10),
-        engagement_score: Math.round((conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10),
+        capacity_score: Math.round(
+          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
+        ),
+        engagement_score: Math.round(
+          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
+        ),
       };
 
       // Guardar en la base de datos
@@ -311,7 +317,11 @@ class ConversationAnalysisService {
       console.log(`✅ Analysis saved for conversation ${conversationId}`);
 
       // Actualizar lead con toda la información del análisis
-      await this.updateLeadFromAnalysis(conversation.lead_id, enrichedAnalysis, conversationAnalysis);
+      await this.updateLeadFromAnalysis(
+        conversation.lead_id,
+        enrichedAnalysis,
+        conversationAnalysis,
+      );
 
       // Si es prioritario, emitir evento para actualización en tiempo real
       if (isPriority) {
@@ -490,12 +500,15 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
         model: DEFAULT_MODEL, // Use Gemini-2.5-Pro as default
       });
 
-      console.log('generateAIResponse returned:', response ? `response received (${response.length} chars)` : 'no response');
+      console.log(
+        'generateAIResponse returned:',
+        response ? `response received (${response.length} chars)` : 'no response',
+      );
       console.log('Raw response preview:', response?.substring(0, 200) + '...');
 
       // Try to extract JSON from response if it's not pure JSON
       let jsonContent = response;
-      
+
       // Look for JSON pattern in the response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -515,11 +528,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Generar análisis básico como fallback
-  private generateBasicAnalysis(
-    messages: any[],
-    conversation: any,
-    conversationMemory: any,
-  ): any {
+  private generateBasicAnalysis(messages: any[], conversation: any, conversationMemory: any): any {
     return {
       analysis_data: {
         summary: `Conversación en fase ${conversation.current_phase}`,
@@ -537,10 +546,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Generar detalles de fases
-  private generatePhaseDetails(
-    messages: any[],
-    currentPhase: number,
-  ): Record<number, PhaseDetail> {
+  private generatePhaseDetails(messages: any[], currentPhase: number): Record<number, PhaseDetail> {
     const phases: Record<number, PhaseDetail> = {};
 
     for (let i = 1; i <= 5; i++) {
@@ -585,7 +591,11 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Actualizar lead basado en el análisis
-  private async updateLeadFromAnalysis(leadId: string, enrichedAnalysis: any, conversationAnalysis: any) {
+  private async updateLeadFromAnalysis(
+    leadId: string,
+    enrichedAnalysis: any,
+    conversationAnalysis: any,
+  ) {
     if (!leadId || leadId === 'undefined') {
       console.error('Invalid leadId in updateLeadFromAnalysis:', leadId);
       return;
@@ -593,44 +603,44 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
 
     try {
       console.log(`🔄 Updating lead ${leadId} from analysis...`);
-      
+
       // Extraer información del análisis
       const leadProfile = conversationAnalysis?.memory?.phase_info || {};
       const phaseProgress = enrichedAnalysis?.phase_progress || {};
       const keyInsights = enrichedAnalysis?.key_insights || [];
-      
+
       // Generar tags automáticos basados en el análisis
       const autoTags = [];
-      
+
       // Función para validar que un tag tenga máximo 4 palabras
       const isValidTag = (tag: string): boolean => {
         const words = tag.trim().split(/\s+/);
         return words.length <= 4;
       };
-      
+
       // Función para truncar un tag a máximo 4 palabras
       const truncateTag = (tag: string): string => {
         const words = tag.trim().split(/\s+/);
         if (words.length <= 4) return tag;
         return words.slice(0, 4).join(' ');
       };
-      
+
       // Tags basados en la fase (ya son de 1 palabra)
       const currentPhase = enrichedAnalysis?.analysis_data?.current_phase || 1;
       if (currentPhase >= 4) autoTags.push('caliente');
       else if (currentPhase >= 2) autoTags.push('tibio');
       else autoTags.push('frío');
-      
+
       // Tags basados en el negocio (limitar a 4 palabras)
       if (leadProfile.business_type) {
         const businessTag = leadProfile.business_type.toLowerCase();
         autoTags.push(truncateTag(businessTag));
       }
-      
+
       // Tags basados en urgencia y capacidad (ya son de 1-2 palabras)
       if (enrichedAnalysis.urgency_score >= 7) autoTags.push('urgente');
       if (enrichedAnalysis.capacity_score >= 7) autoTags.push('alta-capacidad');
-      
+
       // Tags basados en los pain points (ya son de 2 palabras)
       if (leadProfile.pain_points?.length > 0) {
         if (leadProfile.pain_points.some(p => p.toLowerCase().includes('venta'))) {
@@ -640,19 +650,19 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
           autoTags.push('problemas-clientes');
         }
       }
-      
+
       // Obtener tags existentes para preferirlos
       const { data: existingTags } = await supabase.rpc('get_all_unique_tags');
       const existingTagsMap = new Map(
-        (existingTags || []).map(({ tag }) => [tag.toLowerCase(), tag])
+        (existingTags || []).map(({ tag }) => [tag.toLowerCase(), tag]),
       );
-      
+
       // Normalizar tags automáticos para usar tags existentes cuando sea posible
       const normalizedAutoTags = autoTags.map(tag => {
         const lowerTag = tag.toLowerCase();
         return existingTagsMap.get(lowerTag) || tag;
       });
-      
+
       // Actualizar tags en el lead
       const { data: currentLead } = await supabase
         .from('leads')
@@ -662,50 +672,50 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
 
       const currentTags = currentLead?.tags || [];
       const newTags = [...new Set([...currentTags, ...normalizedAutoTags])];
-      
+
       // Generar resumen para las notas
       const summaryParts = [];
-      
+
       if (leadProfile.business_type) {
         summaryParts.push(`💼 Negocio: ${leadProfile.business_type}`);
       }
-      
+
       if (leadProfile.pain_points?.length > 0) {
         summaryParts.push(`🎯 Dolores: ${leadProfile.pain_points.slice(0, 2).join(', ')}`);
       }
-      
+
       if (leadProfile.real_goals?.length > 0) {
         summaryParts.push(`🚀 Objetivos: ${leadProfile.real_goals[0]}`);
       }
-      
+
       if (leadProfile.commitment_level) {
         summaryParts.push(`📊 Compromiso: ${leadProfile.commitment_level}`);
       }
-      
+
       const newNotes = summaryParts.join('\n');
-      
+
       // Actualizar el lead
       const leadUpdates: any = {
         tags: newTags,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
-      
+
       // Solo actualizar notas si hay contenido nuevo
       if (newNotes && newNotes !== currentLead?.notes) {
         leadUpdates.notes = newNotes;
       }
-      
+
       const { error: leadError } = await supabase
         .from('leads')
         .update(leadUpdates)
         .eq('id', leadId);
-        
+
       if (leadError) {
         console.error('Error updating lead:', leadError);
       } else {
         console.log(`✅ Lead updated with ${newTags.length} tags`);
       }
-      
+
       // Crear o actualizar lead_insights
       const insightsData = {
         lead_id: leadId,
@@ -713,7 +723,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
           type: leadProfile.business_type || null,
           details: leadProfile.business_details || null,
           youtube_status: leadProfile.current_youtube_status || null,
-          budget_signals: leadProfile.budget_signals || null
+          budget_signals: leadProfile.budget_signals || null,
         },
         pain_points: leadProfile.pain_points || [],
         goals: leadProfile.real_goals || [],
@@ -721,29 +731,29 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
         personality_profile: {
           type: leadProfile.personality_type || null,
           commitment: leadProfile.commitment_level || null,
-          red_flags: leadProfile.red_flags || []
+          red_flags: leadProfile.red_flags || [],
         },
         communication_preferences: {
-          style: leadProfile.personality_type || 'formal'
+          style: leadProfile.personality_type || 'formal',
         },
         auto_tags: autoTags,
-        confidence_score: enrichedAnalysis.capacity_score ? Math.round(enrichedAnalysis.capacity_score) / 10 : 0.5,
-        updated_at: new Date().toISOString()
+        confidence_score: enrichedAnalysis.capacity_score
+          ? Math.round(enrichedAnalysis.capacity_score) / 10
+          : 0.5,
+        updated_at: new Date().toISOString(),
       };
-      
+
       // Verificar si ya existe
       const { data: existingInsights } = await supabase
         .from('lead_insights')
         .select('id')
         .eq('lead_id', leadId)
         .single();
-        
+
       if (!existingInsights) {
         // Crear nuevo
-        const { error: insertError } = await supabase
-          .from('lead_insights')
-          .insert(insightsData);
-          
+        const { error: insertError } = await supabase.from('lead_insights').insert(insightsData);
+
         if (insertError) {
           console.error('Error creating lead insights:', insertError);
         } else {
@@ -755,14 +765,13 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
           .from('lead_insights')
           .update(insightsData)
           .eq('lead_id', leadId);
-          
+
         if (updateError) {
           console.error('Error updating lead insights:', updateError);
         } else {
           console.log('✅ Lead insights updated');
         }
       }
-      
     } catch (error) {
       console.error('Error updating lead from analysis:', error);
     }
@@ -776,12 +785,12 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
       - Max concurrent analyses: ${this.MAX_CONCURRENT_ANALYSES}
       - Check interval: 10s
       - Queue wait time: 2-10s`);
-    
+
     this.isProcessing = true;
-    
+
     // Also ensure the old system is running
     this.start();
-    
+
     // Start the new queue processing
     this.processQueue();
   }
@@ -792,7 +801,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
     this.isProcessing = false;
     this.analysisQueue.clear();
     this.priorityQueue.clear();
-    
+
     // Also stop the old system
     this.stop();
   }
@@ -897,14 +906,14 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
       maxConcurrent: this.MAX_CONCURRENT_ANALYSES,
       messageDelay: this.messageDelay,
     };
-    
+
     console.log(`📈 Analysis Service Status:
       - Processing: ${status.isProcessing ? '✅' : '❌'}
       - Priority Queue: ${status.priorityQueueSize} conversations
       - Normal Queue: ${status.queueSize} conversations
       - Active Analyses: ${status.activeAnalyses}/${status.maxConcurrent}
       - Message Delay: ${status.messageDelay / 1000}s`);
-    
+
     return status;
   }
 }

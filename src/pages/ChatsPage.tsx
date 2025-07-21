@@ -40,7 +40,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
     loadMoreMessages,
     totalCount: totalMessages,
   } = useMessagesPagination(selectedChat?.id || null);
-  
+
   // Obtener información del lead con insights
   const { data: leadData } = useLeadWithInsights(selectedChat?.leadId);
 
@@ -99,7 +99,9 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   }
 
   return (
-    <div className={`h-full w-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-hidden`}>
+    <div
+      className={`h-full w-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-hidden`}
+    >
       <div className="flex-1 min-h-0 overflow-hidden">
         <ResizableLayout
           darkMode={darkMode}

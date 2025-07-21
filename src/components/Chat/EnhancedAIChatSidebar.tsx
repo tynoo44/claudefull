@@ -321,7 +321,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
                     }}
                     className={`
                       w-full text-left px-3 py-2 text-xs first:rounded-t last:rounded-b
-                      ${selectedModel === key ? darkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-50 text-blue-600' : ''}
+                      ${selectedModel === key ? (darkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-50 text-blue-600') : ''}
                       ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}
                     `}
                   >
@@ -385,11 +385,13 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
               leadData={{
                 tags: leadData?.tags,
                 notes: leadData?.notes,
-                insights: leadData?.lead_insights ? {
-                  business_info: leadData.lead_insights.business_info,
-                  personality_profile: leadData.lead_insights.personality_profile,
-                  confidence_score: leadData.lead_insights.confidence_score,
-                } : undefined,
+                insights: leadData?.lead_insights
+                  ? {
+                      business_info: leadData.lead_insights.business_info,
+                      personality_profile: leadData.lead_insights.personality_profile,
+                      confidence_score: leadData.lead_insights.confidence_score,
+                    }
+                  : undefined,
               }}
             />
 

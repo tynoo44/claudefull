@@ -10,18 +10,19 @@
 
 ### ❌ **Estado Real vs Estado Documentado**
 
-| Aspecto | Estado Documentado | Estado Real | Gap |
-|---------|-------------------|-------------|-----|
-| **Errores Lint** | "95% limpio" | **507 errores** | ❌ 502% más errores |
-| **Errores TypeScript** | "Enterprise-grade" | **142 errores** | ❌ Tipos mal implementados |
-| **Código Limpio** | "Listo para producción" | **❌ Crítico** | Requiere refactorización masiva |
+| Aspecto                | Estado Documentado      | Estado Real     | Gap                             |
+| ---------------------- | ----------------------- | --------------- | ------------------------------- |
+| **Errores Lint**       | "95% limpio"            | **507 errores** | ❌ 502% más errores             |
+| **Errores TypeScript** | "Enterprise-grade"      | **142 errores** | ❌ Tipos mal implementados      |
+| **Código Limpio**      | "Listo para producción" | **❌ Crítico**  | Requiere refactorización masiva |
 
 ### 🔍 **Categorización de Errores Encontrados**
 
 #### **ERRORES DE LINT (507 total)**
+
 ```
 Prettier/Formatting:    311 errores (61%)
-TypeScript/Any Types:    79 errores (16%) 
+TypeScript/Any Types:    79 errores (16%)
 Unused Variables:        45 errores (9%)
 Lexical Declarations:    35 errores (7%)
 No-undef:               25 errores (5%)
@@ -29,6 +30,7 @@ Other ESLint Rules:      12 errores (2%)
 ```
 
 #### **ERRORES DE TYPESCRIPT (142 total)**
+
 ```
 Property Does Not Exist:  45 errores (32%)
 Type Incompatibility:     38 errores (27%)
@@ -42,9 +44,11 @@ Function Argument Mismatch: 12 errores (8%)
 ## 🎯 **PLAN DE REFACTORIZACIÓN CRÍTICO**
 
 ### 🚨 **FASE 0: CORRECCIÓN CRÍTICA (PRIORIDAD MÁXIMA)**
+
 **Objetivo:** Hacer el código funcional y eliminar errores bloqueantes
 
 #### **0.1 Corrección Masiva de Prettier (311 errores)**
+
 ```bash
 # Automático - corregible con --fix
 npm run lint -- --fix
@@ -52,6 +56,7 @@ npm run format
 ```
 
 #### **0.2 Tipos TypeScript Críticos (142 errores)**
+
 ```typescript
 // 🔧 CALENDARIO PREMIUM - Errores más críticos
 
@@ -59,15 +64,15 @@ npm run format
 interface CalendarEvent {
   id: string;
   summary: string;
-  start: { dateTime: string; date?: string };  // ✅ AÑADIR
-  end: { dateTime: string; date?: string };    // ✅ AÑADIR
-  calendarId: string;                          // ✅ AÑADIR
+  start: { dateTime: string; date?: string }; // ✅ AÑADIR
+  end: { dateTime: string; date?: string }; // ✅ AÑADIR
+  calendarId: string; // ✅ AÑADIR
   // ... otros campos faltantes
 }
 
 // EventCreateModal.tsx - EventReminder types
 interface EventReminder {
-  method: 'popup' | 'email';  // ✅ DEFINIR CORRECTAMENTE
+  method: 'popup' | 'email'; // ✅ DEFINIR CORRECTAMENTE
   minutes: number;
 }
 
@@ -75,12 +80,13 @@ interface EventReminder {
 interface SearchResult {
   events: CalendarEvent[];
   totalCount: number;
-  facets: SearchFacets;      // ✅ DEFINIR
+  facets: SearchFacets; // ✅ DEFINIR
   suggestions: string[];
 }
 ```
 
 #### **0.3 Variables No Utilizadas (73 errores)**
+
 ```typescript
 // 🔧 ELIMINAR imports/variables no usados
 
@@ -88,21 +94,24 @@ interface SearchResult {
 // ❌ import { isSameDay } from 'date-fns';   // ELIMINAR
 // ❌ import { Search } from 'lucide-react';  // ELIMINAR
 
-// DayView.tsx  
+// DayView.tsx
 // ❌ import { addHours } from 'date-fns';    // ELIMINAR
 // ❌ import { CalendarIcon } from 'lucide-react'; // ELIMINAR
 ```
 
 #### **0.4 Casos Switch Mal Formateados (35 errores)**
+
 ```typescript
 // 🔧 PremiumCalendarProvider.tsx - Lexical declarations
 switch (action.type) {
-  case 'SET_VIEW': {              // ✅ AÑADIR llaves
-    const newView = action.view;   // ✅ Ahora legal
+  case 'SET_VIEW': {
+    // ✅ AÑADIR llaves
+    const newView = action.view; // ✅ Ahora legal
     return { ...state, currentView: newView };
   }
-  case 'LOAD_EVENTS': {           // ✅ AÑADIR llaves  
-    const events = action.events;  // ✅ Ahora legal
+  case 'LOAD_EVENTS': {
+    // ✅ AÑADIR llaves
+    const events = action.events; // ✅ Ahora legal
     return { ...state, events };
   }
 }
@@ -113,6 +122,7 @@ switch (action.type) {
 ### 🏗️ **FASE 1: CONSOLIDACIÓN ESTRUCTURAL (ALTA PRIORIDAD)**
 
 #### **1.1 Refactorización Interfaces TypeScript**
+
 ```typescript
 // 🆕 types/calendar-events.ts - Definiciones completas
 export interface GoogleCalendarEvent {
@@ -125,7 +135,7 @@ export interface GoogleCalendarEvent {
     timeZone?: string;
   };
   end: {
-    dateTime?: string; 
+    dateTime?: string;
     date?: string;
     timeZone?: string;
   };
@@ -150,6 +160,7 @@ export interface GoogleCalendarEvent {
 ```
 
 #### **1.2 Consolidación Componentes Modales**
+
 ```typescript
 // 🔄 Refactorizar modales duplicados
 // EventCreateModal.tsx + EventDetailModal.tsx → BaseEventModal.tsx
@@ -160,10 +171,10 @@ export const BaseEventModal: React.FC<BaseEventModalProps> = ({
   event,
   onSave,
   onDelete,
-  onClose
+  onClose,
 }) => {
   // ✅ Lógica común entre create/edit/view
-  // ✅ Validación unificada 
+  // ✅ Validación unificada
   // ✅ Google Calendar API calls unificados
 };
 
@@ -171,12 +182,13 @@ export const BaseEventModal: React.FC<BaseEventModalProps> = ({
 ```
 
 #### **1.3 Hooks Virtualization Genéricos**
+
 ```typescript
 // 🆕 hooks/shared/useVirtualizedList.ts
 export const useVirtualizedList = <T>(
   items: T[],
   containerRef: RefObject<HTMLElement>,
-  options: VirtualizationOptions
+  options: VirtualizationOptions,
 ) => {
   // ✅ Lógica reutilizable para MessageList, LeadsList, Calendar
   // ✅ Elimina duplicación en 3+ componentes
@@ -188,11 +200,13 @@ export const useVirtualizedList = <T>(
 ### 🏗️ **FASE 2: OPTIMIZACIÓN DE PERFORMANCE (MEDIA PRIORIDAD)**
 
 #### **2.1 Bundle Splitting Implementation**
+
 ```typescript
 // 🔄 App.tsx - Code splitting por rutas
-const PremiumCalendarAdvanced = lazy(() => 
-  import('./pages/PremiumCalendarAdvanced')
-    .then(module => ({ default: module.PremiumCalendarAdvanced }))
+const PremiumCalendarAdvanced = lazy(() =>
+  import('./pages/PremiumCalendarAdvanced').then(module => ({
+    default: module.PremiumCalendarAdvanced,
+  })),
 );
 
 const LeadsPage = lazy(() => import('./pages/LeadsPage'));
@@ -202,6 +216,7 @@ const ChatsPage = lazy(() => import('./pages/ChatsPage'));
 ```
 
 #### **2.2 Supabase Query Optimization**
+
 ```sql
 -- 🔧 Eliminar N+1 problems identificados
 CREATE OR REPLACE FUNCTION get_conversations_with_unread_counts(
@@ -222,7 +237,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     c.id,
     c.lead_id,
     c.current_phase,
@@ -242,10 +257,10 @@ BEGIN
     LIMIT 1
   ) lm ON true
   LEFT JOIN (
-    SELECT 
+    SELECT
       conversation_id,
       COUNT(*) as count
-    FROM messages 
+    FROM messages
     WHERE sender_type = 'Lead'
     AND created_at >= NOW() - INTERVAL '24 hours'
     GROUP BY conversation_id
@@ -261,32 +276,33 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### **2.3 Cache Strategy Refinement**
+
 ```typescript
 // 🔄 lib/query-client-config.ts
 export const queryClientConfig = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,      // 5 min base
-      cacheTime: 10 * 60 * 1000,     // 10 min cache
+      staleTime: 5 * 60 * 1000, // 5 min base
+      cacheTime: 10 * 60 * 1000, // 10 min cache
       retry: (failureCount, error: any) => {
         // ✅ Smart retry logic
         if (error?.status === 404 || error?.status === 403) return false;
         return failureCount < 2;
       },
-      refetchOnWindowFocus: (query) => {
+      refetchOnWindowFocus: query => {
         // ✅ Conditional refetch
         const queryKey = query.queryKey[0] as string;
         return ['messages', 'leads'].includes(queryKey);
-      }
+      },
     },
     mutations: {
       retry: 1,
-      onError: (error) => {
+      onError: error => {
         // ✅ Global error handling
         console.error('Mutation error:', error);
-      }
-    }
-  }
+      },
+    },
+  },
 });
 ```
 
@@ -295,6 +311,7 @@ export const queryClientConfig = new QueryClient({
 ### 🏗️ **FASE 3: ARQUITECTURA ESCALABLE (MEDIA-BAJA PRIORIDAD)**
 
 #### **3.1 Feature-based Organization**
+
 ```typescript
 // 🔄 Nueva estructura por features
 src/
@@ -328,15 +345,13 @@ src/
 ```
 
 #### **3.2 Service Layer Abstraction**
+
 ```typescript
 // 🆕 shared/services/BaseApiService.ts
 export abstract class BaseApiService {
   protected abstract baseUrl: string;
-  
-  protected async request<T>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<T> {
+
+  protected async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         headers: {
@@ -345,34 +360,31 @@ export abstract class BaseApiService {
         },
         ...options,
       });
-      
+
       if (!response.ok) {
         throw new ApiError(response.status, response.statusText);
       }
-      
+
       return response.json();
     } catch (error) {
       return this.handleError(error);
     }
   }
-  
+
   protected abstract handleError(error: unknown): never;
 }
 
 // 🔄 features/calendar/services/GoogleCalendarService.ts
 export class GoogleCalendarService extends BaseApiService {
   protected baseUrl = 'https://www.googleapis.com/calendar/v3';
-  
-  async createEvent(
-    calendarId: string, 
-    event: CreateEventRequest
-  ): Promise<GoogleCalendarEvent> {
+
+  async createEvent(calendarId: string, event: CreateEventRequest): Promise<GoogleCalendarEvent> {
     return this.request<GoogleCalendarEvent>(`/calendars/${calendarId}/events`, {
       method: 'POST',
       body: JSON.stringify(event),
     });
   }
-  
+
   protected handleError(error: unknown): never {
     if (error instanceof ApiError) {
       // Google Calendar specific error handling
@@ -388,6 +400,7 @@ export class GoogleCalendarService extends BaseApiService {
 ### 🏗️ **FASE 4: TESTING Y DOCUMENTACIÓN (BAJA PRIORIDAD)**
 
 #### **4.1 Arreglar Tests Existentes**
+
 ```typescript
 // 🔧 test/ai-functions.test.ts - 142 errores TypeScript
 describe('AI Functions', () => {
@@ -395,21 +408,26 @@ describe('AI Functions', () => {
   const mockAnalysisResult: AnalysisResult = {
     currentPhase: 1,
     suggestedPhase: 2,
-    qualification: {     // ✅ Era 'qualification_score'
+    qualification: {
+      // ✅ Era 'qualification_score'
       score: 0.75,
-      level: 'medium'
+      level: 'medium',
     },
-    redFlags: [],        // ✅ Definir correctamente
+    redFlags: [], // ✅ Definir correctamente
     // ... otros campos
   };
 });
 ```
 
 #### **4.2 Documentación Arquitectura Actualizada**
+
 ```markdown
 # 🆕 docs/COMPONENT_ARCHITECTURE.md
-# 🆕 docs/PERFORMANCE_OPTIMIZATION.md 
+
+# 🆕 docs/PERFORMANCE_OPTIMIZATION.md
+
 # 🆕 docs/TYPE_DEFINITIONS.md
+
 # 🆕 docs/TESTING_STRATEGY.md
 ```
 
@@ -419,21 +437,22 @@ describe('AI Functions', () => {
 
 ### 🎯 **Objetivos Corregidos Post-Análisis**
 
-| Métrica | Estado Actual | Objetivo | Mejora Esperada |
-|---------|---------------|----------|-----------------|
-| **Errores Lint** | 507 | 0 | -100% |
-| **Errores TypeScript** | 142 | 0 | -100% |
-| **Bundle Size** | ~2.1MB | ~1.6MB | -24% |
-| **Código Duplicado** | ~25% | ~8% | -68% |
-| **Component Reusability** | 45% | 80% | +78% |
-| **Type Safety Score** | 40% (muchos any) | 95% | +138% |
+| Métrica                   | Estado Actual    | Objetivo | Mejora Esperada |
+| ------------------------- | ---------------- | -------- | --------------- |
+| **Errores Lint**          | 507              | 0        | -100%           |
+| **Errores TypeScript**    | 142              | 0        | -100%           |
+| **Bundle Size**           | ~2.1MB           | ~1.6MB   | -24%            |
+| **Código Duplicado**      | ~25%             | ~8%      | -68%            |
+| **Component Reusability** | 45%              | 80%      | +78%            |
+| **Type Safety Score**     | 40% (muchos any) | 95%      | +138%           |
 
 ### ⚡ **Performance Expected Impact**
 
 #### **Antes de Refactorización:**
+
 ```
 ❌ 507 lint errors blocking development
-❌ 142 TypeScript errors causing runtime issues  
+❌ 142 TypeScript errors causing runtime issues
 ❌ N+1 query problems causing slow loads
 ❌ 25% código duplicado
 ❌ Bundle monolítico 2.1MB
@@ -441,11 +460,12 @@ describe('AI Functions', () => {
 ```
 
 #### **Después de Refactorización:**
+
 ```
 ✅ 0 lint/TypeScript errors
 ✅ Single-query optimized database calls
 ✅ 8% código duplicado (componentes base reutilizables)
-✅ Code splitting: -450KB bundle inicial  
+✅ Code splitting: -450KB bundle inicial
 ✅ 95% type safety con interfaces específicas
 ✅ Feature-based architecture escalable
 ```
@@ -455,24 +475,28 @@ describe('AI Functions', () => {
 ## 🚀 **TIMELINE DE IMPLEMENTACIÓN**
 
 ### **SEMANA 1: FASE 0 - CORRECCIÓN CRÍTICA**
+
 - **Día 1-2**: Prettier auto-fix (311 errores)
 - **Día 3-4**: TypeScript interface fixes (142 errores)
 - **Día 5**: Variables no utilizadas + case declarations
 - **Resultado**: ✅ Código funcional sin errores
 
 ### **SEMANA 2: FASE 1 - CONSOLIDACIÓN**
+
 - **Día 1-3**: Refactor modales calendar (BaseEventModal)
 - **Día 4-5**: Hooks virtualización genéricos
 - **Resultado**: ✅ -68% código duplicado
 
-### **SEMANA 3: FASE 2 - OPTIMIZACIÓN**  
+### **SEMANA 3: FASE 2 - OPTIMIZACIÓN**
+
 - **Día 1-2**: Code splitting implementation
 - **Día 3-4**: Supabase N+1 fixes
 - **Día 5**: Cache strategy refinement
 - **Resultado**: ✅ -33% load time, -24% bundle
 
 ### **SEMANA 4: FASE 3-4 - ARQUITECTURA/TESTING**
-- **Día 1-3**: Feature-based reorganization  
+
+- **Día 1-3**: Feature-based reorganization
 - **Día 4-5**: Testing fixes + documentation
 - **Resultado**: ✅ Arquitectura escalable
 
@@ -481,6 +505,7 @@ describe('AI Functions', () => {
 ## 🎯 **RECOMENDACIONES INMEDIATAS**
 
 ### ⚡ **ACCIÓN INMEDIATA (HOY)**
+
 ```bash
 # 1. Auto-fix lo máximo posible
 npm run lint -- --fix
@@ -492,12 +517,14 @@ npm run type-check | wc -l
 ```
 
 ### 🚨 **PRIORIDAD CRÍTICA (ESTA SEMANA)**
+
 1. **Arreglar interfaces Calendar** - 45+ errores TypeScript
 2. **Eliminar variables no usadas** - 73 errores
-3. **Corregir case declarations** - 35 errores  
+3. **Corregir case declarations** - 35 errores
 4. **Definir tipos 'any'** - 79 warnings
 
 ### 📈 **PRIORIDAD ALTA (PRÓXIMAS 2 SEMANAS)**
+
 1. **Consolidar modales Calendar** - Eliminar 400+ líneas duplicadas
 2. **Implementar code splitting** - Reducir bundle 450KB
 3. **Optimizar queries Supabase** - Eliminar N+1 problems
