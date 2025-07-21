@@ -2,6 +2,7 @@ import React from 'react';
 import { Hash } from 'lucide-react';
 import { Chat } from '@/types';
 import { getStatusClasses } from '../../utils/statusUtils';
+import { TagsPopover } from '../Leads/TagsPopover';
 
 interface ChatWithUnreadCount extends Chat {
   unreadCount?: number;
@@ -114,27 +115,8 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
                 {chat.lastMessage}
               </p>
               {chat.tags && chat.tags.length > 0 && (
-                <div className="flex items-center gap-1 mt-1">
-                  {chat.tags.slice(0, 2).map((tag, index) => (
-                    <span
-                      key={index}
-                      className={`text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
-                        darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      <Hash className="w-2.5 h-2.5" />
-                      {tag}
-                    </span>
-                  ))}
-                  {chat.tags.length > 2 && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      +{chat.tags.length - 2}
-                    </span>
-                  )}
+                <div className="mt-1">
+                  <TagsPopover tags={chat.tags} darkMode={darkMode} maxVisible={2} />
                 </div>
               )}
             </div>

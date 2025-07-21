@@ -49,9 +49,10 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
     <nav
       className={`fixed top-0 left-0 right-0 z-50 ${
         darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-      } border-b px-6 py-3`}
+      } border-b`}
     >
-      <div className="flex items-center justify-between">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
         {/* Logo */}
         <div className="flex items-center space-x-8">
           <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -59,7 +60,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
           </h1>
 
           {/* Navigation Items */}
-          <div className="hidden md:flex space-x-6">
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-3">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -97,7 +98,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
             <input
               type="text"
               placeholder="Buscar..."
-              className={`pl-10 pr-4 py-2 w-64 rounded-lg border ${
+              className={`pl-10 pr-4 py-2 w-40 lg:w-64 rounded-lg border ${
                 darkMode
                   ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -183,6 +184,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
             )}
           </div>
         </div>
+      </div>
       </div>
     </nav>
   );

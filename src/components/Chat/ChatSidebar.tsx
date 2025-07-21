@@ -125,6 +125,16 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending);
   }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, applyFilters]);
 
+  // Asegurar que se apliquen los filtros iniciales al montar el componente
+  useEffect(() => {
+    // Aplicar filtros iniciales con ordenamiento por tiempo descendente
+    const timeoutId = setTimeout(() => {
+      applyFilters('', null, null, '', 'time', false);
+    }, 100);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
+
   // Handle pending chat selection
   useEffect(() => {
     if (pendingChatId && chats.length > 0) {

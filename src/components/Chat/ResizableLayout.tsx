@@ -295,10 +295,10 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
 
   return (
-    <div ref={containerRef} className="flex h-full w-full">
+    <div ref={containerRef} className="flex h-full w-full overflow-hidden">
       {/* Sidebar - Resizable width */}
       <div
-        style={{ width: `${actualSidebarWidth}px` }}
+        style={{ width: `${actualSidebarWidth}px`, minWidth: `${actualSidebarWidth}px`, maxWidth: `${actualSidebarWidth}px` }}
         className="flex-shrink-0 h-full overflow-hidden transition-all duration-300"
       >
         {children[0]}
@@ -319,8 +319,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       {/* Chat Column */}
       <div
-        style={{ width: `${columnWidths[0]}px` }}
-        className="h-full overflow-hidden flex-shrink-0"
+        style={{ width: `${columnWidths[0]}px`, minWidth: `${MIN_COLUMN_WIDTH}px` }}
+        className="h-full overflow-hidden"
       >
         {children[1]}
       </div>
@@ -338,8 +338,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       {/* Templates Column */}
       <div
-        style={{ width: `${columnWidths[1]}px` }}
-        className="h-full overflow-hidden flex-shrink-0"
+        style={{ width: `${columnWidths[1]}px`, minWidth: `${MIN_COLUMN_WIDTH}px` }}
+        className="h-full overflow-hidden"
       >
         {children[2]}
       </div>
@@ -357,8 +357,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       {/* AI Column */}
       <div
-        style={{ width: `${columnWidths[2]}px` }}
-        className="h-full overflow-hidden flex-shrink-0"
+        style={{ flexGrow: 1, minWidth: `${MIN_COLUMN_WIDTH}px` }}
+        className="h-full overflow-hidden"
       >
         {children[3]}
       </div>

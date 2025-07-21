@@ -31,6 +31,15 @@ interface EnhancedAIChatSidebarProps {
   leadName?: string;
   isAnalyzing?: boolean;
   analysisError?: string;
+  leadData?: {
+    tags?: string[];
+    notes?: string;
+    lead_insights?: {
+      business_info?: any;
+      personality_profile?: any;
+      confidence_score?: number;
+    };
+  };
 }
 
 interface AIMessage {
@@ -59,6 +68,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   leadName,
   isAnalyzing: _isAnalyzing,
   analysisError: _analysisError,
+  leadData,
 }) => {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
@@ -270,7 +280,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
       {/* Header con tabs */}
       <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-3">
@@ -310,8 +320,8 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
                       setShowModelDropdown(false);
                     }}
                     className={`
-                      w-full text-left px-3 py-2 text-xs hover:bg-gray-100 first:rounded-t last:rounded-b
-                      ${selectedModel === key ? 'bg-blue-50 text-blue-600' : ''}
+                      w-full text-left px-3 py-2 text-xs first:rounded-t last:rounded-b
+                      ${selectedModel === key ? darkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-50 text-blue-600' : ''}
                       ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}
                     `}
                   >
@@ -372,6 +382,15 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
               isRefreshing={isRefreshing}
               darkMode={darkMode}
               leadName={leadName}
+              leadData={{
+                tags: leadData?.tags,
+                notes: leadData?.notes,
+                insights: leadData?.lead_insights ? {
+                  business_info: leadData.lead_insights.business_info,
+                  personality_profile: leadData.lead_insights.personality_profile,
+                  confidence_score: leadData.lead_insights.confidence_score,
+                } : undefined,
+              }}
             />
 
             {/* Sugerencias de mensajes */}
