@@ -641,6 +641,18 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
         }
       }
       
+      // Obtener tags existentes para preferirlos
+      const { data: existingTags } = await supabase.rpc('get_all_unique_tags');
+      const existingTagsMap = new Map(
+        (existingTags || []).map(({ tag }) => [tag.toLowerCase(), tag])
+      );
+      
+      // Normalizar tags automáticos para usar tags existentes cuando sea posible
+      const normalizedAutoTags = autoTags.map(tag => {
+        const lowerTag = tag.toLowerCase();
+        return existingTagsMap.get(lowerTag) || tag;
+      });
+      
       // Actualizar tags en el lead
       const { data: currentLead } = await supabase
         .from('leads')
@@ -649,7 +661,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
         .single();
 
       const currentTags = currentLead?.tags || [];
-      const newTags = [...new Set([...currentTags, ...autoTags])];
+      const newTags = [...new Set([...currentTags, ...normalizedAutoTags])];
       
       // Generar resumen para las notas
       const summaryParts = [];
