@@ -12,6 +12,7 @@ import {
   generateAIResponse,
   generateQuickActions,
   GEMINI_MODELS,
+  DEFAULT_MODEL,
   type GeminiModel,
   type AIMessage as GeminiAIMessage,
 } from '../../lib/gemini';
@@ -62,7 +63,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-pro');
+  const [selectedModel, setSelectedModel] = useState<GeminiModel>(DEFAULT_MODEL);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<'analysis' | 'chat'>('analysis');
   const [suggestions, setSuggestions] = useState<MessageSuggestion[]>([]);

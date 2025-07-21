@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { generateAIResponse } from '../lib/gemini';
+import { generateAIResponse, DEFAULT_MODEL } from '../lib/gemini';
 import ConversationAnalyzer from '../lib/conversation-analyzer';
 import { detectIntent } from '../lib/intent-detector';
 import { analyzeLeadProfile } from '../lib/lead-personalizer';
@@ -57,9 +57,12 @@ interface KeyMoment {
 
 class ConversationAnalysisService {
   private analysisQueue: Set<string> = new Set();
+  private priorityQueue: Set<string> = new Set(); // High priority conversations (currently active)
   private isRunning = false;
   private analysisInterval: NodeJS.Timeout | null = null;
   private messageDelay = 2 * 60 * 1000; // 2 minutos
+  private readonly MAX_CONCURRENT_ANALYSIS = 3; // Process up to 3 conversations simultaneously
+  private currentlyProcessing: Set<string> = new Set();
 
   // Iniciar el servicio de análisis
   start() {
@@ -84,17 +87,69 @@ class ConversationAnalysisService {
     }
   }
 
-  // Priorizar una conversación específica
+  // Priorizar una conversación específica (cuando el usuario abre el chat)
   prioritizeConversation(conversationId: string) {
-    this.analysisQueue.add(conversationId);
+    this.priorityQueue.add(conversationId);
+    this.analysisQueue.delete(conversationId); // Remove from normal queue if present
+    
     // Ejecutar análisis inmediatamente para conversaciones priorizadas
-    this.analyzeConversation(conversationId, true);
+    if (!this.currentlyProcessing.has(conversationId)) {
+      this.analyzeConversation(conversationId, true);
+    }
   }
 
-  // Procesar la cola de análisis
+  // Nuevo método: Solicitar análisis manual (botón refrescar)
+  async refreshAnalysis(conversationId: string): Promise<boolean> {
+    try {
+      await this.analyzeConversation(conversationId, true);
+      return true;
+    } catch (error) {
+      console.error('Error in manual refresh:', error);
+      return false;
+    }
+  }
+
+  // Nuevo método: Obtener estado del análisis
+  getAnalysisStatus(conversationId: string): 'processing' | 'queued' | 'priority' | 'idle' {
+    if (this.currentlyProcessing.has(conversationId)) return 'processing';
+    if (this.priorityQueue.has(conversationId)) return 'priority';
+    if (this.analysisQueue.has(conversationId)) return 'queued';
+    return 'idle';
+  }
+
+  // Procesar la cola de análisis con sistema de prioridades
   private async processAnalysisQueue() {
     if (!this.isRunning) return;
 
+    try {
+      // Procesar cola de prioridad primero
+      await this.processPriorityQueue();
+      
+      // Luego procesar cola normal si no estamos al límite
+      if (this.currentlyProcessing.size < this.MAX_CONCURRENT_ANALYSIS) {
+        await this.processNormalQueue();
+      }
+    } catch (error) {
+      console.error('Error in analysis queue processing:', error);
+    }
+  }
+
+  // Procesar conversaciones de alta prioridad (chats activos)
+  private async processPriorityQueue() {
+    const priorityArray = Array.from(this.priorityQueue);
+    
+    for (const conversationId of priorityArray) {
+      if (!this.isRunning || this.currentlyProcessing.size >= this.MAX_CONCURRENT_ANALYSIS) break;
+      
+      if (!this.currentlyProcessing.has(conversationId)) {
+        this.priorityQueue.delete(conversationId);
+        this.analyzeConversation(conversationId, true); // No await - process in parallel
+      }
+    }
+  }
+
+  // Procesar cola normal de análisis
+  private async processNormalQueue() {
     try {
       // Obtener conversaciones que necesitan análisis
       const { data: conversationsNeedingAnalysis, error } = await supabase.rpc(
@@ -110,27 +165,37 @@ class ConversationAnalysisService {
         return;
       }
 
-      // Procesar conversaciones en orden de prioridad
+      // Procesar conversaciones que no están en procesamiento
       for (const conv of conversationsNeedingAnalysis) {
-        if (!this.isRunning) break;
+        if (!this.isRunning || this.currentlyProcessing.size >= this.MAX_CONCURRENT_ANALYSIS) break;
+
+        const conversationId = conv.conversation_id;
+        
+        // Skip if already processing or in priority queue
+        if (this.currentlyProcessing.has(conversationId) || this.priorityQueue.has(conversationId)) {
+          continue;
+        }
 
         // Verificar si ha pasado suficiente tiempo desde el último mensaje
         const lastMessageTime = new Date(conv.last_message_at).getTime();
         const timeSinceLastMessage = Date.now() - lastMessageTime;
 
         if (timeSinceLastMessage >= this.messageDelay) {
-          await this.analyzeConversation(conv.conversation_id);
-          // Esperar un poco entre análisis para no sobrecargar
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          this.analyzeConversation(conversationId, false); // No await - process in parallel
+          // Small delay to prevent overwhelming
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     } catch (error) {
-      console.error('Error in analysis queue processing:', error);
+      console.error('Error in normal queue processing:', error);
     }
   }
 
   // Analizar una conversación específica
   private async analyzeConversation(conversationId: string, isPriority = false) {
+    // Mark as processing
+    this.currentlyProcessing.add(conversationId);
+    
     try {
       // Obtener mensajes de la conversación
       const { data: messages, error: messagesError } = await supabase
@@ -228,6 +293,13 @@ class ConversationAnalysisService {
       }
     } catch (error) {
       console.error('Error analyzing conversation:', error);
+    } finally {
+      // Always remove from processing set
+      this.currentlyProcessing.delete(conversationId);
+      
+      // Remove from queues if completed
+      this.priorityQueue.delete(conversationId);
+      this.analysisQueue.delete(conversationId);
     }
   }
 
@@ -336,7 +408,7 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
             content: prompt,
           },
         ],
-        model: 'gemini-2.5-pro',
+        model: DEFAULT_MODEL, // Use Gemini-2.5-Pro as default
       });
 
       // Parsear la respuesta JSON

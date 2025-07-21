@@ -69,11 +69,12 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
             prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
           const remainingWidth = availableWidth - templatesWidth;
 
-          // Split remaining width proportionally between Conversation (50%) and AI Chat (50%)
-          const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
-          const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+          // Split remaining width: AI Chat (40%), Conversation (40%), Templates (20%)
+          const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+          const conversationWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+          const templatesWidthNew = Math.max(TEMPLATES_MIN_WIDTH, availableWidth * 0.2);
 
-          return [conversationWidth, templatesWidth, aiChatWidth];
+          return [conversationWidth, templatesWidthNew, aiChatWidth];
         }
 
         // Initial load: Templates gets minimum width, rest split between Conversation and AI Chat
@@ -109,20 +110,18 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
               // Keep templates column at minimum unless it was manually expanded
               const templatesWidth =
                 prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
-              const remainingWidth = availableWidth - templatesWidth;
+              // Keep proportional layout: AI Chat (40%), Conversation (40%), Templates (20%)
+              const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+              const conversationWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+              const templatesWidthNew = Math.max(TEMPLATES_MIN_WIDTH, availableWidth * 0.2);
 
-              // Split remaining width proportionally between Conversation (50%) and AI Chat (50%)
-              const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
-              const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
-
-              return [conversationWidth, templatesWidth, aiChatWidth];
+              return [conversationWidth, templatesWidthNew, aiChatWidth];
             }
 
-            // Initial load: Templates gets minimum width, rest split between Conversation and AI Chat
-            const templatesWidth = TEMPLATES_MIN_WIDTH;
-            const remainingWidth = availableWidth - templatesWidth;
-            const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
-            const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+            // Initial load: Use proportional layout AI Chat (40%), Conversation (40%), Templates (20%)
+            const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+            const conversationWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
+            const templatesWidth = Math.max(TEMPLATES_MIN_WIDTH, availableWidth * 0.2);
 
             return [conversationWidth, templatesWidth, aiChatWidth];
           });

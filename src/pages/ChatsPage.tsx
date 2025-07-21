@@ -9,7 +9,7 @@ import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
 import { ChatSidebar } from '../components/Chat/ChatSidebar';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { ChatTemplatesView } from '../components/Chat/ChatTemplatesView';
-import { AIChatSidebar } from '../components/Chat/AIChatSidebar';
+import { EnhancedAIChatSidebar } from '../components/Chat/EnhancedAIChatSidebar';
 import { ResizableLayout } from '../components/Chat/ResizableLayout';
 import { ErrorState } from '../components/Chat/ErrorState';
 
@@ -142,7 +142,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             onToggleFavorite={handleToggleFavorite}
           />
 
-          <AIChatSidebar
+          <EnhancedAIChatSidebar
             darkMode={darkMode}
             conversationContext={
               selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined
@@ -157,6 +157,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             }
             conversationId={selectedChat?.id}
             leadId={selectedChat?.leadId}
+            leadName={selectedChat?.leadName}
           />
         </ResizableLayout>
       </div>

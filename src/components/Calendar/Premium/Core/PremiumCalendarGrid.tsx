@@ -5,7 +5,6 @@ import { WeekViewGrid } from '../Views/WeekView/WeekViewGrid';
 import { DayViewGrid } from '../Views/DayView/DayViewGrid';
 import { AgendaViewList } from '../Views/AgendaView/AgendaViewList';
 import type { CalendarEvent } from '../../../../types/calendar';
-import type { CalendarView } from '../../../../types/premium-calendar';
 
 interface PremiumCalendarGridProps {
   className?: string;

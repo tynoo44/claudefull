@@ -19,11 +19,14 @@ interface PhaseInfo {
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-// Available models
+// Available models - Pro is now default
 export const GEMINI_MODELS = {
-  'gemini-2.5-flash': 'Gemini 2.5 Flash',
   'gemini-2.5-pro': 'Gemini 2.5 Pro',
+  'gemini-2.5-flash': 'Gemini 2.5 Flash',
 } as const;
+
+// Default model configuration
+export const DEFAULT_MODEL: GeminiModel = 'gemini-2.5-pro';
 
 export type GeminiModel = keyof typeof GEMINI_MODELS;
 

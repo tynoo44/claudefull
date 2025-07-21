@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, RefreshCw, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { Calendar, RefreshCw, CheckCircle, Shield } from 'lucide-react';
 import { AuthService } from '../../lib/auth';
 import type { GoogleCalendar } from '../../types/calendar';
 

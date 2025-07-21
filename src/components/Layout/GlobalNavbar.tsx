@@ -41,7 +41,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
     { path: '/chats', label: 'Chats', icon: MessageSquare },
     { path: '/leads', label: 'Leads', icon: Users },
     { path: '/templates', label: 'Plantillas', icon: FileText },
-    { path: '/calendar', label: 'Calendario', icon: Calendar },
+    { path: '/premium-calendar', label: 'Calendario', icon: Calendar },
     { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
   ];
 
