@@ -36,7 +36,7 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
   onDateClick,
   onTimeSlotClick,
   onEventHover,
-  isLoading = false
+  isLoading = false,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +56,7 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
       const colorId = calendar.color_id || '1';
       const colorMap = {
         '1': '#3b82f6', // blue
-        '2': '#ef4444', // red  
+        '2': '#ef4444', // red
         '3': '#f59e0b', // amber
         '4': '#10b981', // emerald
         '5': '#8b5cf6', // violet
@@ -81,20 +81,32 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
 
   const handleTimeSlotClick = (hour: number) => {
     const timeSlot = {
-      start: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), hour, 0),
-      end: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), hour + 1, 0)
+      start: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate(),
+        hour,
+        0,
+      ),
+      end: new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate(),
+        hour + 1,
+        0,
+      ),
     };
     onTimeSlotClick(currentDate, timeSlot);
   };
 
   const getCurrentTimeIndicator = () => {
     if (!isToday(currentDate)) return null;
-    
+
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const topPosition = (currentHour + currentMinute / 60) * HOUR_HEIGHT;
-    
+
     return topPosition;
   };
 
@@ -111,16 +123,13 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
       />
 
       {/* Time grid with events */}
-      <div 
-        ref={scrollContainerRef}
-        className="flex-1 overflow-auto bg-white dark:bg-gray-800"
-      >
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-white dark:bg-gray-800">
         <div className="relative min-h-full">
           <div className="grid grid-cols-[100px_1fr]">
             {/* Time column */}
             <div className="border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 sticky left-0 z-10">
               {TIME_SLOTS.map(hour => (
-                <div 
+                <div
                   key={hour}
                   className="relative border-b border-gray-100 dark:border-gray-800 flex items-start justify-end pr-3 pt-2"
                   style={{ height: `${HOUR_HEIGHT}px` }}
@@ -148,18 +157,29 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
                   onClick={() => handleTimeSlotClick(hour)}
                 >
                   {/* Quarter-hour lines */}
-                  <div className="absolute left-0 right-0 border-t border-gray-50 dark:border-gray-700 opacity-50" 
-                       style={{ top: `${HOUR_HEIGHT / 4}px` }} />
-                  <div className="absolute left-0 right-0 border-t border-gray-100 dark:border-gray-600" 
-                       style={{ top: `${HOUR_HEIGHT / 2}px` }} />
-                  <div className="absolute left-0 right-0 border-t border-gray-50 dark:border-gray-700 opacity-50" 
-                       style={{ top: `${(3 * HOUR_HEIGHT) / 4}px` }} />
-                  
+                  <div
+                    className="absolute left-0 right-0 border-t border-gray-50 dark:border-gray-700 opacity-50"
+                    style={{ top: `${HOUR_HEIGHT / 4}px` }}
+                  />
+                  <div
+                    className="absolute left-0 right-0 border-t border-gray-100 dark:border-gray-600"
+                    style={{ top: `${HOUR_HEIGHT / 2}px` }}
+                  />
+                  <div
+                    className="absolute left-0 right-0 border-t border-gray-50 dark:border-gray-700 opacity-50"
+                    style={{ top: `${(3 * HOUR_HEIGHT) / 4}px` }}
+                  />
+
                   {/* Time slot hover indicator */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="text-xs text-blue-600 dark:text-blue-400 p-2 font-medium">
-                      {hour === 0 ? '12:00 AM' : hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`} - {' '}
-                      {hour + 1 === 24 ? '12:00 AM' : hour + 1 > 12 ? `${hour + 1 - 12}:00 PM` : `${hour + 1}:00 AM`}
+                      {hour === 0 ? '12:00 AM' : hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`}{' '}
+                      -{' '}
+                      {hour + 1 === 24
+                        ? '12:00 AM'
+                        : hour + 1 > 12
+                          ? `${hour + 1 - 12}:00 PM`
+                          : `${hour + 1}:00 AM`}
                     </div>
                   </div>
                 </div>
@@ -206,14 +226,11 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
       {/* Day Info Footer */}
       <div className="text-xs text-gray-500 dark:text-gray-400 p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between">
-          <span>
-            {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
-          </span>
+          <span>{format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}</span>
           <span>
             {dayEvents.length} evento{dayEvents.length !== 1 ? 's' : ''}
-            {dayEvents.filter(e => e.attendees.length > 0).length > 0 && 
-              ` • ${dayEvents.filter(e => e.attendees.length > 0).length} con asistentes`
-            }
+            {dayEvents.filter(e => e.attendees.length > 0).length > 0 &&
+              ` • ${dayEvents.filter(e => e.attendees.length > 0).length} con asistentes`}
           </span>
         </div>
       </div>

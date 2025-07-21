@@ -20,7 +20,7 @@ export const AgendaViewItem: React.FC<AgendaViewItemProps> = ({
   calendarColor,
   calendar,
   onClick,
-  onHover
+  onHover,
 }) => {
   const getStatusIcon = () => {
     switch (event.status) {
@@ -37,54 +37,59 @@ export const AgendaViewItem: React.FC<AgendaViewItemProps> = ({
     if (event.is_all_day) {
       return 'Todo el día';
     }
-    
+
     const start = new Date(event.start_datetime);
     const end = new Date(event.end_datetime);
     const startTime = format(start, 'HH:mm');
     const endTime = format(end, 'HH:mm');
-    
+
     // Calculate duration
     const durationMs = end.getTime() - start.getTime();
     const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
     const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     let duration = '';
     if (durationHours > 0) {
       duration = `${durationHours}h${durationMinutes > 0 ? ` ${durationMinutes}m` : ''}`;
     } else {
       duration = `${durationMinutes}m`;
     }
-    
+
     return `${startTime} - ${endTime} (${duration})`;
   };
 
   const getEventClasses = () => {
-    let classes = "p-4 cursor-pointer transition-all duration-200 border-l-4 hover:bg-white dark:hover:bg-gray-600";
-    
+    let classes =
+      'p-4 cursor-pointer transition-all duration-200 border-l-4 hover:bg-white dark:hover:bg-gray-600';
+
     // Status-based styling
     if (event.status === 'cancelled') {
-      classes += " opacity-60";
+      classes += ' opacity-60';
     }
-    
+
     // Selection and hover states
     if (isSelected) {
-      classes += " bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-300 dark:ring-blue-700";
+      classes += ' bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-300 dark:ring-blue-700';
     } else if (isHovered) {
-      classes += " bg-gray-50 dark:bg-gray-600";
+      classes += ' bg-gray-50 dark:bg-gray-600';
     }
-    
+
     return classes;
   };
 
   const getPriorityIndicator = () => {
     const hasAttendees = event.attendees && event.attendees.length > 0;
     const hasLocation = !!event.location;
-    
-    if (event.status === 'cancelled') return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-    if (event.status === 'tentative') return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-    if (hasAttendees && hasLocation) return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-    if (hasAttendees || hasLocation) return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-    
+
+    if (event.status === 'cancelled')
+      return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+    if (event.status === 'tentative')
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+    if (hasAttendees && hasLocation)
+      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+    if (hasAttendees || hasLocation)
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+
     return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
   };
 
@@ -113,18 +118,24 @@ export const AgendaViewItem: React.FC<AgendaViewItemProps> = ({
         <div className="flex-1 min-w-0">
           {/* Title and Status */}
           <div className="flex items-start justify-between mb-2">
-            <h3 className={`font-semibold text-gray-900 dark:text-gray-100 mr-2 ${
-              event.status === 'cancelled' ? 'line-through' : ''
-            }`}>
+            <h3
+              className={`font-semibold text-gray-900 dark:text-gray-100 mr-2 ${
+                event.status === 'cancelled' ? 'line-through' : ''
+              }`}
+            >
               {event.title}
             </h3>
-            
+
             <div className="flex items-center space-x-2 flex-shrink-0">
               {getStatusIcon()}
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityIndicator()}`}>
-                {event.status === 'cancelled' ? 'Cancelado' : 
-                 event.status === 'tentative' ? 'Tentativo' : 
-                 'Confirmado'}
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityIndicator()}`}
+              >
+                {event.status === 'cancelled'
+                  ? 'Cancelado'
+                  : event.status === 'tentative'
+                    ? 'Tentativo'
+                    : 'Confirmado'}
               </span>
             </div>
           </div>
@@ -182,9 +193,7 @@ export const AgendaViewItem: React.FC<AgendaViewItemProps> = ({
           {calendar && (
             <div className="flex items-center space-x-2 mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
               <Calendar className="h-3 w-3" style={{ color: calendarColor }} />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {calendar.name}
-              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{calendar.name}</span>
             </div>
           )}
         </div>

@@ -140,7 +140,7 @@ export class GoogleCalendarService {
   }
 
   // Create new event in Google Calendar
-  async createEvent(eventData: CreateEventRequest): Promise<CalendarEvent> {
+  async createEvent(calendarId: string, eventData: CreateEventRequest): Promise<CalendarEvent> {
     try {
       const {
         data: { session },
@@ -180,7 +180,7 @@ export class GoogleCalendarService {
       const { data, error } = await supabase.functions.invoke('create-google-calendar-event-v2', {
         body: {
           providerToken: providerToken,
-          calendarId: eventData.google_calendar_id || 'primary',
+          calendarId: calendarId || 'primary',
           event: googleEvent,
         },
       });
@@ -191,7 +191,7 @@ export class GoogleCalendarService {
       const createdEvent: CalendarEvent = {
         id: data.id,
         user_id: session.user.id,
-        google_calendar_id: eventData.google_calendar_id,
+        google_calendar_id: calendarId,
         google_event_id: data.id,
         title: data.summary || eventData.title,
         description: data.description || eventData.description,
@@ -219,7 +219,7 @@ export class GoogleCalendarService {
   }
 
   // Update event in Google Calendar
-  async updateEvent(eventData: UpdateEventRequest): Promise<CalendarEvent> {
+  async updateEvent(calendarId: string, eventId: string, eventData: UpdateEventRequest): Promise<CalendarEvent> {
     try {
       const {
         data: { session },
@@ -230,17 +230,6 @@ export class GoogleCalendarService {
       const providerToken = session.provider_token;
       if (!providerToken) {
         throw new Error('No Google provider token found. Please re-authenticate.');
-      }
-
-      // Get the existing event to get the google_event_id
-      const { data: existingEvent } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .eq('id', eventData.id)
-        .single();
-
-      if (!existingEvent || !existingEvent.google_event_id) {
-        throw new Error('Event not found or not synced with Google');
       }
 
       // Prepare Google Calendar event format

@@ -111,6 +111,12 @@ export class ConversationStateManager {
    * @returns Promise with memory data or null if not found
    */
   static async getConversationMemory(conversationId: string): Promise<Conversation | null> {
+    // Validate conversationId
+    if (!conversationId || conversationId === 'undefined' || conversationId === 'null') {
+      console.warn('Invalid conversationId provided to getConversationMemory:', conversationId);
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('conversations')

@@ -89,12 +89,14 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   useEffect(() => {
     if (aiConversation?.messages && Array.isArray(aiConversation.messages)) {
       setMessages(
-        aiConversation.messages.map((msg: { id?: string; role: string; content: string; timestamp?: string | number }) => ({
-          id: msg.id || Date.now().toString(),
-          role: msg.role,
-          content: msg.content,
-          timestamp: new Date(msg.timestamp || Date.now()),
-        })),
+        aiConversation.messages.map(
+          (msg: { id?: string; role: string; content: string; timestamp?: string | number }) => ({
+            id: msg.id || Date.now().toString(),
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp || Date.now()),
+          }),
+        ),
       );
     }
   }, [aiConversation]);

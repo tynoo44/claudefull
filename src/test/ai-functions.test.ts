@@ -28,13 +28,15 @@ vi.mock('../lib/supabase', () => ({
 vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: vi.fn(() => ({
     getGenerativeModel: vi.fn(() => ({
-      generateContent: vi.fn(() => Promise.resolve({
-        response: {
-          text: () => 'Mocked AI response'
-        }
-      }))
-    }))
-  }))
+      generateContent: vi.fn(() =>
+        Promise.resolve({
+          response: {
+            text: () => 'Mocked AI response',
+          },
+        }),
+      ),
+    })),
+  })),
 }));
 
 describe('AI Functions Comprehensive Test Suite', () => {
@@ -56,7 +58,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should build prompt components correctly', async () => {
       const components = await promptManager.buildPromptComponents('main', 1, 'entrepreneur');
-      
+
       expect(components).toHaveProperty('basePrompt');
       expect(components).toHaveProperty('scriptTemplates');
       expect(components).toHaveProperty('fewShotExamples');
@@ -97,8 +99,9 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
   describe('Response Validator', () => {
     it('should validate responses with high scores for good responses', async () => {
-      const goodResponse = 'Perfecto! Me alegra saber que ya tienes experiencia. Cuéntame, qué es lo que más te frustra de tu situación actual con el marketing';
-      
+      const goodResponse =
+        'Perfecto! Me alegra saber que ya tienes experiencia. Cuéntame, qué es lo que más te frustra de tu situación actual con el marketing';
+
       const validation = await responseValidator.validate(goodResponse, 2, 'entrepreneur', {
         minScore: 0.5,
         keyPhraseWeight: 0.5,
@@ -114,7 +117,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should validate responses with low scores for poor responses', async () => {
       const poorResponse = 'OK';
-      
+
       const validation = await responseValidator.validate(poorResponse, 2, 'entrepreneur', {
         minScore: 0.5,
         keyPhraseWeight: 0.5,
@@ -130,7 +133,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should provide contextual suggestions for improvement', async () => {
       const response = 'Está bien, entiendo';
-      
+
       const validation = await responseValidator.validate(response, 3, 'small_business', {
         minScore: 0.6,
         keyPhraseWeight: 0.7,
@@ -145,7 +148,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should handle different validation configs', async () => {
       const response = 'Genial, eso me ayuda a entender mejor tu situación';
-      
+
       const strictValidation = await responseValidator.validate(response, 1, 'entrepreneur', {
         minScore: 0.8,
         keyPhraseWeight: 0.9,
@@ -169,7 +172,10 @@ describe('AI Functions Comprehensive Test Suite', () => {
   describe('Conversation Analyzer', () => {
     it('should analyze conversation and extract qualification data', async () => {
       const messages = [
-        { role: 'user', content: 'Tengo un negocio de ecommerce, genero 15k al mes pero quiero escalar' },
+        {
+          role: 'user',
+          content: 'Tengo un negocio de ecommerce, genero 15k al mes pero quiero escalar',
+        },
         { role: 'assistant', content: 'Excelente! Cuéntame qué te está limitando para crecer más' },
         { role: 'user', content: 'No tengo tiempo para el marketing, estoy solo en el negocio' },
       ];
@@ -218,12 +224,17 @@ describe('AI Functions Comprehensive Test Suite', () => {
       expect(analysis).toHaveProperty('insights');
       expect(analysis).toHaveProperty('redFlags');
       expect(analysis.redFlags.length).toBeGreaterThan(0);
-      expect(analysis.redFlags.some(flag => flag.includes('presupuesto') || flag.includes('dinero'))).toBe(true);
+      expect(
+        analysis.redFlags.some(flag => flag.includes('presupuesto') || flag.includes('dinero')),
+      ).toBe(true);
     });
 
     it('should calculate realistic qualification scores', async () => {
       const highQualityMessages = [
-        { role: 'user', content: 'Tengo una empresa de software con 50 empleados, facturamos 2M al año' },
+        {
+          role: 'user',
+          content: 'Tengo una empresa de software con 50 empleados, facturamos 2M al año',
+        },
         { role: 'assistant', content: 'Impresionante! Qué desafíos tienes para seguir creciendo?' },
         { role: 'user', content: 'Necesitamos optimizar nuestro proceso de ventas urgentemente' },
       ];
@@ -234,10 +245,18 @@ describe('AI Functions Comprehensive Test Suite', () => {
         { role: 'user', content: 'No sé, solo estaba mirando' },
       ];
 
-      const highQualityAnalysis = await ConversationAnalyzer.analyzeConversation(highQualityMessages, 2);
-      const lowQualityAnalysis = await ConversationAnalyzer.analyzeConversation(lowQualityMessages, 1);
+      const highQualityAnalysis = await ConversationAnalyzer.analyzeConversation(
+        highQualityMessages,
+        2,
+      );
+      const lowQualityAnalysis = await ConversationAnalyzer.analyzeConversation(
+        lowQualityMessages,
+        1,
+      );
 
-      expect(highQualityAnalysis.qualification.score).toBeGreaterThan(lowQualityAnalysis.qualification.score);
+      expect(highQualityAnalysis.qualification.score).toBeGreaterThan(
+        lowQualityAnalysis.qualification.score,
+      );
       expect(highQualityAnalysis.qualification.capacityToPay).toBeGreaterThan(0.8);
       expect(lowQualityAnalysis.qualification.score).toBeLessThan(0.4);
     });
@@ -280,7 +299,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
     it('should provide contextual recommendations', () => {
       const priceObjectionMessage = 'Es demasiado caro para mí';
       const intent = detectIntent(priceObjectionMessage);
-      
+
       expect(intent.objectionType).toBe('price');
       expect(intent.recommendations).toContain(expect.stringContaining('valor'));
       expect(intent.recommendations.length).toBeGreaterThan(0);
@@ -306,13 +325,13 @@ describe('AI Functions Comprehensive Test Suite', () => {
       const entrepreneurMessages = [
         'Soy CEO de una startup tech',
         'Llevamos 3 años en el mercado',
-        'Necesitamos escalar rápido, bro'
+        'Necesitamos escalar rápido, bro',
       ];
 
       const corporateMessages = [
         'Represento a una multinacional',
         'Necesitamos una solución enterprise',
-        'Requiere integración con nuestros sistemas actuales'
+        'Requiere integración con nuestros sistemas actuales',
       ];
 
       const entrepreneurProfile = analyzeLeadProfile(entrepreneurMessages);
@@ -345,7 +364,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
         communicationStyle: 'informal',
         techSavviness: 'high',
         businessType: 'tech_startup',
-        decisionMakingStyle: 'fast'
+        decisionMakingStyle: 'fast',
       };
 
       const matureExecutiveProfile = {
@@ -354,11 +373,15 @@ describe('AI Functions Comprehensive Test Suite', () => {
         communicationStyle: 'formal',
         techSavviness: 'medium',
         businessType: 'traditional_business',
-        decisionMakingStyle: 'methodical'
+        decisionMakingStyle: 'methodical',
       };
 
-      const youngTechRules = require('../lib/lead-personalizer').getPersonalizationRules(youngTechProfile);
-      const matureExecutiveRules = require('../lib/lead-personalizer').getPersonalizationRules(matureExecutiveProfile);
+      const youngTechRules = require('../lib/lead-personalizer').getPersonalizationRules(
+        youngTechProfile,
+      );
+      const matureExecutiveRules = require('../lib/lead-personalizer').getPersonalizationRules(
+        matureExecutiveProfile,
+      );
 
       expect(youngTechRules.useSlang).toBe(true);
       expect(youngTechRules.vocabularyLevel).toBe('casual');
@@ -376,18 +399,23 @@ describe('AI Functions Comprehensive Test Suite', () => {
         communicationStyle: 'informal',
         techSavviness: 'low',
         businessType: 'local_service',
-        decisionMakingStyle: 'emotional'
+        decisionMakingStyle: 'emotional',
       };
 
       const rules = require('../lib/lead-personalizer').getPersonalizationRules(casualProfile);
 
-      expect(rules.examplePhrases.greeting.some((phrase: string) => 
-        phrase.includes('qué tal') || phrase.includes('hola')
-      )).toBe(true);
+      expect(
+        rules.examplePhrases.greeting.some(
+          (phrase: string) => phrase.includes('qué tal') || phrase.includes('hola'),
+        ),
+      ).toBe(true);
 
-      expect(rules.examplePhrases.question.some((phrase: string) => 
-        phrase.toLowerCase().includes('cuéntame') || phrase.toLowerCase().includes('qué')
-      )).toBe(true);
+      expect(
+        rules.examplePhrases.question.some(
+          (phrase: string) =>
+            phrase.toLowerCase().includes('cuéntame') || phrase.toLowerCase().includes('qué'),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -396,7 +424,10 @@ describe('AI Functions Comprehensive Test Suite', () => {
       const conversationMessages = [
         { role: 'user', content: 'Hola, tengo una agencia de marketing digital' },
         { role: 'assistant', content: 'Perfecto! Cuéntame más sobre tu agencia' },
-        { role: 'user', content: 'Llevamos 2 años, tenemos 8 clientes fijos pero queremos crecer más' },
+        {
+          role: 'user',
+          content: 'Llevamos 2 años, tenemos 8 clientes fijos pero queremos crecer más',
+        },
       ];
 
       // Test prompt manager phase detection
@@ -404,7 +435,10 @@ describe('AI Functions Comprehensive Test Suite', () => {
       expect(currentPhase).toBe(1);
 
       // Test conversation analysis
-      const analysis = await ConversationAnalyzer.analyzeConversation(conversationMessages, currentPhase);
+      const analysis = await ConversationAnalyzer.analyzeConversation(
+        conversationMessages,
+        currentPhase,
+      );
       expect(analysis.qualification.score).toBeGreaterThan(0.3);
 
       // Test intent detection on last message
@@ -430,19 +464,27 @@ describe('AI Functions Comprehensive Test Suite', () => {
       ];
 
       const earlyAnalysis = await ConversationAnalyzer.analyzeConversation(
-        multipleInteractions.slice(0, 3), 1
+        multipleInteractions.slice(0, 3),
+        1,
       );
-      const laterAnalysis = await ConversationAnalyzer.analyzeConversation(
-        multipleInteractions, 2
-      );
+      const laterAnalysis = await ConversationAnalyzer.analyzeConversation(multipleInteractions, 2);
 
       // Score should improve with more quality information
-      expect(laterAnalysis.qualification.score).toBeGreaterThanOrEqual(earlyAnalysis.qualification.score);
-      
+      expect(laterAnalysis.qualification.score).toBeGreaterThanOrEqual(
+        earlyAnalysis.qualification.score,
+      );
+
       // Should maintain lead profile consistency
-      const earlyProfile = analyzeLeadProfile(multipleInteractions.slice(0, 3).filter(m => m.role === 'user').map(m => m.content));
-      const laterProfile = analyzeLeadProfile(multipleInteractions.filter(m => m.role === 'user').map(m => m.content));
-      
+      const earlyProfile = analyzeLeadProfile(
+        multipleInteractions
+          .slice(0, 3)
+          .filter(m => m.role === 'user')
+          .map(m => m.content),
+      );
+      const laterProfile = analyzeLeadProfile(
+        multipleInteractions.filter(m => m.role === 'user').map(m => m.content),
+      );
+
       expect(earlyProfile.type).toBe(laterProfile.type);
       expect(earlyProfile.businessType).toBe(laterProfile.businessType);
     });
@@ -451,16 +493,16 @@ describe('AI Functions Comprehensive Test Suite', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle empty messages gracefully', async () => {
       const emptyMessages: any[] = [];
-      
+
       expect(() => promptManager.detectCurrentPhase(emptyMessages)).not.toThrow();
-      
+
       const analysis = await ConversationAnalyzer.analyzeConversation(emptyMessages, 1);
       expect(analysis.qualification.score).toBe(0);
     });
 
     it('should handle malformed message content', () => {
       const malformedMessages = ['', null, undefined, '   ', 'a'.repeat(10000)];
-      
+
       malformedMessages.forEach(message => {
         if (message !== null && message !== undefined) {
           expect(() => detectIntent(message)).not.toThrow();
@@ -470,9 +512,9 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should handle invalid phase numbers', async () => {
       const messages = [{ role: 'user', content: 'Test message' }];
-      
+
       const invalidPhases = [-1, 0, 6, 100, null, undefined];
-      
+
       for (const phase of invalidPhases) {
         if (phase !== null && phase !== undefined) {
           const analysis = await ConversationAnalyzer.analyzeConversation(messages, phase);
@@ -485,12 +527,12 @@ describe('AI Functions Comprehensive Test Suite', () => {
       // Mock AI service failure
       vi.mocked(require('@google/generative-ai').GoogleGenerativeAI).mockImplementation(() => ({
         getGenerativeModel: () => ({
-          generateContent: () => Promise.reject(new Error('API Error'))
-        })
+          generateContent: () => Promise.reject(new Error('API Error')),
+        }),
       }));
 
       const messages = [{ role: 'user', content: 'Test message' }];
-      
+
       // Should not throw and should provide fallback
       const analysis = await ConversationAnalyzer.analyzeConversation(messages, 1);
       expect(analysis).toBeDefined();
@@ -502,7 +544,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
     it('should process large conversations efficiently', async () => {
       const largeConversation = Array.from({ length: 100 }, (_, i) => ({
         role: i % 2 === 0 ? 'user' : 'assistant',
-        content: `Message ${i + 1}: This is a test message with some content about business and marketing.`
+        content: `Message ${i + 1}: This is a test message with some content about business and marketing.`,
       }));
 
       const startTime = Date.now();
@@ -520,12 +562,10 @@ describe('AI Functions Comprehensive Test Suite', () => {
         { role: 'assistant', content: `Conversation ${i} assistant message` },
       ]);
 
-      const promises = conversations.map(conv => 
-        ConversationAnalyzer.analyzeConversation(conv, 1)
-      );
+      const promises = conversations.map(conv => ConversationAnalyzer.analyzeConversation(conv, 1));
 
       const results = await Promise.all(promises);
-      
+
       expect(results).toHaveLength(5);
       results.forEach(result => {
         expect(result).toBeDefined();

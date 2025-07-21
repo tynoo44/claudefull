@@ -5,7 +5,12 @@ import { Conversation } from '../types';
 import { APPOINTMENT_SETTING_CONTEXT } from './appointment-setting-context';
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+console.log(
+  '[ConversationAnalyzer] Gemini API Key:',
+  apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT DEFINED',
+);
+const genAI = new GoogleGenerativeAI(apiKey);
 
 interface AnalysisResult {
   success: boolean;
@@ -102,6 +107,16 @@ export class ConversationAnalyzer {
       const analysis = await this.generateComprehensiveAnalysis(conversationText, messages);
 
       // Store analysis results in conversation_memory
+      console.log('[ConversationAnalyzer] Storing analysis results...');
+      console.log('[ConversationAnalyzer] Analysis data:', {
+        conversationId,
+        leadId,
+        currentPhase: analysis.currentPhase,
+        hasLeadProfile: !!analysis.leadProfile,
+        hasLastUserMessage: !!analysis.lastUserMessage,
+        hasSummary: !!analysis.summary
+      });
+      
       const result = await ConversationStateManager.updateConversationState({
         conversationId,
         leadId,
@@ -113,12 +128,15 @@ export class ConversationAnalyzer {
       });
 
       if (!result.success) {
+        console.error('[ConversationAnalyzer] Failed to store analysis:', result.error);
         return {
           success: false,
           error: result.error || 'Failed to store analysis',
           isNewAnalysis: false,
         };
       }
+      
+      console.log('[ConversationAnalyzer] Analysis stored successfully');
 
       // Get the updated memory record
       const updatedMemory = await ConversationStateManager.getConversationMemory(conversationId);
@@ -158,6 +176,10 @@ export class ConversationAnalyzer {
     messages: Message[],
   ) {
     try {
+      console.log('[ConversationAnalyzer] Starting generateComprehensiveAnalysis');
+      console.log('[ConversationAnalyzer] Conversation text length:', conversationText.length);
+      console.log('[ConversationAnalyzer] Number of messages:', messages.length);
+
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
       // Build analysis prompt with focus on natural understanding
@@ -232,19 +254,29 @@ REGLAS CRÍTICAS:
 
 Responde SOLO con el JSON, sin explicaciones adicionales.`;
 
-      const result = await model.generateContent(prompt);
-      const response = result.response.text();
+      console.log('[ConversationAnalyzer] Calling Gemini API...');
+      const geminiResult = await model.generateContent(prompt);
+      const response = geminiResult.response.text();
+      console.log('[ConversationAnalyzer] Gemini API response received, length:', response.length);
 
       // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
+        console.error('[ConversationAnalyzer] No JSON found in response:', response.substring(0, 200));
         throw new Error('No valid JSON found in AI response');
       }
 
+      console.log('[ConversationAnalyzer] Parsing JSON from response...');
       const analysis = JSON.parse(jsonMatch[0]);
+      console.log('[ConversationAnalyzer] Parsed analysis:', {
+        hasCurrentPhase: !!analysis.currentPhase,
+        hasLeadProfile: !!analysis.leadProfile,
+        hasQualificationScore: !!analysis.qualificationScore,
+        currentPhase: analysis.currentPhase
+      });
 
       // Validate and enhance the analysis
-      return {
+      const result = {
         currentPhase: Number(analysis.currentPhase) || 1,
         leadProfile: {
           ...analysis.leadProfile,
@@ -277,8 +309,21 @@ Responde SOLO con el JSON, sin explicaciones adicionales.`;
         conversationMomentum: analysis.conversationMomentum || 'estancado',
         estimatedCloseProbability: analysis.estimatedCloseProbability || 0,
       };
+      
+      console.log('[ConversationAnalyzer] Final analysis result:', {
+        currentPhase: result.currentPhase,
+        summaryLength: result.summary?.length,
+        lastUserMessageLength: result.lastUserMessage?.length,
+        detectedIntent: result.detectedIntent
+      });
+      
+      return result;
     } catch (error) {
-      console.error('Error generating AI analysis:', error);
+      console.error('[ConversationAnalyzer] Error generating AI analysis:', error);
+      console.error(
+        '[ConversationAnalyzer] Error details:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       // Return minimal analysis on error
       return {

@@ -37,7 +37,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
   onEventClick,
   onDateClick,
   onEventHover,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'date' | 'calendar' | 'priority'>('date');
@@ -49,10 +49,10 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
     const extendedEnd = new Date(weekEnd);
     extendedEnd.setDate(extendedEnd.getDate() + 14); // Add 2 more weeks
-    
+
     return {
       start: weekStart,
-      end: extendedEnd
+      end: extendedEnd,
     };
   }, [currentDate]);
 
@@ -63,7 +63,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
       const colorId = calendar.color_id || '1';
       const colorMap = {
         '1': '#3b82f6', // blue
-        '2': '#ef4444', // red  
+        '2': '#ef4444', // red
         '3': '#f59e0b', // amber
         '4': '#10b981', // emerald
         '5': '#8b5cf6', // violet
@@ -92,7 +92,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
     filteredEvents.sort((a, b) => {
       const dateA = new Date(a.start_datetime);
       const dateB = new Date(b.start_datetime);
-      
+
       switch (sortBy) {
         case 'calendar':
           const calendarCompare = a.google_calendar_id.localeCompare(b.google_calendar_id);
@@ -113,7 +113,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
 
     // Group by date
     const grouped: GroupedEvents = {};
-    
+
     // Create entries for all days in range, even if no events
     const allDays = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
     allDays.forEach(day => {
@@ -121,7 +121,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
       grouped[dateKey] = {
         date: day,
         events: [],
-        isExpanded: expandedDays.has(dateKey) || isToday(day)
+        isExpanded: expandedDays.has(dateKey) || isToday(day),
       };
     });
 
@@ -129,7 +129,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
     filteredEvents.forEach(event => {
       const eventDate = new Date(event.start_datetime);
       const dateKey = format(eventDate, 'yyyy-MM-dd');
-      
+
       if (grouped[dateKey]) {
         grouped[dateKey].events.push(event);
       }
@@ -153,16 +153,17 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
   };
 
   const getDayDisplayClasses = (date: Date, hasEvents: boolean) => {
-    let classes = "flex items-center justify-between p-3 cursor-pointer transition-colors rounded-lg";
-    
+    let classes =
+      'flex items-center justify-between p-3 cursor-pointer transition-colors rounded-lg';
+
     if (isToday(date)) {
-      classes += " bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700";
+      classes += ' bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700';
     } else if (hasEvents) {
-      classes += " hover:bg-gray-50 dark:hover:bg-gray-700";
+      classes += ' hover:bg-gray-50 dark:hover:bg-gray-700';
     } else {
-      classes += " opacity-60 hover:bg-gray-50 dark:hover:bg-gray-700";
+      classes += ' opacity-60 hover:bg-gray-50 dark:hover:bg-gray-700';
     }
-    
+
     return classes;
   };
 
@@ -172,14 +173,13 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Vista Agenda
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Vista Agenda</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {format(dateRange.start, 'dd MMM', { locale: es })} - {format(dateRange.end, 'dd MMM yyyy', { locale: es })}
+              {format(dateRange.start, 'dd MMM', { locale: es })} -{' '}
+              {format(dateRange.end, 'dd MMM yyyy', { locale: es })}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {getTotalEventsCount()} eventos
@@ -193,7 +193,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
             <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              onChange={e => setSortBy(e.target.value as typeof sortBy)}
               className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="date">Por fecha</option>
@@ -204,7 +204,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
 
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+            onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
             className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             <option value="all">Todos los estados</option>
@@ -236,11 +236,14 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
             {Object.entries(groupedEvents).map(([dateKey, dayData]) => {
               const hasEvents = dayData.events.length > 0;
               const isExpanded = dayData.isExpanded;
-              
+
               return (
-                <div key={dateKey} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div
+                  key={dateKey}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                >
                   {/* Day header */}
-                  <div 
+                  <div
                     className={getDayDisplayClasses(dayData.date, hasEvents)}
                     onClick={() => {
                       if (hasEvents) {
@@ -251,19 +254,23 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`text-lg font-semibold ${
-                        isToday(dayData.date) 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}>
+                      <div
+                        className={`text-lg font-semibold ${
+                          isToday(dayData.date)
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                      >
                         {format(dayData.date, 'd')}
                       </div>
                       <div>
-                        <div className={`font-medium ${
-                          isToday(dayData.date) 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-900 dark:text-gray-100'
-                        }`}>
+                        <div
+                          className={`font-medium ${
+                            isToday(dayData.date)
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : 'text-gray-900 dark:text-gray-100'
+                          }`}
+                        >
                           {format(dayData.date, 'EEEE', { locale: es })}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -279,11 +286,17 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
 
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {hasEvents ? `${dayData.events.length} evento${dayData.events.length !== 1 ? 's' : ''}` : 'Sin eventos'}
+                        {hasEvents
+                          ? `${dayData.events.length} evento${dayData.events.length !== 1 ? 's' : ''}`
+                          : 'Sin eventos'}
                       </span>
                       {hasEvents && (
                         <div className="text-gray-400 dark:text-gray-500">
-                          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
                         </div>
                       )}
                     </div>

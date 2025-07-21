@@ -28,15 +28,15 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
   calendarColors,
   hourHeight,
   onEventClick,
-  onEventHover
+  onEventHover,
 }) => {
   // Calculate positioned events with advanced collision detection for day view
   const positionedEvents = useMemo((): PositionedEvent[] => {
     if (events.length === 0) return [];
 
     // Sort events by start time
-    const sortedEvents = [...events].sort((a, b) => 
-      new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime()
+    const sortedEvents = [...events].sort(
+      (a, b) => new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime(),
     );
 
     const positioned: PositionedEvent[] = [];
@@ -45,12 +45,12 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
     sortedEvents.forEach(event => {
       const start = new Date(event.start_datetime);
       const end = new Date(event.end_datetime);
-      
+
       // Calculate position in pixels
       const startHour = start.getHours() + start.getMinutes() / 60;
       const endHour = end.getHours() + end.getMinutes() / 60;
       const duration = endHour - startHour;
-      
+
       const top = startHour * hourHeight;
       const height = Math.max(duration * hourHeight, 30); // Minimum 30px height for day view
 
@@ -58,17 +58,17 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
       let columnIndex = 0;
       const eventStart = start.getTime();
       const eventEnd = end.getTime();
-      
+
       while (columnIndex < columns.length) {
         const column = columns[columnIndex];
         // Check if this event overlaps with any event in this column
         const hasOverlap = column.events.some(existingEvent => {
           const existingStart = new Date(existingEvent.event.start_datetime).getTime();
           const existingEnd = new Date(existingEvent.event.end_datetime).getTime();
-          
+
           return !(eventEnd <= existingStart || eventStart >= existingEnd);
         });
-        
+
         if (!hasOverlap) {
           break;
         }
@@ -93,12 +93,12 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
         height,
         left,
         width: columnWidth,
-        zIndex: 10 + columnIndex
+        zIndex: 10 + columnIndex,
       };
 
       positioned.push(positionedEvent);
       columns[columnIndex].events.push(positionedEvent);
-      
+
       // Update column boundaries
       columns[columnIndex].start = Math.min(columns[columnIndex].start, eventStart);
       columns[columnIndex].end = Math.max(columns[columnIndex].end, eventEnd);
@@ -136,16 +136,14 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
                 style={{
                   backgroundColor: `${calendarColors.get(event.google_calendar_id) || '#3b82f6'}20`,
                   borderLeft: `3px solid ${calendarColors.get(event.google_calendar_id) || '#3b82f6'}`,
-                  color: calendarColors.get(event.google_calendar_id) || '#3b82f6'
+                  color: calendarColors.get(event.google_calendar_id) || '#3b82f6',
                 }}
-                onClick={(e) => handleEventClick(event, e)}
+                onClick={e => handleEventClick(event, e)}
                 onMouseEnter={() => handleEventHover(event.id)}
                 onMouseLeave={() => handleEventHover(null)}
               >
                 <span className="font-medium">{event.title}</span>
-                {event.location && (
-                  <span className="ml-2 opacity-75">📍 {event.location}</span>
-                )}
+                {event.location && <span className="ml-2 opacity-75">📍 {event.location}</span>}
               </div>
             ))}
           </div>
@@ -153,10 +151,10 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
       )}
 
       {/* Timed events */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none"
-        style={{ 
-          top: allDayEvents.length > 0 ? `${60 + allDayEvents.length * 24}px` : '0px' 
+        style={{
+          top: allDayEvents.length > 0 ? `${60 + allDayEvents.length * 24}px` : '0px',
         }}
       >
         {timedEvents.map(({ event, top, height, left, width, zIndex }) => (
@@ -168,7 +166,7 @@ export const DayViewEvents: React.FC<DayViewEventsProps> = ({
               height: `${height}px`,
               left: `${left}%`,
               width: `${width}%`,
-              zIndex: selectedEvents.has(event.id) ? zIndex + 100 : zIndex
+              zIndex: selectedEvents.has(event.id) ? zIndex + 100 : zIndex,
             }}
           >
             <WeekViewEvent

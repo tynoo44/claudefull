@@ -2,11 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { googleCalendarService } from '../lib/google-calendar';
 import { useAuth } from '../contexts/AuthContext';
-import type {
-  CreateEventRequest,
-  UpdateEventRequest,
-  CalendarView,
-} from '../types/calendar';
+import type { CreateEventRequest, UpdateEventRequest, CalendarView } from '../types/calendar';
 import {
   format,
   startOfMonth,

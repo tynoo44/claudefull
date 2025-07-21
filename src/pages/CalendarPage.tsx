@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Calendar,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Settings,
-  RefreshCw,
-} from 'lucide-react';
+import { Calendar, Plus, ChevronLeft, ChevronRight, Settings, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useCalendar } from '../hooks/useCalendar';

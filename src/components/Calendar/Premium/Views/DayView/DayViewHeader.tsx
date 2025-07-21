@@ -15,14 +15,14 @@ export const DayViewHeader: React.FC<DayViewHeaderProps> = ({
   date,
   events,
   onDateClick,
-  isToday
+  isToday,
 }) => {
   // Calculate day statistics
   const totalEvents = events.length;
   const allDayEvents = events.filter(e => e.is_all_day).length;
   const eventsWithAttendees = events.filter(e => e.attendees && e.attendees.length > 0).length;
   const eventsWithLocation = events.filter(e => e.location).length;
-  
+
   // Calculate total meeting time
   const totalMeetingMinutes = events.reduce((total, event) => {
     if (event.is_all_day) return total;
@@ -31,7 +31,7 @@ export const DayViewHeader: React.FC<DayViewHeaderProps> = ({
     return total + (end.getTime() - start.getTime()) / (1000 * 60);
   }, 0);
 
-  const totalMeetingHours = Math.round(totalMeetingMinutes / 60 * 10) / 10;
+  const totalMeetingHours = Math.round((totalMeetingMinutes / 60) * 10) / 10;
 
   // Get upcoming event
   const now = new Date();
@@ -55,24 +55,24 @@ export const DayViewHeader: React.FC<DayViewHeaderProps> = ({
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
       {/* Main Date Display */}
       <div className="flex items-center justify-between mb-4">
-        <div 
+        <div
           className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
           onClick={() => onDateClick(date)}
         >
           <div className="flex items-center space-x-3">
-            <div className={`text-4xl font-bold ${
-              isToday 
-                ? 'text-blue-600 dark:text-blue-400' 
-                : 'text-gray-900 dark:text-gray-100'
-            }`}>
+            <div
+              className={`text-4xl font-bold ${
+                isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'
+              }`}
+            >
               {format(date, 'd')}
             </div>
             <div>
-              <div className={`text-lg font-semibold ${
-                isToday 
-                  ? 'text-blue-600 dark:text-blue-400' 
-                  : 'text-gray-900 dark:text-gray-100'
-              }`}>
+              <div
+                className={`text-lg font-semibold ${
+                  isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'
+                }`}
+              >
                 {format(date, 'EEEE', { locale: es })}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">

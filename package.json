@@ -5,7 +5,7 @@
   "description": "Plataforma SaaS para Appointment Setting y gestión de leads",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc && vite build",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",

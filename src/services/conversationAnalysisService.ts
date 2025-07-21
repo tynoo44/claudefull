@@ -59,22 +59,31 @@ class ConversationAnalysisService {
   private analysisQueue: Set<string> = new Set();
   private priorityQueue: Set<string> = new Set(); // High priority conversations (currently active)
   private isRunning = false;
+  private isProcessing = false;
   private analysisInterval: NodeJS.Timeout | null = null;
   private messageDelay = 2 * 60 * 1000; // 2 minutos
   private readonly MAX_CONCURRENT_ANALYSIS = 3; // Process up to 3 conversations simultaneously
+  private readonly MAX_CONCURRENT_ANALYSES = 3; // Alias for consistency
   private currentlyProcessing: Set<string> = new Set();
+  private activeAnalyses: Set<string> = new Set();
 
   // Iniciar el servicio de análisis
   start() {
-    if (this.isRunning) return;
+    if (this.isRunning) {
+      console.log('Analysis service already running');
+      return;
+    }
 
+    console.log('Starting analysis service...');
     this.isRunning = true;
     // Ejecutar cada 30 segundos
     this.analysisInterval = setInterval(() => {
+      console.log('Running scheduled analysis queue processing...');
       this.processAnalysisQueue();
     }, 30000);
 
     // Ejecutar inmediatamente
+    console.log('Running immediate analysis queue processing...');
     this.processAnalysisQueue();
   }
 
@@ -87,36 +96,6 @@ class ConversationAnalysisService {
     }
   }
 
-  // Priorizar una conversación específica (cuando el usuario abre el chat)
-  prioritizeConversation(conversationId: string) {
-    this.priorityQueue.add(conversationId);
-    this.analysisQueue.delete(conversationId); // Remove from normal queue if present
-    
-    // Ejecutar análisis inmediatamente para conversaciones priorizadas
-    if (!this.currentlyProcessing.has(conversationId)) {
-      this.analyzeConversation(conversationId, true);
-    }
-  }
-
-  // Nuevo método: Solicitar análisis manual (botón refrescar)
-  async refreshAnalysis(conversationId: string): Promise<boolean> {
-    try {
-      await this.analyzeConversation(conversationId, true);
-      return true;
-    } catch (error) {
-      console.error('Error in manual refresh:', error);
-      return false;
-    }
-  }
-
-  // Nuevo método: Obtener estado del análisis
-  getAnalysisStatus(conversationId: string): 'processing' | 'queued' | 'priority' | 'idle' {
-    if (this.currentlyProcessing.has(conversationId)) return 'processing';
-    if (this.priorityQueue.has(conversationId)) return 'priority';
-    if (this.analysisQueue.has(conversationId)) return 'queued';
-    return 'idle';
-  }
-
   // Procesar la cola de análisis con sistema de prioridades
   private async processAnalysisQueue() {
     if (!this.isRunning) return;
@@ -124,7 +103,7 @@ class ConversationAnalysisService {
     try {
       // Procesar cola de prioridad primero
       await this.processPriorityQueue();
-      
+
       // Luego procesar cola normal si no estamos al límite
       if (this.currentlyProcessing.size < this.MAX_CONCURRENT_ANALYSIS) {
         await this.processNormalQueue();
@@ -137,10 +116,10 @@ class ConversationAnalysisService {
   // Procesar conversaciones de alta prioridad (chats activos)
   private async processPriorityQueue() {
     const priorityArray = Array.from(this.priorityQueue);
-    
+
     for (const conversationId of priorityArray) {
       if (!this.isRunning || this.currentlyProcessing.size >= this.MAX_CONCURRENT_ANALYSIS) break;
-      
+
       if (!this.currentlyProcessing.has(conversationId)) {
         this.priorityQueue.delete(conversationId);
         this.analyzeConversation(conversationId, true); // No await - process in parallel
@@ -170,9 +149,12 @@ class ConversationAnalysisService {
         if (!this.isRunning || this.currentlyProcessing.size >= this.MAX_CONCURRENT_ANALYSIS) break;
 
         const conversationId = conv.conversation_id;
-        
+
         // Skip if already processing or in priority queue
-        if (this.currentlyProcessing.has(conversationId) || this.priorityQueue.has(conversationId)) {
+        if (
+          this.currentlyProcessing.has(conversationId) ||
+          this.priorityQueue.has(conversationId)
+        ) {
           continue;
         }
 
@@ -193,9 +175,18 @@ class ConversationAnalysisService {
 
   // Analizar una conversación específica
   private async analyzeConversation(conversationId: string, isPriority = false) {
+    // Validate conversationId
+    if (!conversationId || conversationId === 'undefined') {
+      console.error('Invalid conversationId received:', conversationId);
+      console.trace(); // Show stack trace to find where this is coming from
+      return;
+    }
+
+    console.log(`Starting analysis for conversation: ${conversationId}, isPriority: ${isPriority}`);
+
     // Mark as processing
     this.currentlyProcessing.add(conversationId);
-    
+
     try {
       // Obtener mensajes de la conversación
       const { data: messages, error: messagesError } = await supabase
@@ -204,9 +195,17 @@ class ConversationAnalysisService {
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (messagesError || !messages || messages.length === 0) {
+      if (messagesError) {
+        console.error(`Error fetching messages for ${conversationId}:`, messagesError);
         return;
       }
+
+      if (!messages || messages.length === 0) {
+        console.log(`No messages found for conversation ${conversationId}`);
+        return;
+      }
+
+      console.log(`Found ${messages.length} messages for conversation ${conversationId}`);
 
       // Obtener información de la conversación y el lead
       const { data: conversation } = await supabase
@@ -240,16 +239,29 @@ class ConversationAnalysisService {
       const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text));
 
       // Análisis completo de la conversación
-      const conversationAnalysis = await ConversationAnalyzer.analyzeConversation(
-        aiMessages as { role: string; content: string }[],
-        conversation.current_phase,
-      );
+      console.log(`Calling ConversationAnalyzer.analyzeConversation for ${conversationId}`);
+      const conversationAnalysis = await ConversationAnalyzer.analyzeConversation({
+        conversationId,
+        leadId: conversation.lead_id,
+        messages,
+        forceReanalyze: true,
+      });
 
-      // Generar análisis enriquecido con IA
+      // Check if conversation analysis was successful
+      if (!conversationAnalysis.success) {
+        console.log(
+          `ConversationAnalyzer failed for ${conversationId}: ${conversationAnalysis.error}`,
+        );
+        return;
+      }
+
+      console.log(`ConversationAnalyzer successful for ${conversationId}`);
+
+      // Generar análisis enriquecido con IA usando la memoria actualizada
       const enrichedAnalysis = await this.generateEnrichedAnalysis(
         messages,
         conversation,
-        conversationAnalysis,
+        conversationAnalysis.memory || null,
         intent,
         leadProfile,
       );
@@ -265,8 +277,8 @@ class ConversationAnalysisService {
         warnings: enrichedAnalysis.warnings,
         action_threads: enrichedAnalysis.action_threads,
         urgency_score: intent?.urgencyLevel || 5,
-        capacity_score: conversationAnalysis.qualification.capacityToPay * 10,
-        engagement_score: conversationAnalysis.qualification.engagementLevel * 10,
+        capacity_score: (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
+        engagement_score: (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
       };
 
       // Guardar en la base de datos
@@ -296,7 +308,8 @@ class ConversationAnalysisService {
     } finally {
       // Always remove from processing set
       this.currentlyProcessing.delete(conversationId);
-      
+      this.activeAnalyses.delete(conversationId);
+
       // Remove from queues if completed
       this.priorityQueue.delete(conversationId);
       this.analysisQueue.delete(conversationId);
@@ -304,7 +317,10 @@ class ConversationAnalysisService {
   }
 
   // Analizar sentimientos de los mensajes
-  private analyzeSentiments(messages: { text: string; sender_type: string }[]): { overall: number; timeline: Array<{ timestamp: Date; score: number; emotion: string }> } {
+  private analyzeSentiments(messages: { text: string; sender_type: string }[]): {
+    overall: number;
+    timeline: Array<{ timestamp: Date; score: number; emotion: string }>;
+  } {
     const _sentimentMap = {
       muy_positivo: 1,
       positivo: 0.5,
@@ -358,12 +374,40 @@ class ConversationAnalysisService {
 
   // Generar análisis enriquecido con IA
   private async generateEnrichedAnalysis(
-    messages: unknown[],
-    conversation: unknown,
-    baseAnalysis: unknown,
-    intent: unknown,
-    leadProfile: unknown,
+    messages: any[],
+    conversation: any,
+    conversationMemory: any,
+    intent: any,
+    leadProfile: any,
   ): Promise<any> {
+    console.log('generateEnrichedAnalysis called with:', {
+      messagesCount: messages?.length,
+      conversationId: conversation?.id,
+      hasMemory: !!conversationMemory,
+      intent: intent?.primaryIntent,
+      leadProfile: leadProfile?.type,
+    });
+
+    // Validate conversation memory structure
+    if (!conversationMemory) {
+      console.error('No conversation memory available for enriched analysis');
+      // Return a default structure
+      return {
+        analysis_data: {
+          summary: 'Análisis básico - memoria no disponible',
+          current_phase: conversation?.current_phase || 1,
+          phase_details: {},
+          sentiment_timeline: [],
+          overall_sentiment: 'neutral',
+          key_moments: [],
+        },
+        phase_progress: {},
+        key_insights: ['Memoria de conversación no disponible'],
+        warnings: ['Análisis limitado sin contexto previo'],
+        action_threads: [],
+      };
+    }
+
     const prompt = `
 Analiza esta conversación de ventas y proporciona un análisis PROFESIONAL y ACCIONABLE.
 
@@ -372,9 +416,9 @@ ${messages.map(m => `${m.sender_type}: ${m.text}`).join('\n')}
 
 ANÁLISIS BASE:
 - Fase actual: ${conversation.current_phase}
-- Cualificación: ${baseAnalysis.qualification.score}
+- Cualificación: ${conversationMemory.qualification_score?.score || 0}
 - Intención detectada: ${intent?.primaryIntent || 'general'}
-- Perfil del lead: ${leadProfile.type}
+- Perfil del lead: ${leadProfile?.type || 'unknown'}
 
 NECESITO:
 
@@ -401,6 +445,9 @@ NECESITO:
 Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
 
     try {
+      console.log('About to call generateAIResponse with DEFAULT_MODEL:', DEFAULT_MODEL);
+      console.log('Prompt length:', prompt.length);
+
       const response = await generateAIResponse({
         messages: [
           {
@@ -411,16 +458,25 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
         model: DEFAULT_MODEL, // Use Gemini-2.5-Pro as default
       });
 
+      console.log('generateAIResponse returned:', response ? 'response received' : 'no response');
+
       // Parsear la respuesta JSON
-      return JSON.parse(response);
+      const parsed = JSON.parse(response);
+      console.log('Successfully parsed AI response');
+      return parsed;
     } catch (error) {
+      console.error('Error in generateEnrichedAnalysis:', error);
       // Fallback a análisis básico si falla la IA
-      return this.generateBasicAnalysis(messages, conversation, baseAnalysis);
+      return this.generateBasicAnalysis(messages, conversation, conversationMemory);
     }
   }
 
   // Generar análisis básico como fallback
-  private generateBasicAnalysis(messages: unknown[], conversation: unknown, baseAnalysis: unknown): unknown {
+  private generateBasicAnalysis(
+    messages: unknown[],
+    conversation: unknown,
+    conversationMemory: unknown,
+  ): unknown {
     return {
       analysis_data: {
         summary: `Conversación en fase ${conversation.current_phase}`,
@@ -438,7 +494,10 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
   }
 
   // Generar detalles de fases
-  private generatePhaseDetails(messages: unknown[], currentPhase: number): Record<number, PhaseDetail> {
+  private generatePhaseDetails(
+    messages: unknown[],
+    currentPhase: number,
+  ): Record<number, PhaseDetail> {
     const phases: Record<number, PhaseDetail> = {};
 
     for (let i = 1; i <= 5; i++) {
@@ -483,7 +542,12 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
   }
 
   // Actualizar lead basado en el análisis
-  private async updateLeadFromAnalysis(leadId: string, analysis: unknown) {
+  private async updateLeadFromAnalysis(leadId: string, analysis: any) {
+    if (!leadId || leadId === 'undefined') {
+      console.error('Invalid leadId in updateLeadFromAnalysis:', leadId);
+      return;
+    }
+
     try {
       // Determinar si hay cambios significativos
       const updates: unknown = {};
@@ -547,6 +611,130 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
     } catch (error) {
       console.error('Error updating lead from analysis:', error);
     }
+  }
+
+  // Start background analysis process
+  async startBackgroundAnalysis() {
+    console.log('Starting background conversation analysis...');
+    this.isProcessing = true;
+    
+    // Also ensure the old system is running
+    this.start();
+    
+    // Start the new queue processing
+    this.processQueue();
+  }
+
+  // Stop background analysis
+  stopBackgroundAnalysis() {
+    console.log('Stopping background conversation analysis...');
+    this.isProcessing = false;
+    this.analysisQueue.clear();
+    this.priorityQueue.clear();
+    
+    // Also stop the old system
+    this.stop();
+  }
+
+  // Process the analysis queue
+  private async processQueue() {
+    while (this.isProcessing) {
+      try {
+        // Check for conversations needing analysis
+        const { data: conversations, error } = await supabase
+          .rpc('get_conversations_needing_analysis')
+          .limit(50);
+
+        if (error) {
+          console.error('Error fetching conversations for analysis:', error);
+        } else if (conversations && conversations.length > 0) {
+          console.log(`Found ${conversations.length} conversations needing analysis`);
+
+          // Add to queue if not already there
+          for (const conv of conversations) {
+            if (!this.analysisQueue.has(conv.conversation_id)) {
+              this.analysisQueue.add(conv.conversation_id);
+            }
+          }
+        }
+
+        // Process priority queue first (active conversations)
+        const priorityArray = Array.from(this.priorityQueue);
+        for (const conversationId of priorityArray) {
+          if (this.activeAnalyses.size < this.MAX_CONCURRENT_ANALYSES && conversationId) {
+            this.priorityQueue.delete(conversationId);
+            this.analysisQueue.delete(conversationId); // Remove from normal queue if present
+            this.activeAnalyses.add(conversationId);
+            this.analyzeConversation(conversationId, true);
+          }
+        }
+
+        // Then process normal queue
+        const queueArray = Array.from(this.analysisQueue);
+        for (const conversationId of queueArray) {
+          if (this.activeAnalyses.size < this.MAX_CONCURRENT_ANALYSES && conversationId) {
+            this.analysisQueue.delete(conversationId);
+            this.activeAnalyses.add(conversationId);
+            this.analyzeConversation(conversationId, false);
+          }
+        }
+
+        // Wait before next check (30 seconds if queue is empty, 5 seconds if processing)
+        const waitTime =
+          this.analysisQueue.size === 0 && this.priorityQueue.size === 0 ? 30000 : 5000;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      } catch (error) {
+        console.error('Error in background analysis process:', error);
+        await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10s on error
+      }
+    }
+  }
+
+  // Prioritize a conversation for immediate analysis
+  prioritizeConversation(conversationId: string) {
+    this.priorityQueue.add(conversationId);
+    console.log(`Prioritized conversation ${conversationId} for analysis`);
+  }
+
+  // Manually refresh analysis for a conversation
+  async refreshAnalysis(conversationId: string): Promise<AnalysisResult | null> {
+    if (!conversationId) {
+      console.error('Cannot refresh analysis: conversationId is undefined');
+      return null;
+    }
+
+    // Add validation and proper handling
+    this.activeAnalyses.add(conversationId);
+
+    try {
+      // Call the private method and wait for result
+      await this.analyzeConversation(conversationId, true);
+
+      // Fetch the analysis result from database
+      const { data: analysis } = await supabase
+        .from('conversation_analysis')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .single();
+
+      return analysis as AnalysisResult;
+    } catch (error) {
+      console.error('Error refreshing analysis:', error);
+      return null;
+    } finally {
+      this.activeAnalyses.delete(conversationId);
+    }
+  }
+
+  // Get analysis status
+  getAnalysisStatus() {
+    return {
+      isProcessing: this.isProcessing,
+      queueSize: this.analysisQueue.size,
+      priorityQueueSize: this.priorityQueue.size,
+      activeAnalyses: this.activeAnalyses.size,
+      maxConcurrent: this.MAX_CONCURRENT_ANALYSES,
+    };
   }
 }
 

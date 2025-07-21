@@ -293,7 +293,7 @@
         "description": "Build the core calendar grid components supporting multiple view modes (month, week, day, agenda). Implement responsive design with Tailwind CSS and proper event rendering.",
         "details": "Create CalendarGrid, CalendarMonth, CalendarWeek, CalendarDay components with proper date navigation, event positioning, and view switching. Ensure mobile responsiveness and accessibility.",
         "testStrategy": "",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           79
         ],
@@ -306,7 +306,7 @@
         "description": "Implement advanced drag & drop functionality for calendar events including drag to move, resize events, and create new events by dragging. Add conflict detection and visual feedback.",
         "details": "Use React DnD or native HTML5 drag/drop API. Implement optimistic updates, conflict resolution, and smooth animations. Support cross-calendar dragging and time slot snapping.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           80
         ],
@@ -437,7 +437,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-21T02:55:13.640Z",
+      "updated": "2025-07-21T03:52:57.957Z",
       "description": "Tasks for master context"
     }
   }

@@ -47,7 +47,9 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
 
           {/* Features Preview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Zap className="h-5 w-5 text-blue-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -59,7 +61,9 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Users className="h-5 w-5 text-green-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -71,7 +75,9 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Star className="h-5 w-5 text-purple-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -83,7 +89,9 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Calendar className="h-5 w-5 text-orange-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -98,7 +106,9 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
         </div>
 
         {/* Premium Calendar Component */}
-        <div className={`rounded-lg shadow-sm border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} h-[800px]`}>
+        <div
+          className={`rounded-lg shadow-sm border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} h-[800px]`}
+        >
           <PremiumCalendarProvider initialView="month" initialDate={new Date()}>
             <PremiumCalendarGrid
               onEventClick={handleEventClick}
@@ -110,8 +120,12 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
 
         {/* Implementation Status */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className={`p-6 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div
+            className={`p-6 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
+            <h3
+              className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}
+            >
               ✅ Características Implementadas
             </h3>
             <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -127,8 +141,12 @@ export const PremiumCalendarDemo: React.FC<PremiumCalendarDemoProps> = ({ darkMo
             </ul>
           </div>
 
-          <div className={`p-6 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div
+            className={`p-6 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
+            <h3
+              className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}
+            >
               🚧 Próximas Características
             </h3>
             <ul className={`space-y-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>

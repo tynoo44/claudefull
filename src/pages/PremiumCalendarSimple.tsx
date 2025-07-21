@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { Calendar, Star, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isToday,
+  isSameDay,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface PremiumCalendarSimpleProps {
@@ -21,15 +31,15 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
       title: 'Reunión con cliente',
       start: new Date(2025, 0, 25, 10, 0),
       end: new Date(2025, 0, 25, 11, 0),
-      color: '#3b82f6'
+      color: '#3b82f6',
     },
     {
       id: '2',
       title: 'Presentación proyecto',
       start: new Date(2025, 0, 27, 14, 0),
       end: new Date(2025, 0, 27, 15, 30),
-      color: '#ef4444'
-    }
+      color: '#ef4444',
+    },
   ];
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -45,16 +55,17 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
       <div className="grid grid-cols-7 gap-1 p-4">
         {/* Headers */}
         {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-          <div key={day} className={`p-3 text-center font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div
+            key={day}
+            className={`p-3 text-center font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             {day}
           </div>
         ))}
-        
+
         {/* Days */}
         {days.map(day => {
-          const dayEvents = sampleEvents.filter(event => 
-            isSameDay(event.start, day)
-          );
+          const dayEvents = sampleEvents.filter(event => isSameDay(event.start, day));
 
           return (
             <div
@@ -68,10 +79,12 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
                 ${selectedDate && isSameDay(day, selectedDate) ? 'ring-2 ring-blue-500' : ''}
               `}
             >
-              <div className={`font-medium mb-1 ${isToday(day) ? 'text-blue-600 dark:text-blue-400' : darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div
+                className={`font-medium mb-1 ${isToday(day) ? 'text-blue-600 dark:text-blue-400' : darkMode ? 'text-white' : 'text-gray-900'}`}
+              >
                 {format(day, 'd')}
               </div>
-              
+
               {/* Events */}
               <div className="space-y-1">
                 {dayEvents.map(event => (
@@ -100,7 +113,10 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
       </div>
       <div className="grid grid-cols-7 gap-4 mt-8">
         {Array.from({ length: 7 }, (_, i) => (
-          <div key={i} className={`p-4 border rounded-lg ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+          <div
+            key={i}
+            className={`p-4 border rounded-lg ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}
+          >
             <div className="font-semibold mb-2">Día {i + 1}</div>
             <div className="text-sm opacity-75">Coming soon...</div>
           </div>
@@ -117,9 +133,14 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
       <div className="mt-8 text-left max-w-md mx-auto">
         <div className="space-y-2">
           {sampleEvents.map(event => (
-            <div key={event.id} className={`p-3 rounded-lg border ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+            <div
+              key={event.id}
+              className={`p-3 rounded-lg border ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}
+            >
               <div className="font-medium">{event.title}</div>
-              <div className="text-sm opacity-75">{format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}</div>
+              <div className="text-sm opacity-75">
+                {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
+              </div>
             </div>
           ))}
         </div>
@@ -134,11 +155,15 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
       <p>Lista cronológica de todos los eventos</p>
       <div className="mt-8 text-left max-w-lg mx-auto space-y-3">
         {sampleEvents.map(event => (
-          <div key={event.id} className={`p-4 rounded-lg border-l-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`} 
-               style={{ borderLeftColor: event.color }}>
+          <div
+            key={event.id}
+            className={`p-4 rounded-lg border-l-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            style={{ borderLeftColor: event.color }}
+          >
             <div className="font-semibold">{event.title}</div>
             <div className="text-sm opacity-75 mt-1">
-              {format(event.start, 'dd MMM yyyy, HH:mm', { locale: es })} - {format(event.end, 'HH:mm')}
+              {format(event.start, 'dd MMM yyyy, HH:mm', { locale: es })} -{' '}
+              {format(event.end, 'HH:mm')}
             </div>
           </div>
         ))}
@@ -188,7 +213,9 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
 
           {/* Features Preview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Zap className="h-5 w-5 text-blue-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -200,7 +227,9 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Users className="h-5 w-5 text-green-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -212,7 +241,9 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Star className="h-5 w-5 text-purple-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -224,7 +255,9 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            <div
+              className={`p-4 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="flex items-center space-x-2 mb-2">
                 <Calendar className="h-5 w-5 text-orange-600" />
                 <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -239,7 +272,9 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
         </div>
 
         {/* Calendar Interface */}
-        <div className={`rounded-lg shadow-sm border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div
+          className={`rounded-lg shadow-sm border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+        >
           {/* Calendar Header */}
           <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="flex items-center justify-between">
@@ -251,11 +286,13 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                
-                <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+
+                <h2
+                  className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                >
                   {format(currentDate, 'MMMM yyyy', { locale: es })}
                 </h2>
-                
+
                 <button
                   onClick={() => navigateMonth('next')}
                   className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${darkMode ? 'text-white' : 'text-gray-700'}`}
@@ -270,7 +307,7 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
                   { key: 'month', label: 'Mes' },
                   { key: 'week', label: 'Semana' },
                   { key: 'day', label: 'Día' },
-                  { key: 'agenda', label: 'Agenda' }
+                  { key: 'agenda', label: 'Agenda' },
                 ].map(view => (
                   <button
                     key={view.key}
@@ -289,15 +326,14 @@ export const PremiumCalendarSimple: React.FC<PremiumCalendarSimpleProps> = ({ da
           </div>
 
           {/* Calendar Content */}
-          <div className="min-h-[600px]">
-            {renderCurrentView()}
-          </div>
+          <div className="min-h-[600px]">{renderCurrentView()}</div>
         </div>
 
         {/* Status */}
         <div className="mt-8 text-center">
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            ✅ Nueva interfaz premium implementada • Vista actual: <span className="font-semibold">{currentView}</span>
+            ✅ Nueva interfaz premium implementada • Vista actual:{' '}
+            <span className="font-semibold">{currentView}</span>
           </p>
         </div>
       </div>
