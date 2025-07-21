@@ -11,6 +11,7 @@ export interface KeyPhrase {
 
 export interface ResponseValidationResult {
   score: number; // 0.0 to 1.0
+  isValid: boolean; // Whether the response meets minimum requirements
   matchedKeyPhrases: Array<{
     phrase: string;
     matchConfidence: number;
@@ -465,6 +466,7 @@ export function calculateAlignmentScore(
 
   return {
     score: finalScore,
+    isValid: finalScore >= config.minScore,
     matchedKeyPhrases: matchedPhrases,
     missingKeyPhrases: missingPhrases,
     suggestions,
@@ -493,6 +495,7 @@ export async function validateResponseAlignment(
       // No templates found for validation
       return {
         score: 1.0, // Default to pass if no templates
+        isValid: true,
         matchedKeyPhrases: [],
         missingKeyPhrases: [],
         suggestions: ['No hay templates disponibles para validar esta fase.'],
@@ -513,6 +516,7 @@ export async function validateResponseAlignment(
       // No key phrases extracted
       return {
         score: 1.0,
+        isValid: true,
         matchedKeyPhrases: [],
         missingKeyPhrases: [],
         suggestions: ['No se pudieron extraer frases clave de los templates.'],
@@ -596,6 +600,7 @@ export async function validateResponseAlignment(
     // Return neutral result on error
     return {
       score: 0.5,
+      isValid: false,
       matchedKeyPhrases: [],
       missingKeyPhrases: [],
       suggestions: ['Error al validar la respuesta. Procediendo con precaución.'],

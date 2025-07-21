@@ -60,7 +60,7 @@ class ConversationAnalysisService {
   private priorityQueue: Set<string> = new Set(); // High priority conversations (currently active)
   private isRunning = false;
   private isProcessing = false;
-  private analysisInterval: NodeJS.Timeout | null = null;
+  private analysisInterval: ReturnType<typeof setTimeout> | null = null;
   private messageDelay = 30 * 1000; // 30 segundos (reducido de 2 minutos)
   private readonly MAX_CONCURRENT_ANALYSIS = 5; // Process up to 5 conversations simultaneously
   private readonly MAX_CONCURRENT_ANALYSES = 5; // Alias for consistency
@@ -240,11 +240,11 @@ class ConversationAnalysisService {
         hasLeadData: !!conversation.leads,
       });
 
-      // Preparar mensajes para análisis
-      const aiMessages = messages.map(msg => ({
-        role: msg.sender_type === 'setter' ? 'assistant' : 'user',
-        content: msg.text,
-      }));
+      // Preparar mensajes para análisis - commented out for now
+      // const aiMessages = messages.map(msg => ({
+      //   role: msg.sender_type === 'setter' ? 'assistant' : 'user',
+      //   content: msg.text,
+      // }));
 
       // Análisis de sentimientos y emociones
       const sentimentAnalysis = this.analyzeSentiments(messages);
@@ -350,13 +350,13 @@ class ConversationAnalysisService {
     overall: number;
     timeline: Array<{ timestamp: Date; score: number; emotion: string }>;
   } {
-    const _sentimentMap = {
-      muy_positivo: 1,
-      positivo: 0.5,
-      neutral: 0,
-      negativo: -0.5,
-      muy_negativo: -1,
-    };
+    // const _sentimentMap = {
+    //   muy_positivo: 1,
+    //   positivo: 0.5,
+    //   neutral: 0,
+    //   negativo: -0.5,
+    //   muy_negativo: -1,
+    // };
 
     const emotionKeywords = {
       frustración: ['frustrado', 'harto', 'cansado', 'difícil', 'problema', 'no puedo'],
@@ -387,7 +387,7 @@ class ConversationAnalysisService {
       }
 
       return {
-        message_id: msg.id || 'unknown',
+        message_id: (msg as any).id || `msg-${index}`,
         score,
         emotion,
       };
@@ -397,24 +397,29 @@ class ConversationAnalysisService {
 
     return {
       overall,
+      timeline: byMessage.map((msg, index) => ({
+        timestamp: new Date(),
+        score: msg.score,
+        emotion: msg.emotion,
+      })),
       by_message: byMessage,
     };
   }
 
   // Generar análisis enriquecido con IA
   private async generateEnrichedAnalysis(
-    messages: any[],
+    _messages: any[],
     conversation: any,
     conversationMemory: any,
     intent: any,
-    leadProfile: any,
+    _leadProfile: any,
   ): Promise<any> {
     console.log('generateEnrichedAnalysis called with:', {
-      messagesCount: messages?.length,
+      messagesCount: _messages?.length,
       conversationId: conversation?.id,
       hasMemory: !!conversationMemory,
       intent: intent?.primaryIntent,
-      leadProfile: leadProfile?.type,
+      leadProfile: _leadProfile?.type,
     });
 
     // Validate conversation memory structure
@@ -528,7 +533,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Generar análisis básico como fallback
-  private generateBasicAnalysis(messages: any[], conversation: any, conversationMemory: any): any {
+  private generateBasicAnalysis(messages: any[], conversation: any, _conversationMemory: any): any {
     return {
       analysis_data: {
         summary: `Conversación en fase ${conversation.current_phase}`,
@@ -546,7 +551,10 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Generar detalles de fases
-  private generatePhaseDetails(messages: any[], currentPhase: number): Record<number, PhaseDetail> {
+  private generatePhaseDetails(
+    _messages: any[],
+    currentPhase: number,
+  ): Record<number, PhaseDetail> {
     const phases: Record<number, PhaseDetail> = {};
 
     for (let i = 1; i <= 5; i++) {
@@ -563,7 +571,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
   }
 
   // Generar progreso de fases
-  private generatePhaseProgress(messages: any[], currentPhase: number): any {
+  private generatePhaseProgress(_messages: any[], currentPhase: number): any {
     const progress: any = {};
 
     for (let i = 1; i <= 5; i++) {
@@ -606,17 +614,17 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
 
       // Extraer información del análisis
       const leadProfile = conversationAnalysis?.memory?.phase_info || {};
-      const phaseProgress = enrichedAnalysis?.phase_progress || {};
-      const keyInsights = enrichedAnalysis?.key_insights || [];
+      // const phaseProgress = enrichedAnalysis?.phase_progress || {};
+      // const keyInsights = enrichedAnalysis?.key_insights || [];
 
       // Generar tags automáticos basados en el análisis
       const autoTags = [];
 
-      // Función para validar que un tag tenga máximo 4 palabras
-      const isValidTag = (tag: string): boolean => {
-        const words = tag.trim().split(/\s+/);
-        return words.length <= 4;
-      };
+      // Función para validar que un tag tenga máximo 4 palabras - commented out for now
+      // const isValidTag = (tag: string): boolean => {
+      //   const words = tag.trim().split(/\s+/);
+      //   return words.length <= 4;
+      // };
 
       // Función para truncar un tag a máximo 4 palabras
       const truncateTag = (tag: string): string => {
@@ -643,10 +651,10 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
 
       // Tags basados en los pain points (ya son de 2 palabras)
       if (leadProfile.pain_points?.length > 0) {
-        if (leadProfile.pain_points.some(p => p.toLowerCase().includes('venta'))) {
+        if (leadProfile.pain_points.some((p: any) => p.toLowerCase().includes('venta'))) {
           autoTags.push('necesita-ventas');
         }
-        if (leadProfile.pain_points.some(p => p.toLowerCase().includes('cliente'))) {
+        if (leadProfile.pain_points.some((p: any) => p.toLowerCase().includes('cliente'))) {
           autoTags.push('problemas-clientes');
         }
       }
@@ -654,7 +662,7 @@ Responde SOLO con este JSON (sin texto adicional antes o después):
       // Obtener tags existentes para preferirlos
       const { data: existingTags } = await supabase.rpc('get_all_unique_tags');
       const existingTagsMap = new Map(
-        (existingTags || []).map(({ tag }) => [tag.toLowerCase(), tag]),
+        (existingTags || []).map(({ tag }: any) => [tag.toLowerCase(), tag]),
       );
 
       // Normalizar tags automáticos para usar tags existentes cuando sea posible

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface TagData {
-  tag: string;
-  count: number;
-}
+// interface TagData {
+//   tag: string;
+//   count: number;
+// } // Unused
 
 export function useTags() {
   const queryClient = useQueryClient();

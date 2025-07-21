@@ -65,9 +65,8 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
         const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
         if (currentTotal > 0) {
           // Keep templates column at minimum unless it was manually expanded
-          const templatesWidth =
-            prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
-          const remainingWidth = availableWidth - templatesWidth;
+          // const templatesWidth = prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
+          // const remainingWidth = availableWidth - templatesWidth;
 
           // Split remaining width: AI Chat (40%), Conversation (40%), Templates (20%)
           const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
@@ -108,8 +107,7 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
             const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
             if (currentTotal > 0) {
               // Keep templates column at minimum unless it was manually expanded
-              const templatesWidth =
-                prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
+              // const templatesWidth = prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
               // Keep proportional layout: AI Chat (40%), Conversation (40%), Templates (20%)
               const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);
               const conversationWidth = Math.max(MIN_COLUMN_WIDTH, availableWidth * 0.4);

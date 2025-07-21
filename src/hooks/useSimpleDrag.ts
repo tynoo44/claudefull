@@ -3,7 +3,7 @@
 // =============================================================================
 
 import { useState, useCallback } from 'react';
-import type { CalendarEvent } from '../types/calendar';
+// import type { CalendarEvent } from '../types/calendar';
 
 export interface SimpleDragState {
   isDragging: boolean;

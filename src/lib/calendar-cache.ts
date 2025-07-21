@@ -5,7 +5,7 @@
 // Garantiza carga instantánea y actualización en background
 
 import type { CalendarEvent, GoogleCalendar } from '../types/calendar';
-import type { DateRange } from '../types/premium-calendar';
+// import type { DateRange } from '../types/premium-calendar'; // Unused
 
 // =============================================================================
 // TYPES

@@ -11,6 +11,7 @@ import { CalendarPage } from '@/pages/CalendarPage';
 import { PremiumCalendarAdvanced } from '@/pages/PremiumCalendarAdvanced';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
+import { CalendarCacheProvider } from './contexts/CalendarCacheContext';
 import { ProtectedRoute } from './components/Layout/ProtectedRoute';
 import { conversationAnalysisService } from './services/conversationAnalysisService';
 
@@ -70,7 +71,11 @@ const AppContent: React.FC = () => {
           <Route path="/calendar" element={<CalendarPage darkMode={darkMode} />} />
           <Route
             path="/premium-calendar"
-            element={<PremiumCalendarAdvanced darkMode={darkMode} />}
+            element={
+              <CalendarCacheProvider>
+                <PremiumCalendarAdvanced darkMode={darkMode} />
+              </CalendarCacheProvider>
+            }
           />
         </Route>
       </Route>

@@ -154,21 +154,24 @@ export const useDragAndDrop = (
         }
 
         switch (dragType) {
-          case 'move':
+          case 'move': {
             return {
               startDate: targetDate,
               endDate: new Date(targetDate.getTime() + duration),
             };
-          case 'resize-start':
+          }
+          case 'resize-start': {
             return {
               startDate: targetDate,
               endDate: originalEnd,
             };
-          case 'resize-end':
+          }
+          case 'resize-end': {
             return {
               startDate: originalStart,
               endDate: targetDate,
             };
+          }
         }
       }
 
@@ -181,23 +184,27 @@ export const useDragAndDrop = (
       const totalDelta = timeDelta + dayDelta;
 
       switch (dragType) {
-        case 'move':
+        case 'move': {
           return {
             startDate: new Date(originalStart.getTime() + totalDelta),
             endDate: new Date(originalEnd.getTime() + totalDelta),
           };
-        case 'resize-start':
+        }
+        case 'resize-start': {
           return {
             startDate: new Date(originalStart.getTime() + totalDelta),
             endDate: originalEnd,
           };
-        case 'resize-end':
+        }
+        case 'resize-end': {
           return {
             startDate: originalStart,
             endDate: new Date(originalEnd.getTime() + totalDelta),
           };
-        default:
+        }
+        default: {
           return { startDate: originalStart, endDate: originalEnd };
+        }
       }
     },
     [],
@@ -296,7 +303,7 @@ export const useDragAndDrop = (
   );
 
   const handleDragEnd = useCallback(
-    async (dropTarget?: DropTarget) => {
+    async (_dropTarget?: DropTarget) => {
       if (!dragState.isDragging || !dragState.draggedEvent || !dragState.currentPosition) {
         return;
       }

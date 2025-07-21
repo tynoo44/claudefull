@@ -1,39 +1,21 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import {
   Calendar,
-  Star,
   Zap,
   Users,
   ChevronLeft,
   ChevronRight,
   Plus,
   Search,
-  Filter,
   Settings,
   MoreHorizontal,
-  Clock,
-  MapPin,
-  Video,
-  Phone,
-  Bell,
-  Share2,
-  Edit3,
-  Trash2,
-  Copy,
-  Move,
-  Archive,
-  Tag,
   Grid3X3,
   List,
   LayoutGrid,
   Sidebar,
-  Maximize2,
-  Download,
   RefreshCw,
-  Sun,
-  Moon,
-  Palette,
-  User,
   Globe,
   Shield,
 } from 'lucide-react';
@@ -53,11 +35,11 @@ import {
   endOfWeek,
   addWeeks,
   subWeeks,
-  getWeek,
   isSameWeek,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
+import { useCalendarCache } from '../contexts/CalendarCacheContext';
 import { GoogleCalendarService } from '../lib/google-calendar';
 import { MonthView } from '../components/Calendar/Premium/MonthView';
 import { WeekView } from '../components/Calendar/Premium/WeekView';
@@ -73,7 +55,8 @@ interface PremiumCalendarAdvancedProps {
 type ViewType = 'month' | 'week' | 'day' | 'agenda' | 'year';
 type TimeFormat = '12h' | '24h';
 
-interface CalendarEvent {
+// Use interface compatible with CalendarCacheContext
+interface LocalCalendarEvent {
   id: string;
   title: string;
   start: Date;
@@ -112,7 +95,7 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<ViewType>('month');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<LocalCalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<string | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -120,12 +103,15 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
   const [showSettings, setShowSettings] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [calendars, setCalendars] = useState<
-    Array<{ id: string; name: string; color: string; visible: boolean }>
-  >([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [settings, setSettings] = useState<CalendarSettings>({
+  // Use global calendar cache directly - no local state needed
+  const { events, calendars, isLoading, forceRefresh, loadMonth } = useCalendarCache();
+
+  // Load current month when component mounts
+  React.useEffect(() => {
+    console.log('🚀 PremiumCalendarAdvanced mounted - loading current month...');
+    loadMonth(new Date());
+  }, [loadMonth]);
+  const [settings] = useState<CalendarSettings>({
     timeFormat: '24h',
     weekStartsOn: 1,
     showWeekends: true,
@@ -136,165 +122,53 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
     compactView: false,
   });
 
-  const { user } = useAuth();
-
-  // No sample events - will load from Google Calendar only
-  const sampleEvents: CalendarEvent[] = useMemo(() => [], []);
-
-  const sampleCalendars = useMemo(() => {
-    const defaultCalendars = [
-      { id: 'work', name: 'Trabajo', color: '#3b82f6', visible: true },
-      { id: 'personal', name: 'Personal', color: '#f59e0b', visible: true },
-      { id: 'business', name: 'Negocios', color: '#10b981', visible: true },
-      { id: 'events', name: 'Eventos', color: '#8b5cf6', visible: true },
-    ];
-
-    // Load visibility preferences from localStorage
-    const savedVisibility = localStorage.getItem('calendar-visibility');
-    if (savedVisibility) {
-      try {
-        const visibilityMap = JSON.parse(savedVisibility);
-        return defaultCalendars.map(cal => ({
-          ...cal,
-          visible: visibilityMap[cal.id] !== undefined ? visibilityMap[cal.id] : cal.visible,
-        }));
-      } catch (error) {
-        console.error('Error parsing saved calendar visibility:', error);
-      }
-    }
-
-    return defaultCalendars;
-  }, []);
-
-  // Initialize data
-  useEffect(() => {
-    console.log('Initializing data...');
-    console.log('Sample events:', sampleEvents.length);
-    console.log('Sample calendars:', sampleCalendars);
-    setEvents(sampleEvents);
-    setCalendars(sampleCalendars);
-  }, [sampleEvents, sampleCalendars]);
-
-  // Load Google Calendar data
+  // Use forceRefresh from context for manual refresh
   const loadGoogleCalendarData = useCallback(async () => {
-    if (!user) {
-      console.log('No user authenticated, using sample data only');
-      return;
-    }
+    console.log('🔄 Force refreshing calendar data...');
+    await forceRefresh();
+  }, [forceRefresh]);
 
-    setIsLoading(true);
-    try {
-      const calendarService = new GoogleCalendarService();
+  // Navigation functions with dynamic loading
+  const navigateDate = useCallback(
+    (direction: 'prev' | 'next') => {
+      let newDate: Date;
 
-      // Check if user has Google access
-      const hasAccess = await calendarService.hasGoogleAccess();
-      if (!hasAccess) {
-        console.log('User needs to re-authenticate with Google Calendar');
-        // Continue with sample data
-        return;
+      switch (currentView) {
+        case 'month':
+          newDate = direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1);
+          setCurrentDate(newDate);
+          // Load the new month's events dynamically
+          loadMonth(newDate);
+          break;
+        case 'week':
+          newDate = direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1);
+          setCurrentDate(newDate);
+          // Load the month containing this week if needed
+          loadMonth(newDate);
+          break;
+        case 'day':
+          newDate = direction === 'next' ? addDays(currentDate, 1) : subDays(currentDate, 1);
+          setCurrentDate(newDate);
+          // Load the month containing this day if needed
+          loadMonth(newDate);
+          break;
+        case 'year':
+          newDate = direction === 'next' ? addMonths(currentDate, 12) : subMonths(currentDate, 12);
+          setCurrentDate(newDate);
+          break;
       }
+    },
+    [currentView, currentDate, loadMonth],
+  );
 
-      const googleCalendars = await calendarService.getUserCalendars();
+  const goToToday = useCallback(() => {
+    const today = new Date();
+    setCurrentDate(today);
+    loadMonth(today);
+  }, [loadMonth]);
 
-      // Convert Google calendars to our format with saved visibility
-      const savedVisibility = localStorage.getItem('calendar-visibility');
-      let visibilityMap: Record<string, boolean> = {};
-      if (savedVisibility) {
-        try {
-          visibilityMap = JSON.parse(savedVisibility);
-        } catch (error) {
-          console.error('Error parsing saved calendar visibility:', error);
-        }
-      }
-
-      const formattedCalendars = googleCalendars.map(cal => {
-        const calendarId = cal.google_calendar_id || cal.id;
-        return {
-          id: calendarId,
-          name: cal.name,
-          color: cal.color_id ? `#${cal.color_id}` : '#3b82f6',
-          visible: visibilityMap[calendarId] !== undefined ? visibilityMap[calendarId] : true,
-        };
-      });
-
-      setCalendars([...sampleCalendars, ...formattedCalendars]);
-
-      // Load events for visible calendars
-      const allEvents: CalendarEvent[] = [];
-      for (const calendar of googleCalendars) {
-        try {
-          const calendarEvents = await calendarService.getEvents(
-            calendar.google_calendar_id || calendar.id,
-          );
-          const formattedEvents = calendarEvents.map(event => ({
-            id: event.id,
-            title: event.title,
-            start: new Date(event.start_datetime),
-            end: new Date(event.end_datetime),
-            color: calendar.color_id ? `#${calendar.color_id}` : '#3b82f6',
-            calendarId: calendar.google_calendar_id || calendar.id,
-            calendarName: calendar.name,
-            description: event.description,
-            location: event.location,
-            type: 'meeting' as const,
-            priority: 'medium' as const,
-            isAllDay: event.is_all_day,
-            meetingLink: event.meeting_link,
-            attendees: event.attendees?.map(att => ({
-              email: att.email,
-              name: att.display_name,
-              status: 'pending' as const,
-            })),
-          }));
-          allEvents.push(...formattedEvents);
-        } catch (eventError) {
-          console.error(`Error loading events for calendar ${calendar.name}:`, eventError);
-          // Continue with other calendars
-        }
-      }
-
-      setEvents(allEvents);
-    } catch (error) {
-      console.error('Error loading Google Calendar:', error);
-      // Continue with sample data if Google Calendar fails
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, sampleEvents, sampleCalendars]);
-
-  // Load data on mount
-  useEffect(() => {
-    loadGoogleCalendarData();
-  }, [loadGoogleCalendarData]);
-
-  // Navigation functions
-  const navigateDate = (direction: 'prev' | 'next') => {
-    switch (currentView) {
-      case 'month':
-        setCurrentDate(
-          direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1),
-        );
-        break;
-      case 'week':
-        setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
-        break;
-      case 'day':
-        setCurrentDate(direction === 'next' ? addDays(currentDate, 1) : subDays(currentDate, 1));
-        break;
-      case 'year':
-        setCurrentDate(
-          direction === 'next' ? addMonths(currentDate, 12) : subMonths(currentDate, 12),
-        );
-        break;
-    }
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  // Filter events
-  const filteredEvents = useMemo(() => {
+  // Convert events to local format and filter
+  const filteredEvents = useMemo((): LocalCalendarEvent[] => {
     console.log('=== FILTERING EVENTS ===');
     console.log('Total events available:', events.length);
     console.log('Calendars state:', calendars);
@@ -304,7 +178,26 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
       return [];
     }
 
-    const filtered = events.filter(event => {
+    // Convert to local format first
+    const localEvents: LocalCalendarEvent[] = events.map(event => ({
+      id: event.id,
+      title: event.title,
+      start: event.start,
+      end: event.end,
+      color: event.color,
+      calendarId: event.calendarId,
+      calendarName: event.calendarName,
+      description: event.description,
+      location: event.location,
+      attendees: event.attendees,
+      isRecurring: event.isRecurring,
+      isAllDay: event.isAllDay,
+      meetingLink: event.meetingLink,
+      type: 'event', // Default type
+      priority: 'medium', // Default priority
+    }));
+
+    const filtered = localEvents.filter(event => {
       const calendar = calendars.find(cal => cal.id === event.calendarId);
       console.log(`Event: ${event.title}`);
       console.log(`  - Event calendarId: ${event.calendarId}`);
@@ -363,31 +256,95 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
     }
   };
 
-  // Event handlers
-  const handleEventCreated = (newEvent: CalendarEvent) => {
-    setEvents(prev => [...prev, newEvent]);
+  // Event handlers - now force refresh to get updated data
+  const handleEventCreated = async () => {
     setShowCreateModal(false);
     setCreateModalData({});
+    // Force refresh to get updated data from cache
+    await forceRefresh();
   };
 
-  const handleEventUpdated = (updatedEvent: CalendarEvent) => {
-    setEvents(prev => prev.map(event => (event.id === updatedEvent.id ? updatedEvent : event)));
+  const handleEventUpdated = async () => {
     setShowEventModal(false);
     setSelectedEvent(null);
+    // Force refresh to get updated data from cache
+    await forceRefresh();
   };
 
-  const handleEventDeleted = (eventId: string) => {
-    setEvents(prev => prev.filter(event => event.id !== eventId));
+  const handleEventDeleted = async () => {
     setShowEventModal(false);
     setSelectedEvent(null);
+    // Force refresh to get updated data from cache
+    await forceRefresh();
   };
 
-  const handleEditEvent = (event: CalendarEvent) => {
+  const handleEditEvent = (event: LocalCalendarEvent) => {
     setSelectedEvent(event);
     setShowEventModal(false);
     setCreateModalData({ date: event.start });
     setShowCreateModal(true);
   };
+
+  // Handle event update (for drag & drop)
+  const handleEventUpdate = useCallback(
+    async (eventId: string, updates: any): Promise<any> => {
+      try {
+        const calendarService = new GoogleCalendarService();
+        const eventToUpdate = events.find(e => e.id === eventId);
+
+        if (!eventToUpdate) {
+          throw new Error('Event not found');
+        }
+
+        const updateData = {
+          id: eventId,
+          title: updates.title || eventToUpdate.title,
+          description: updates.description || eventToUpdate.description,
+          location: updates.location || eventToUpdate.location,
+          start_datetime:
+            updates.start_datetime ||
+            (updates.start ? updates.start.toISOString() : eventToUpdate.start.toISOString()),
+          end_datetime:
+            updates.end_datetime ||
+            (updates.end ? updates.end.toISOString() : eventToUpdate.end.toISOString()),
+          is_all_day:
+            updates.isAllDay !== undefined ? updates.isAllDay : eventToUpdate.isAllDay || false,
+        };
+
+        const updatedEvent = await calendarService.updateEvent(
+          eventToUpdate.calendarId,
+          eventId,
+          updateData,
+        );
+
+        // Force refresh to update cache and get fresh data
+        await forceRefresh();
+
+        // Return the updated event in local format
+        const updatedLocalEvent: LocalCalendarEvent = {
+          id: eventToUpdate.id,
+          title: updatedEvent.title,
+          start: new Date(updatedEvent.start_datetime),
+          end: new Date(updatedEvent.end_datetime),
+          color: eventToUpdate.color,
+          calendarId: eventToUpdate.calendarId,
+          calendarName: eventToUpdate.calendarName,
+          description: updatedEvent.description,
+          location: updatedEvent.location,
+          isAllDay: updatedEvent.is_all_day,
+          attendees: eventToUpdate.attendees,
+          type: 'event',
+          priority: 'medium',
+        };
+
+        return updatedLocalEvent;
+      } catch (error) {
+        console.error('Error updating event:', error);
+        throw error;
+      }
+    },
+    [events, forceRefresh],
+  );
 
   // Render top toolbar
   const renderToolbar = () => (
@@ -592,7 +549,14 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
             }).map(day => (
               <button
                 key={day.toISOString()}
-                onClick={() => setSelectedDate(day)}
+                onClick={() => {
+                  setSelectedDate(day);
+                  // Load month if clicking on a different month
+                  if (!isSameMonth(day, currentDate)) {
+                    setCurrentDate(day);
+                    loadMonth(day);
+                  }
+                }}
                 className={`p-1 text-center rounded hover:bg-blue-100 dark:hover:bg-blue-900 ${
                   isToday(day)
                     ? 'bg-blue-600 text-white'
@@ -631,12 +595,11 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
               <div key={calendar.id} className="flex items-center space-x-3 group">
                 <button
                   onClick={() => {
+                    // Save visibility preferences to localStorage - the cache will pick this up
                     const updatedCalendars = calendars.map(cal =>
                       cal.id === calendar.id ? { ...cal, visible: !cal.visible } : cal,
                     );
-                    setCalendars(updatedCalendars);
 
-                    // Save visibility preferences to localStorage
                     const visibilityMap = updatedCalendars.reduce(
                       (acc, cal) => {
                         acc[cal.id] = cal.visible;
@@ -645,6 +608,9 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
                       {} as Record<string, boolean>,
                     );
                     localStorage.setItem('calendar-visibility', JSON.stringify(visibilityMap));
+
+                    // Force refresh to apply visibility changes
+                    forceRefresh();
                   }}
                   className="flex-shrink-0"
                 >
@@ -710,243 +676,245 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
   };
 
   return (
-    <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      {renderToolbar()}
-      {renderNavigation()}
+    <DndProvider backend={HTML5Backend}>
+      <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        {renderToolbar()}
+        {renderNavigation()}
 
-      <div className="flex flex-1 overflow-hidden">
-        {renderSidebar()}
+        <div className="flex flex-1 overflow-hidden">
+          {renderSidebar()}
 
-        {/* Main content area */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className={`flex-1 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'} p-4`}>
-            {currentView === 'month' ? (
-              <div className="h-full overflow-hidden">
-                <MonthView
-                  currentDate={currentDate}
-                  events={filteredEvents}
-                  calendars={calendars}
-                  selectedDate={selectedDate}
-                  selectedEvent={selectedEvent}
-                  hoveredEvent={hoveredEvent}
-                  onDateClick={setSelectedDate}
-                  onEventClick={event => {
-                    console.log('Event clicked:', event);
-                    setSelectedEvent(event);
-                    setShowEventModal(true);
-                  }}
-                  onEventHover={setHoveredEvent}
-                  onTimeSlotClick={date => {
-                    setSelectedDate(date);
-                    setCreateModalData({ date });
-                    setShowCreateModal(true);
-                  }}
-                  darkMode={darkMode}
-                  compactView={settings.compactView}
-                />
-              </div>
-            ) : currentView === 'week' ? (
-              <div className="h-full overflow-hidden">
-                <WeekView
-                  currentDate={currentDate}
-                  events={filteredEvents}
-                  calendars={calendars}
-                  selectedDate={selectedDate}
-                  selectedEvent={selectedEvent}
-                  hoveredEvent={hoveredEvent}
-                  onDateClick={setSelectedDate}
-                  onEventClick={event => {
-                    setSelectedEvent(event);
-                    setShowEventModal(true);
-                  }}
-                  onEventHover={setHoveredEvent}
-                  onTimeSlotClick={(date, hour) => {
-                    setSelectedDate(date);
-                    setCreateModalData({ date, hour });
-                    setShowCreateModal(true);
-                  }}
-                  darkMode={darkMode}
-                  compactView={settings.compactView}
-                />
-              </div>
-            ) : currentView === 'day' ? (
-              <div className="h-full overflow-hidden">
-                <DayView
-                  currentDate={currentDate}
-                  events={filteredEvents}
-                  calendars={calendars}
-                  selectedEvent={selectedEvent}
-                  hoveredEvent={hoveredEvent}
-                  onEventClick={event => {
-                    setSelectedEvent(event);
-                    setShowEventModal(true);
-                  }}
-                  onEventHover={setHoveredEvent}
-                  onTimeSlotClick={(date, hour) => {
-                    setSelectedDate(date);
-                    setCreateModalData({ date, hour });
-                    setShowCreateModal(true);
-                  }}
-                  darkMode={darkMode}
-                  compactView={settings.compactView}
-                />
-              </div>
-            ) : currentView === 'agenda' ? (
-              <div className="h-full overflow-hidden">
-                <AgendaView
-                  currentDate={currentDate}
-                  events={filteredEvents}
-                  calendars={calendars}
-                  selectedEvent={selectedEvent}
-                  hoveredEvent={hoveredEvent}
-                  onEventClick={event => {
-                    setSelectedEvent(event);
-                    setShowEventModal(true);
-                  }}
-                  onEventHover={setHoveredEvent}
-                  onTimeSlotClick={(date, hour) => {
-                    setSelectedDate(date);
-                    setCreateModalData({ date, hour });
-                    setShowCreateModal(true);
-                  }}
-                  darkMode={darkMode}
-                  compactView={settings.compactView}
-                />
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <Calendar
-                  className={`h-24 w-24 mx-auto mb-6 ${
-                    darkMode ? 'text-gray-600' : 'text-gray-300'
-                  }`}
-                />
-                <h3
-                  className={`text-2xl font-semibold mb-2 ${
-                    darkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}
-                >
-                  Vista {currentView} próximamente
-                </h3>
-                <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Estamos trabajando en esta vista...
-                </p>
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className={`flex-1 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'} p-4`}>
+              {currentView === 'month' ? (
+                <div className="h-full overflow-hidden">
+                  <MonthView
+                    currentDate={currentDate}
+                    events={filteredEvents}
+                    calendars={calendars}
+                    selectedDate={selectedDate}
+                    selectedEvent={selectedEvent}
+                    hoveredEvent={hoveredEvent}
+                    onDateClick={setSelectedDate}
+                    onEventClick={event => {
+                      console.log('Event clicked:', event);
+                      setSelectedEvent(event);
+                      setShowEventModal(true);
+                    }}
+                    onEventHover={setHoveredEvent}
+                    onTimeSlotClick={date => {
+                      setSelectedDate(date);
+                      setCreateModalData({ date });
+                      setShowCreateModal(true);
+                    }}
+                    onEventUpdate={handleEventUpdate}
+                    darkMode={darkMode}
+                    compactView={settings.compactView}
+                  />
+                </div>
+              ) : currentView === 'week' ? (
+                <div className="h-full overflow-hidden">
+                  <WeekView
+                    currentDate={currentDate}
+                    events={filteredEvents}
+                    calendars={calendars}
+                    selectedDate={selectedDate}
+                    selectedEvent={selectedEvent}
+                    hoveredEvent={hoveredEvent}
+                    onDateClick={setSelectedDate}
+                    onEventClick={event => {
+                      setSelectedEvent(event);
+                      setShowEventModal(true);
+                    }}
+                    onEventHover={setHoveredEvent}
+                    onTimeSlotClick={(date, hour) => {
+                      setSelectedDate(date);
+                      setCreateModalData({ date, hour });
+                      setShowCreateModal(true);
+                    }}
+                    darkMode={darkMode}
+                    compactView={settings.compactView}
+                  />
+                </div>
+              ) : currentView === 'day' ? (
+                <div className="h-full overflow-hidden">
+                  <DayView
+                    currentDate={currentDate}
+                    events={filteredEvents}
+                    calendars={calendars}
+                    selectedEvent={selectedEvent}
+                    hoveredEvent={hoveredEvent}
+                    onEventClick={event => {
+                      setSelectedEvent(event);
+                      setShowEventModal(true);
+                    }}
+                    onEventHover={setHoveredEvent}
+                    onTimeSlotClick={(date, hour) => {
+                      setSelectedDate(date);
+                      setCreateModalData({ date, hour });
+                      setShowCreateModal(true);
+                    }}
+                    darkMode={darkMode}
+                    compactView={settings.compactView}
+                  />
+                </div>
+              ) : currentView === 'agenda' ? (
+                <div className="h-full overflow-hidden">
+                  <AgendaView
+                    currentDate={currentDate}
+                    events={filteredEvents}
+                    calendars={calendars}
+                    selectedEvent={selectedEvent}
+                    hoveredEvent={hoveredEvent}
+                    onEventClick={event => {
+                      setSelectedEvent(event);
+                      setShowEventModal(true);
+                    }}
+                    onEventHover={setHoveredEvent}
+                    onTimeSlotClick={(date, hour) => {
+                      setSelectedDate(date);
+                      setCreateModalData({ date, hour });
+                      setShowCreateModal(true);
+                    }}
+                    darkMode={darkMode}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-20">
+                  <Calendar
+                    className={`h-24 w-24 mx-auto mb-6 ${
+                      darkMode ? 'text-gray-600' : 'text-gray-300'
+                    }`}
+                  />
+                  <h3
+                    className={`text-2xl font-semibold mb-2 ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}
+                  >
+                    Vista {currentView} próximamente
+                  </h3>
+                  <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Estamos trabajando en esta vista...
+                  </p>
 
-                {isLoading && (
-                  <div className="mt-4 flex items-center justify-center space-x-2">
-                    <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
-                    <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                      Cargando Google Calendar...
-                    </span>
-                  </div>
-                )}
+                  {isLoading && (
+                    <div className="mt-4 flex items-center justify-center space-x-2">
+                      <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
+                      <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+                        Cargando Google Calendar...
+                      </span>
+                    </div>
+                  )}
 
-                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                  {[
-                    { icon: Zap, label: 'Rápido', desc: 'Carga instantánea' },
-                    { icon: Users, label: 'Colaborativo', desc: 'Trabajo en equipo' },
-                    { icon: Shield, label: 'Seguro', desc: 'Datos protegidos' },
-                    { icon: Globe, label: 'Sincronizado', desc: 'Multi-dispositivo' },
-                  ].map((feature, index) => {
-                    const Icon = feature.icon;
-                    return (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg border ${
-                          darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                        }`}
-                      >
-                        <Icon
-                          className={`h-8 w-8 mx-auto mb-2 ${
-                            [
-                              'text-blue-500',
-                              'text-green-500',
-                              'text-purple-500',
-                              'text-orange-500',
-                            ][index]
-                          }`}
-                        />
-                        <h4
-                          className={`font-semibold text-sm ${
-                            darkMode ? 'text-gray-200' : 'text-gray-800'
+                  <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                    {[
+                      { icon: Zap, label: 'Rápido', desc: 'Carga instantánea' },
+                      { icon: Users, label: 'Colaborativo', desc: 'Trabajo en equipo' },
+                      { icon: Shield, label: 'Seguro', desc: 'Datos protegidos' },
+                      { icon: Globe, label: 'Sincronizado', desc: 'Multi-dispositivo' },
+                    ].map((feature, index) => {
+                      const Icon = feature.icon;
+                      return (
+                        <div
+                          key={index}
+                          className={`p-4 rounded-lg border ${
+                            darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
                           }`}
                         >
-                          {feature.label}
-                        </h4>
-                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {feature.desc}
-                        </p>
-                      </div>
-                    );
-                  })}
+                          <Icon
+                            className={`h-8 w-8 mx-auto mb-2 ${
+                              [
+                                'text-blue-500',
+                                'text-green-500',
+                                'text-purple-500',
+                                'text-orange-500',
+                              ][index]
+                            }`}
+                          />
+                          <h4
+                            className={`font-semibold text-sm ${
+                              darkMode ? 'text-gray-200' : 'text-gray-800'
+                            }`}
+                          >
+                            {feature.label}
+                          </h4>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {feature.desc}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Status bar - Fixed at bottom */}
-          <div
-            className={`shrink-0 p-3 border-t ${
-              darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
-            } flex items-center justify-between text-xs min-h-[48px]`}
-          >
-            <div className="flex items-center space-x-4">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                {filteredEvents.length} eventos cargados
-              </span>
-              {searchQuery && (
-                <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                  Filtrado por: "{searchQuery}"
-                </span>
               )}
             </div>
-            <div className="flex items-center space-x-2">
-              <span
-                className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}
-              />
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                {isLoading ? 'Sincronizando...' : 'Sincronizado'}
-              </span>
+
+            {/* Status bar - Fixed at bottom */}
+            <div
+              className={`shrink-0 p-3 border-t ${
+                darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'
+              } flex items-center justify-between text-xs min-h-[48px]`}
+            >
+              <div className="flex items-center space-x-4">
+                <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  {filteredEvents.length} eventos cargados
+                </span>
+                {searchQuery && (
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                    Filtrado por: "{searchQuery}"
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}
+                />
+                <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  {isLoading ? 'Sincronizando...' : 'Sincronizado'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Event Detail Modal */}
-      {selectedEvent && showEventModal && (
-        <EventDetailModal
-          event={selectedEvent}
-          calendars={calendars}
+        {/* Event Detail Modal */}
+        {selectedEvent && showEventModal && (
+          <EventDetailModal
+            event={selectedEvent}
+            calendars={calendars}
+            onClose={() => {
+              setShowEventModal(false);
+              setSelectedEvent(null);
+            }}
+            onEdit={handleEditEvent}
+            onDelete={handleEventDeleted}
+            onDuplicate={event => {
+              console.log('Duplicate event:', event);
+              // TODO: Implement duplicate functionality
+            }}
+            darkMode={darkMode}
+          />
+        )}
+
+        {/* Event Create/Edit Modal */}
+        <EventCreateModal
+          isOpen={showCreateModal}
           onClose={() => {
-            setShowEventModal(false);
+            setShowCreateModal(false);
+            setCreateModalData({});
             setSelectedEvent(null);
           }}
-          onEdit={handleEditEvent}
-          onDelete={handleEventDeleted}
-          onDuplicate={event => {
-            console.log('Duplicate event:', event);
-            // TODO: Implement duplicate functionality
-          }}
+          calendars={calendars}
+          selectedDate={createModalData.date}
+          selectedHour={createModalData.hour}
+          existingEvent={selectedEvent}
           darkMode={darkMode}
+          onEventCreated={handleEventCreated}
+          onEventUpdated={handleEventUpdated}
+          onEventDeleted={handleEventDeleted}
         />
-      )}
-
-      {/* Event Create/Edit Modal */}
-      <EventCreateModal
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-          setCreateModalData({});
-          setSelectedEvent(null);
-        }}
-        calendars={calendars}
-        selectedDate={createModalData.date}
-        selectedHour={createModalData.hour}
-        existingEvent={selectedEvent}
-        darkMode={darkMode}
-        onEventCreated={handleEventCreated}
-        onEventUpdated={handleEventUpdated}
-        onEventDeleted={handleEventDeleted}
-      />
-    </div>
+      </div>
+    </DndProvider>
   );
 };

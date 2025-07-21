@@ -7,17 +7,13 @@ import {
   Clock,
   MapPin,
   Users,
-  Link,
   FileText,
   Video,
-  Phone,
-  Mail,
   Edit3,
   Trash2,
   Copy,
   ExternalLink,
   Bell,
-  MoreHorizontal,
 } from 'lucide-react';
 
 interface EventDetailModalProps {

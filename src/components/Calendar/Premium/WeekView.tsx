@@ -6,7 +6,6 @@ import {
   eachDayOfInterval,
   isToday,
   isSameDay,
-  addHours,
   isWithinInterval,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -137,12 +136,13 @@ export const WeekView: React.FC<WeekViewProps> = ({
           ${isSelected ? 'ring-2' : ''}
           ${darkMode ? 'ring-offset-gray-800' : 'ring-offset-white'}
         `}
-        style={{
-          backgroundColor: `${color}20`,
-          borderLeft: `3px solid ${color}`,
-          color: darkMode ? '#ffffff' : color,
-          ringColor: color,
-        }}
+        style={
+          {
+            backgroundColor: `${color}20`,
+            borderLeft: `3px solid ${color}`,
+            color: darkMode ? '#ffffff' : color,
+          } as React.CSSProperties
+        }
       >
         <div className="flex items-center space-x-1">
           {!compactView && getEventIcon()}

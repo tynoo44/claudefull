@@ -1,21 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, addHours, startOfDay } from 'date-fns';
-import {
-  X,
-  Clock,
-  MapPin,
-  Users,
-  Video,
-  Calendar,
-  Bell,
-  Repeat,
-  Type,
-  AlignLeft,
-  Save,
-  Trash2,
-  Copy,
-  Globe,
-} from 'lucide-react';
+import { X, MapPin, Users, Video, Calendar, Bell, Type, Save, Trash2 } from 'lucide-react';
 import { GoogleCalendarService } from '../../../lib/google-calendar';
 
 interface EventCreateModalProps {

@@ -200,7 +200,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       }));
 
       const currentPhase = analysis?.analysis_data?.current_phase || 1;
-      const leadType = analysis?.analysis_data?.lead_type || 'general';
+      const leadType = 'general'; // TODO: Implement lead_type detection
 
       const response = await generateQuickActions.suggestMessages(
         conversationMessages,
@@ -213,13 +213,13 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       const parsedSuggestions = parseSuggestionsFromResponse(response, currentPhase);
       setSuggestions(parsedSuggestions);
     } catch (_error) {
-      console.error('Error generating suggestions:', error);
+      console.error('Error generating suggestions:', _error);
     } finally {
       setIsGeneratingSuggestions(false);
     }
   };
 
-  const parseSuggestionsFromResponse = (response: string, phase: number): MessageSuggestion[] => {
+  const parseSuggestionsFromResponse = (_response: string, phase: number): MessageSuggestion[] => {
     // Esta función debería parsear el response de la IA y extraer las sugerencias
     // Por ahora, devolvemos sugerencias de ejemplo
     return [
@@ -259,7 +259,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       await navigator.clipboard.writeText(message);
       // Podríamos mostrar una notificación aquí
     } catch (_error) {
-      console.error('Error copying message:', error);
+      console.error('Error copying message:', _error);
     }
   };
 
@@ -376,7 +376,22 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
           <div className="h-full overflow-y-auto p-4 space-y-4">
             {/* Estado de la conversación */}
             <ConversationStatusCard
-              status={analysis}
+              status={
+                analysis
+                  ? {
+                      current_phase: analysis.analysis_data?.current_phase || 1,
+                      phase_progress: analysis.phase_progress || {},
+                      sentiment_scores: analysis.sentiment_scores,
+                      key_insights: analysis.key_insights || [],
+                      warnings: analysis.warnings || [],
+                      action_threads: analysis.action_threads || [],
+                      urgency_score: analysis.urgency_score || 0,
+                      capacity_score: analysis.capacity_score || 0,
+                      engagement_score: analysis.engagement_score || 0,
+                      updated_at: analysis.updated_at,
+                    }
+                  : null
+              }
               isLoading={analysisLoading}
               onRefresh={refreshAnalysis}
               isRefreshing={isRefreshing}

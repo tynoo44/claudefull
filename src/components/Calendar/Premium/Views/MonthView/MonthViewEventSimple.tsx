@@ -12,7 +12,7 @@ interface MonthViewEventProps {
   onClick: (event: CalendarEvent, e: React.MouseEvent) => void;
   onHover: (eventId: string | null) => void;
   isDragDisabled?: boolean;
-  onEventUpdate?: (eventId: string, updates: Partial<CalendarEvent>) => Promise<void>;
+  onEventUpdate?: (eventId: string, updates: Partial<CalendarEvent>) => Promise<CalendarEvent>;
 }
 
 export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
@@ -32,29 +32,31 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
   const handleEventMove = async (eventId: string, deltaX: number, deltaY: number) => {
     // Convert pixel movement to time/date changes
     const dayChange = Math.round(deltaX / 120); // 120px = 1 day
-    const hourChange = Math.round(deltaY / 40);  // 40px = 1 hour
-    
+    const hourChange = Math.round(deltaY / 40); // 40px = 1 hour
+
     const originalStart = new Date(event.start_datetime);
     const originalEnd = new Date(event.end_datetime);
-    
+
     // Calculate new dates
     const newStart = new Date(originalStart);
     newStart.setDate(newStart.getDate() + dayChange);
     newStart.setHours(newStart.getHours() + hourChange);
-    
+
     const newEnd = new Date(originalEnd);
     newEnd.setDate(newEnd.getDate() + dayChange);
     newEnd.setHours(newEnd.getHours() + hourChange);
-    
+
     console.log(`📅 Moving event: ${dayChange} days, ${hourChange} hours`);
-    
+
     // Update the event
-    await onEventUpdate(eventId, {
+    const updatedEvent = await onEventUpdate(eventId, {
       start_datetime: newStart.toISOString(),
       end_datetime: newEnd.toISOString(),
     });
+
+    console.log('✅ Event updated:', updatedEvent.title);
   };
-  
+
   const { dragState, handlers } = useSimpleDrag(handleEventMove);
 
   const getStatusIcon = () => {
@@ -92,7 +94,7 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
       'group w-full text-left text-xs rounded p-1 mb-1 transition-all duration-200 relative overflow-hidden';
 
     let classes = baseClasses;
-    
+
     // Drag cursor
     if (!isDragDisabled && !dragState.isDragging) {
       classes += ' cursor-move hover:cursor-move';
@@ -138,10 +140,10 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
 
   const getBackgroundStyle = () => {
     let baseOpacity = isHovered || isSelected ? 0.9 : 0.8;
-    
+
     // Apply drag visual feedback
     let style: React.CSSProperties = {};
-    
+
     if (dragState.isDragging && dragState.draggedEventId === event.id) {
       style.transform = 'scale(1.05)';
       style.boxShadow = '0 8px 16px rgba(59, 130, 246, 0.3)';
@@ -180,44 +182,45 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
   // Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isDragDisabled || e.button !== 0) return; // Only left click
-    
+
     e.preventDefault();
     isDragging.current = false;
-    
+
     const startPosition = { x: e.clientX, y: e.clientY };
-    
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!isDragging.current) {
         const distance = Math.sqrt(
           Math.pow(moveEvent.clientX - startPosition.x, 2) +
-          Math.pow(moveEvent.clientY - startPosition.y, 2)
+            Math.pow(moveEvent.clientY - startPosition.y, 2),
         );
-        
-        if (distance > 5) { // Start drag after 5px movement
+
+        if (distance > 5) {
+          // Start drag after 5px movement
           isDragging.current = true;
           handlers.startDrag(event.id, startPosition);
         }
       }
-      
+
       if (isDragging.current) {
         handlers.updateDrag({ x: moveEvent.clientX, y: moveEvent.clientY });
       }
     };
-    
+
     const handleMouseUp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      
+
       if (isDragging.current) {
         handlers.endDrag();
       } else {
         // It was a click, not a drag
         onClick(event, e);
       }
-      
+
       isDragging.current = false;
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -302,7 +305,7 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
       {isHovered && !isSelected && !dragState.isDragging && (
         <div className="absolute inset-0 bg-white bg-opacity-10 pointer-events-none" />
       )}
-      
+
       {/* Drag Preview Overlay */}
       {dragState.isDragging && dragState.draggedEventId === event.id && (
         <div className="absolute inset-0 pointer-events-none">

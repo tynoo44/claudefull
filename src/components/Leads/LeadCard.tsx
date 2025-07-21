@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Calendar, Trash2, MoreVertical, Hash } from 'lucide-react';
+import { MessageCircle, Calendar, Trash2, MoreVertical } from 'lucide-react';
 import { Lead } from '../../types';
 import { useConversationsQuery } from '../../hooks/useConversationsQuery';
 import { useNavigate } from 'react-router-dom';

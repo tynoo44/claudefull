@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { format, isToday, addHours, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { format, isToday, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Plus, Clock, MapPin, Video, Users, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Clock, MapPin, Video, Users } from 'lucide-react';
 
 interface DayViewProps {
   currentDate: Date;
@@ -118,7 +118,6 @@ export const DayView: React.FC<DayViewProps> = ({
           backgroundColor: `${color}15`,
           borderLeft: `4px solid ${color}`,
           color: darkMode ? '#ffffff' : color,
-          ringColor: color,
         }}
       >
         <div className="flex items-start space-x-3">

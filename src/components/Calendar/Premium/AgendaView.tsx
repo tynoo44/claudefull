@@ -8,7 +8,6 @@ import {
   endOfDay,
   addDays,
   isWithinInterval,
-  isSameDay,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -20,7 +19,6 @@ import {
   ChevronRight,
   Plus,
   Filter,
-  Search,
 } from 'lucide-react';
 
 interface AgendaViewProps {
@@ -33,7 +31,6 @@ interface AgendaViewProps {
   onEventHover: (eventId: string | null) => void;
   onTimeSlotClick: (date: Date, hour?: number) => void;
   darkMode: boolean;
-  compactView?: boolean;
 }
 
 export const AgendaView: React.FC<AgendaViewProps> = ({
@@ -46,7 +43,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   onEventHover,
   onTimeSlotClick,
   darkMode,
-  compactView = false,
 }) => {
   // Generate next 30 days from current date
   const agendaDays = useMemo(() => {
@@ -150,7 +146,6 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
         `}
         style={{
           borderLeftColor: color,
-          ringColor: color,
         }}
       >
         <div className="flex items-start space-x-3">

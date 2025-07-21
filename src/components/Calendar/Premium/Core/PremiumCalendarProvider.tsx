@@ -12,6 +12,9 @@ import type {
   MultiCalendarState,
   CalendarView,
   DateRange,
+  SearchResult,
+  EventFilters,
+  SearchFacets,
 } from '../../../../types/premium-calendar';
 import type { CalendarEvent, GoogleCalendar } from '../../../../types/calendar';
 import { calendarCache } from '../../../../lib/calendar-cache';
@@ -128,7 +131,7 @@ const premiumCalendarReducer = (
         },
       };
 
-    case 'SELECT_EVENT':
+    case 'SELECT_EVENT': {
       const { eventId, multi } = action.payload;
       const newSelectedEvents = new Set(multi ? state.uiState.selectedEvents : []);
 
@@ -145,8 +148,9 @@ const premiumCalendarReducer = (
           selectedEvents: newSelectedEvents,
         },
       };
+    }
 
-    case 'TOGGLE_CALENDAR':
+    case 'TOGGLE_CALENDAR': {
       const calendarId = action.payload;
       const newSelectedCalendars = new Set(state.multiCalendarState.selectedCalendars);
 
@@ -163,8 +167,9 @@ const premiumCalendarReducer = (
           selectedCalendars: newSelectedCalendars,
         },
       };
+    }
 
-    case 'SET_CALENDARS':
+    case 'SET_CALENDARS': {
       const calendarsMap = new Map<string, GoogleCalendar>();
       action.payload.forEach(calendar => {
         calendarsMap.set(calendar.id, calendar);
@@ -174,8 +179,9 @@ const premiumCalendarReducer = (
         ...state,
         calendars: calendarsMap,
       };
+    }
 
-    case 'SET_EVENTS':
+    case 'SET_EVENTS': {
       const eventsMap = new Map<string, CalendarEvent>();
       action.payload.forEach(event => {
         eventsMap.set(event.id, event);
@@ -185,8 +191,9 @@ const premiumCalendarReducer = (
         ...state,
         events: eventsMap,
       };
+    }
 
-    case 'ADD_EVENT':
+    case 'ADD_EVENT': {
       const newEvents = new Map(state.events);
       newEvents.set(action.payload.id, action.payload);
 
@@ -194,8 +201,9 @@ const premiumCalendarReducer = (
         ...state,
         events: newEvents,
       };
+    }
 
-    case 'UPDATE_EVENT':
+    case 'UPDATE_EVENT': {
       const { eventId: updateEventId, updates } = action.payload;
       const updatedEvents = new Map(state.events);
       const existingEvent = updatedEvents.get(updateEventId);
@@ -208,8 +216,9 @@ const premiumCalendarReducer = (
         ...state,
         events: updatedEvents,
       };
+    }
 
-    case 'DELETE_EVENT':
+    case 'DELETE_EVENT': {
       const eventsAfterDelete = new Map(state.events);
       eventsAfterDelete.delete(action.payload);
 
@@ -217,6 +226,7 @@ const premiumCalendarReducer = (
         ...state,
         events: eventsAfterDelete,
       };
+    }
 
     case 'SET_LOADING':
       return {
@@ -257,7 +267,7 @@ const premiumCalendarReducer = (
         uiState: {
           ...state.uiState,
           detailPanelOpen: action.payload !== null,
-          detailPanelEventId: action.payload,
+          detailPanelEventId: action.payload ?? undefined,
         },
       };
 
@@ -316,7 +326,7 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
   const [state, dispatch] = useReducer(premiumCalendarReducer, createInitialState());
   const googleCalendarService = useRef(new GoogleCalendarService());
   const isInitialized = useRef(false);
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // =============================================================================
   // INSTANT CACHE LOADING ON MOUNT
@@ -545,6 +555,7 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
           existingEvent.google_calendar_id,
           eventId,
           {
+            id: eventId,
             title: updates.title,
             description: updates.description,
             location: updates.location,
@@ -634,10 +645,19 @@ export const PremiumCalendarProvider: React.FC<PremiumCalendarProviderProps> = (
     console.log('cancelDrag');
   }, []);
 
-  const searchEvents = useCallback(async (query: string, filters?: any) => {
-    console.log('searchEvents:', query, filters);
-    return { events: [], totalCount: 0, facets: {}, suggestions: [] };
-  }, []);
+  const searchEvents = useCallback(
+    async (query: string, filters?: EventFilters): Promise<SearchResult> => {
+      console.log('searchEvents:', query, filters);
+      const facets: SearchFacets = {
+        calendars: [],
+        attendees: [],
+        locations: [],
+        tags: [],
+      };
+      return { events: [], totalCount: 0, facets, suggestions: [] };
+    },
+    [],
+  );
 
   const applyFilters = useCallback((filters: any) => {
     console.log('applyFilters:', filters);

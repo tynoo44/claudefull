@@ -19,7 +19,8 @@ export const PremiumCalendarGrid: React.FC<PremiumCalendarGridProps> = ({
   onDateClick,
   onTimeSlotClick,
 }) => {
-  const { uiState, multiCalendarState, events, calendars, selectEvent } = usePremiumCalendar();
+  const { uiState, multiCalendarState, events, calendars, selectEvent, updateEvent } =
+    usePremiumCalendar();
 
   const [hoveredEvent, setHoveredEvent] = useState<string | null>(null);
 
@@ -69,6 +70,7 @@ export const PremiumCalendarGrid: React.FC<PremiumCalendarGridProps> = ({
     onDateClick: handleDateClick,
     onTimeSlotClick: handleTimeSlotClick,
     onEventHover: handleEventHover,
+    onEventUpdate: updateEvent,
     isLoading: uiState.isLoading,
   };
 
@@ -129,7 +131,7 @@ export const PremiumCalendarGrid: React.FC<PremiumCalendarGridProps> = ({
       <div className="calendar-view-container h-full relative">{renderCalendarView()}</div>
 
       {/* Debug Info (Development Only) */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white text-xs p-2 rounded max-w-xs">
           <div>Vista: {uiState.currentView}</div>
           <div>Fecha: {uiState.currentDate.toLocaleDateString()}</div>

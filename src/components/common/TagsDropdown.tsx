@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown, Tag, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTags } from '@/hooks/useTags';

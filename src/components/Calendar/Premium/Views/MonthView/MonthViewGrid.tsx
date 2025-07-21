@@ -25,7 +25,11 @@ interface MonthViewGridProps {
   onEventClick: (event: CalendarEvent) => void;
   onDateClick: (date: Date) => void;
   onEventHover: (eventId: string | null) => void;
+  onEventUpdate?: (eventId: string, updates: Partial<CalendarEvent>) => Promise<CalendarEvent>;
   isLoading?: boolean;
+  darkMode?: boolean;
+  selectedDate?: Date | null;
+  onTimeSlotClick?: (date: Date) => void;
 }
 
 const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -40,10 +44,14 @@ export const MonthViewGrid: React.FC<MonthViewGridProps> = ({
   onEventClick,
   onDateClick,
   onEventHover,
+  onEventUpdate = async () => ({}) as CalendarEvent,
   isLoading = false,
+  darkMode = false,
+  selectedDate = null,
+  onTimeSlotClick = () => {},
 }) => {
   // Calculate calendar grid dates
-  const { calendarDays, monthStart, monthEnd } = useMemo(() => {
+  const { calendarDays, monthStart } = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -196,7 +204,14 @@ export const MonthViewGrid: React.FC<MonthViewGridProps> = ({
                   multiCalendarSettings={multiCalendarSettings}
                   onEventClick={onEventClick}
                   onEventHover={onEventHover}
+                  onEventUpdate={onEventUpdate}
                   maxVisibleEvents={3}
+                  isCurrentMonth={isSameMonth(date, currentDate)}
+                  isSelected={selectedDate ? isSameDay(date, selectedDate) : false}
+                  isToday={isToday(date)}
+                  darkMode={darkMode}
+                  onDateClick={() => onDateClick(date)}
+                  onTimeSlotClick={() => onTimeSlotClick(date)}
                 />
               </div>
             </div>

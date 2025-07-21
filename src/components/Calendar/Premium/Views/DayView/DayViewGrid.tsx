@@ -31,7 +31,7 @@ export const DayViewGrid: React.FC<DayViewGridProps> = ({
   selectedEvents,
   hoveredEvent,
   calendars,
-  multiCalendarSettings,
+  multiCalendarSettings: _multiCalendarSettings,
   onEventClick,
   onDateClick,
   onTimeSlotClick,

@@ -72,7 +72,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
   selectedTags = [],
   selectedStatus = 'all',
   selectedProcedence = 'all',
-  availableTags = [],
+  // availableTags = [], // Unused
   onSearchChange = () => {},
   onTagToggle = () => {},
   onStatusChange = () => {},

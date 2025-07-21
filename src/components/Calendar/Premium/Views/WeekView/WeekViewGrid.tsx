@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { startOfWeek, addDays, format, isToday, isSameDay } from 'date-fns';
+import { startOfWeek, addDays, format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { WeekViewColumn } from './WeekViewColumn';
 import type { CalendarEvent, GoogleCalendar } from '../../../../../types/calendar';
@@ -31,7 +31,7 @@ export const WeekViewGrid: React.FC<WeekViewGridProps> = ({
   selectedEvents,
   hoveredEvent,
   calendars,
-  multiCalendarSettings,
+  multiCalendarSettings: _multiCalendarSettings,
   onEventClick,
   onDateClick,
   onTimeSlotClick,

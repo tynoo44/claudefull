@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar, ChevronDown, ChevronRight, Filter } from 'lucide-react';
 import { AgendaViewItem } from './AgendaViewItem';
@@ -33,7 +33,7 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
   selectedEvents,
   hoveredEvent,
   calendars,
-  multiCalendarSettings,
+  multiCalendarSettings: _multiCalendarSettings,
   onEventClick,
   onDateClick,
   onEventHover,

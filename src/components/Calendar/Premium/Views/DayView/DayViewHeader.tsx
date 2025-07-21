@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Users, MapPin, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin } from 'lucide-react';
 import type { CalendarEvent } from '../../../../../types/calendar';
 
 interface DayViewHeaderProps {
@@ -19,7 +19,7 @@ export const DayViewHeader: React.FC<DayViewHeaderProps> = ({
 }) => {
   // Calculate day statistics
   const totalEvents = events.length;
-  const allDayEvents = events.filter(e => e.is_all_day).length;
+  // const allDayEvents = events.filter(e => e.is_all_day).length;
   const eventsWithAttendees = events.filter(e => e.attendees && e.attendees.length > 0).length;
   const eventsWithLocation = events.filter(e => e.location).length;
 

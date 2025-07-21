@@ -69,10 +69,13 @@ describe('AI Functions Comprehensive Test Suite', () => {
     it('should format script templates properly', () => {
       const templates = [
         {
+          id: 'template-1',
           phase: 1,
           template_type: 'opener',
           content: 'Hola {nombre}, ¿cómo está tu negocio de {tipo_negocio}?',
           variables: ['nombre', 'tipo_negocio'],
+          priority: 1,
+          active: true,
         },
       ];
 
@@ -84,16 +87,17 @@ describe('AI Functions Comprehensive Test Suite', () => {
     it('should format few-shot examples correctly', () => {
       const examples = [
         {
+          id: 'example-1',
           phase: 1,
-          scenario: 'Consulta inicial',
-          lead_message: 'Hola, me interesa tu servicio',
-          setter_response: 'Perfecto! Cuéntame sobre tu situación actual',
+          scenario_type: 'Consulta inicial',
+          example_input: 'Hola, me interesa tu servicio',
+          example_output: 'Perfecto! Cuéntame sobre tu situación actual',
         },
       ];
 
       const formatted = promptManager.formatFewShotExamples(examples);
-      expect(formatted).toContain('Lead: Hola, me interesa tu servicio');
-      expect(formatted).toContain('Setter: Perfecto! Cuéntame sobre tu situación actual');
+      expect(formatted).toContain('Input: Hola, me interesa tu servicio');
+      expect(formatted).toContain('Output: Perfecto! Cuéntame sobre tu situación actual');
     });
   });
 
@@ -357,7 +361,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
       expect(formalProfile.communicationStyle).toBe('formal');
     });
 
-    it('should determine appropriate personalization rules', () => {
+    it('should determine appropriate personalization rules', async () => {
       const youngTechProfile = {
         type: 'entrepreneur',
         ageGroup: 'young_professional',
@@ -376,12 +380,12 @@ describe('AI Functions Comprehensive Test Suite', () => {
         decisionMakingStyle: 'methodical',
       };
 
-      const youngTechRules = require('../lib/lead-personalizer').getPersonalizationRules(
+      const youngTechRules = (await import('../lib/lead-personalizer')).getPersonalizationRules(
         youngTechProfile,
       );
-      const matureExecutiveRules = require('../lib/lead-personalizer').getPersonalizationRules(
-        matureExecutiveProfile,
-      );
+      const matureExecutiveRules = (
+        await import('../lib/lead-personalizer')
+      ).getPersonalizationRules(matureExecutiveProfile);
 
       expect(youngTechRules.useSlang).toBe(true);
       expect(youngTechRules.vocabularyLevel).toBe('casual');
@@ -392,7 +396,7 @@ describe('AI Functions Comprehensive Test Suite', () => {
       expect(matureExecutiveRules.persuasionStyle).toBe('data_driven');
     });
 
-    it('should provide appropriate example phrases', () => {
+    it('should provide appropriate example phrases', async () => {
       const casualProfile = {
         type: 'small_business_owner',
         ageGroup: 'young_professional',
@@ -402,7 +406,9 @@ describe('AI Functions Comprehensive Test Suite', () => {
         decisionMakingStyle: 'emotional',
       };
 
-      const rules = require('../lib/lead-personalizer').getPersonalizationRules(casualProfile);
+      const rules = (await import('../lib/lead-personalizer')).getPersonalizationRules(
+        casualProfile,
+      );
 
       expect(
         rules.examplePhrases.greeting.some(
@@ -525,7 +531,8 @@ describe('AI Functions Comprehensive Test Suite', () => {
 
     it('should provide fallback responses when AI services fail', async () => {
       // Mock AI service failure
-      vi.mocked(require('@google/generative-ai').GoogleGenerativeAI).mockImplementation(() => ({
+      const mockGoogleAI = await import('@google/generative-ai');
+      vi.mocked(mockGoogleAI.GoogleGenerativeAI).mockImplementation(() => ({
         getGenerativeModel: () => ({
           generateContent: () => Promise.reject(new Error('API Error')),
         }),

@@ -6,6 +6,7 @@ import type {
   CreateEventRequest,
   UpdateEventRequest,
   GoogleCalendar,
+  EventReminder,
 } from '../../types/calendar';
 
 interface EventModalProps {
@@ -40,7 +41,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     is_all_day: false,
     google_calendar_id: '',
     attendees: [] as { email: string; display_name?: string }[],
-    reminders: [{ method: 'popup' as const, minutes: 15 }],
+    reminders: [] as EventReminder[],
   });
 
   const [newAttendeeEmail, setNewAttendeeEmail] = useState('');

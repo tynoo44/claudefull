@@ -199,7 +199,7 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
       </div>
 
       {/* Información del Lead */}
-      {leadData && (leadData.tags?.length > 0 || leadData.notes || leadData.insights) && (
+      {leadData && ((leadData.tags?.length ?? 0) > 0 || leadData.notes || leadData.insights) && (
         <div
           className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} space-y-3`}
         >

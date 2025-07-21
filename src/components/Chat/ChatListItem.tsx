@@ -1,5 +1,4 @@
 import React from 'react';
-import { Hash } from 'lucide-react';
 import { Chat } from '@/types';
 import { getStatusClasses } from '../../utils/statusUtils';
 
