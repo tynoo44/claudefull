@@ -8,6 +8,7 @@ import { ChatsPage } from '@/pages/ChatsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
 import { TemplatesPage } from '@/pages/TemplatesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
+import { PremiumCalendarDemo } from '@/pages/PremiumCalendarDemo';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/Layout/ProtectedRoute';
@@ -53,6 +54,7 @@ const AppContent: React.FC = () => {
           <Route path="/leads" element={<LeadsPage darkMode={darkMode} />} />
           <Route path="/templates" element={<TemplatesPage darkMode={darkMode} />} />
           <Route path="/calendar" element={<CalendarPage darkMode={darkMode} />} />
+          <Route path="/premium-calendar" element={<PremiumCalendarDemo darkMode={darkMode} />} />
         </Route>
       </Route>
 

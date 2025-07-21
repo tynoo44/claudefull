@@ -142,16 +142,16 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-2 mb-3">
+        {/* Filters - Compact single row */}
+        <div className="flex items-center gap-1 mb-3">
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
-            className={`flex-1 px-3 py-2 rounded-lg border ${
+            className={`flex-1 min-w-0 px-2 py-1.5 text-sm rounded border ${
               darkMode
                 ? 'bg-gray-700 border-gray-600 text-white'
                 : 'bg-white border-gray-300 text-gray-900'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
           >
             {categories.map(category => (
               <option key={category} value={category}>
@@ -163,30 +163,31 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as SortOption)}
-            className={`flex-1 px-3 py-2 rounded-lg border ${
+            className={`flex-1 min-w-0 px-2 py-1.5 text-sm rounded border ${
               darkMode
                 ? 'bg-gray-700 border-gray-600 text-white'
                 : 'bg-white border-gray-300 text-gray-900'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            } focus:outline-none focus:ring-1 focus:ring-blue-500`}
           >
             <option value="mostUsed">Más usado</option>
             <option value="leastUsed">Menos usado</option>
-            <option value="successRate">Tasa de éxito</option>
-            <option value="alphabetical">Alfabético</option>
-            <option value="recent">Más reciente</option>
+            <option value="successRate">Tasa éxito</option>
+            <option value="alphabetical">A-Z</option>
+            <option value="recent">Reciente</option>
           </select>
 
           <button
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`p-2 rounded-lg border transition-colors ${
+            className={`flex-shrink-0 p-1.5 rounded border transition-colors ${
               showFavoritesOnly
                 ? 'bg-yellow-500 border-yellow-500 text-white'
                 : darkMode
                   ? 'border-gray-600 text-gray-400 hover:text-yellow-500 hover:border-yellow-500'
                   : 'border-gray-300 text-gray-500 hover:text-yellow-500 hover:border-yellow-500'
             }`}
+            title={showFavoritesOnly ? 'Mostrar todas' : 'Solo favoritos'}
           >
-            <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+            <Star className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-current' : ''}`} />
           </button>
         </div>
       </div>

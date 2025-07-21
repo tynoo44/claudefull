@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { generateAIResponse } from '../lib/gemini';
-import { analyzeConversation } from '../lib/conversation-analyzer';
+import ConversationAnalyzer from '../lib/conversation-analyzer';
 import { detectIntent } from '../lib/intent-detector';
 import { analyzeLeadProfile } from '../lib/lead-personalizer';
 
@@ -64,13 +64,13 @@ class ConversationAnalysisService {
   // Iniciar el servicio de análisis
   start() {
     if (this.isRunning) return;
-    
+
     this.isRunning = true;
     // Ejecutar cada 30 segundos
     this.analysisInterval = setInterval(() => {
       this.processAnalysisQueue();
     }, 30000);
-    
+
     // Ejecutar inmediatamente
     this.processAnalysisQueue();
   }
@@ -97,8 +97,9 @@ class ConversationAnalysisService {
 
     try {
       // Obtener conversaciones que necesitan análisis
-      const { data: conversationsNeedingAnalysis, error } = await supabase
-        .rpc('get_conversations_needing_analysis');
+      const { data: conversationsNeedingAnalysis, error } = await supabase.rpc(
+        'get_conversations_needing_analysis',
+      );
 
       if (error) {
         console.error('Error getting conversations needing analysis:', error);
@@ -112,11 +113,11 @@ class ConversationAnalysisService {
       // Procesar conversaciones en orden de prioridad
       for (const conv of conversationsNeedingAnalysis) {
         if (!this.isRunning) break;
-        
+
         // Verificar si ha pasado suficiente tiempo desde el último mensaje
         const lastMessageTime = new Date(conv.last_message_at).getTime();
         const timeSinceLastMessage = Date.now() - lastMessageTime;
-        
+
         if (timeSinceLastMessage >= this.messageDelay) {
           await this.analyzeConversation(conv.conversation_id);
           // Esperar un poco entre análisis para no sobrecargar
@@ -145,10 +146,12 @@ class ConversationAnalysisService {
       // Obtener información de la conversación y el lead
       const { data: conversation } = await supabase
         .from('conversations')
-        .select(`
+        .select(
+          `
           *,
           leads (*)
-        `)
+        `,
+        )
         .eq('id', conversationId)
         .single();
 
@@ -162,7 +165,7 @@ class ConversationAnalysisService {
 
       // Análisis de sentimientos y emociones
       const sentimentAnalysis = this.analyzeSentiments(messages);
-      
+
       // Análisis de intenciones del último mensaje del lead
       const leadMessages = messages.filter(m => m.sender_type === 'lead');
       const lastLeadMessage = leadMessages[leadMessages.length - 1];
@@ -172,9 +175,9 @@ class ConversationAnalysisService {
       const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text));
 
       // Análisis completo de la conversación
-      const conversationAnalysis = await analyzeConversation(
-        aiMessages as any,
-        conversation.current_phase
+      const conversationAnalysis = await ConversationAnalyzer.analyzeConversation(
+        aiMessages as { role: string; content: string }[],
+        conversation.current_phase,
       );
 
       // Generar análisis enriquecido con IA
@@ -183,7 +186,7 @@ class ConversationAnalysisService {
         conversation,
         conversationAnalysis,
         intent,
-        leadProfile
+        leadProfile,
       );
 
       // Guardar análisis en la base de datos
@@ -218,25 +221,24 @@ class ConversationAnalysisService {
       if (isPriority) {
         await supabase
           .from('conversations')
-          .update({ 
-            last_analyzed_at: new Date().toISOString() 
+          .update({
+            last_analyzed_at: new Date().toISOString(),
           })
           .eq('id', conversationId);
       }
-
     } catch (error) {
       console.error('Error analyzing conversation:', error);
     }
   }
 
   // Analizar sentimientos de los mensajes
-  private analyzeSentiments(messages: any[]): any {
-    const sentimentMap = {
-      'muy_positivo': 1,
-      'positivo': 0.5,
-      'neutral': 0,
-      'negativo': -0.5,
-      'muy_negativo': -1
+  private analyzeSentiments(messages: { text: string; sender_type: string }[]): { overall: number; timeline: Array<{ timestamp: Date; score: number; emotion: string }> } {
+    const _sentimentMap = {
+      muy_positivo: 1,
+      positivo: 0.5,
+      neutral: 0,
+      negativo: -0.5,
+      muy_negativo: -1,
     };
 
     const emotionKeywords = {
@@ -270,7 +272,7 @@ class ConversationAnalysisService {
       return {
         message_id: msg.id,
         score,
-        emotion
+        emotion,
       };
     });
 
@@ -278,17 +280,17 @@ class ConversationAnalysisService {
 
     return {
       overall,
-      by_message: byMessage
+      by_message: byMessage,
     };
   }
 
   // Generar análisis enriquecido con IA
   private async generateEnrichedAnalysis(
-    messages: any[],
-    conversation: any,
-    baseAnalysis: any,
-    intent: any,
-    leadProfile: any
+    messages: unknown[],
+    conversation: unknown,
+    baseAnalysis: unknown,
+    intent: unknown,
+    leadProfile: unknown,
   ): Promise<any> {
     const prompt = `
 Analiza esta conversación de ventas y proporciona un análisis PROFESIONAL y ACCIONABLE.
@@ -328,10 +330,12 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
 
     try {
       const response = await generateAIResponse({
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
         model: 'gemini-2.5-pro',
       });
 
@@ -344,7 +348,7 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
   }
 
   // Generar análisis básico como fallback
-  private generateBasicAnalysis(messages: any[], conversation: any, baseAnalysis: any): any {
+  private generateBasicAnalysis(messages: unknown[], conversation: unknown, baseAnalysis: unknown): unknown {
     return {
       analysis_data: {
         summary: `Conversación en fase ${conversation.current_phase}`,
@@ -352,45 +356,45 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
         phase_details: this.generatePhaseDetails(messages, conversation.current_phase),
         sentiment_timeline: [],
         overall_sentiment: 'neutral',
-        key_moments: []
+        key_moments: [],
       },
       phase_progress: this.generatePhaseProgress(messages, conversation.current_phase),
       key_insights: [],
       warnings: [],
-      action_threads: []
+      action_threads: [],
     };
   }
 
   // Generar detalles de fases
-  private generatePhaseDetails(messages: any[], currentPhase: number): Record<number, PhaseDetail> {
+  private generatePhaseDetails(messages: unknown[], currentPhase: number): Record<number, PhaseDetail> {
     const phases: Record<number, PhaseDetail> = {};
-    
+
     for (let i = 1; i <= 5; i++) {
       phases[i] = {
         name: this.getPhaseName(i),
         status: i < currentPhase ? 'completed' : i === currentPhase ? 'in_progress' : 'not_started',
         progress: i < currentPhase ? 100 : i === currentPhase ? 50 : 0,
         information_gathered: [],
-        next_steps: []
+        next_steps: [],
       };
     }
-    
+
     return phases;
   }
 
   // Generar progreso de fases
-  private generatePhaseProgress(messages: any[], currentPhase: number): any {
-    const progress: any = {};
-    
+  private generatePhaseProgress(messages: unknown[], currentPhase: number): unknown {
+    const progress: unknown = {};
+
     for (let i = 1; i <= 5; i++) {
       progress[i] = {
         completed: i < currentPhase,
         progress: i < currentPhase ? 100 : i === currentPhase ? 50 : 0,
         key_info: [],
-        missing_info: []
+        missing_info: [],
       };
     }
-    
+
     return progress;
   }
 
@@ -401,22 +405,22 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
       2: 'Dolor',
       3: 'Situación Deseada',
       4: 'Obstáculo',
-      5: 'Oferta'
+      5: 'Oferta',
     };
     return phaseNames[phase as keyof typeof phaseNames] || 'Desconocida';
   }
 
   // Actualizar lead basado en el análisis
-  private async updateLeadFromAnalysis(leadId: string, analysis: any) {
+  private async updateLeadFromAnalysis(leadId: string, analysis: unknown) {
     try {
       // Determinar si hay cambios significativos
-      const updates: any = {};
-      
+      const updates: unknown = {};
+
       // Actualizar fase si cambió
       if (analysis.suggested_phase_change) {
         updates.current_phase = analysis.suggested_phase_change;
       }
-      
+
       // Actualizar tags automáticos
       if (analysis.auto_tags && analysis.auto_tags.length > 0) {
         const { data: currentLead } = await supabase
@@ -424,15 +428,15 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
           .select('tags')
           .eq('id', leadId)
           .single();
-          
+
         const currentTags = currentLead?.tags || [];
         const newTags = [...new Set([...currentTags, ...analysis.auto_tags])];
-        
+
         if (newTags.length > currentTags.length) {
           updates.tags = newTags;
         }
       }
-      
+
       // Actualizar notas si hay información relevante
       if (analysis.key_insights && analysis.key_insights.length > 0) {
         const { data: insights } = await supabase
@@ -440,18 +444,16 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
           .select('*')
           .eq('lead_id', leadId)
           .single();
-          
+
         if (!insights) {
           // Crear nuevo registro de insights
-          await supabase
-            .from('lead_insights')
-            .insert({
-              lead_id: leadId,
-              business_info: analysis.business_info || {},
-              pain_points: analysis.pain_points || [],
-              goals: analysis.goals || [],
-              personality_profile: analysis.personality_profile || {}
-            });
+          await supabase.from('lead_insights').insert({
+            lead_id: leadId,
+            business_info: analysis.business_info || {},
+            pain_points: analysis.pain_points || [],
+            goals: analysis.goals || [],
+            personality_profile: analysis.personality_profile || {},
+          });
         } else {
           // Actualizar insights existentes
           await supabase
@@ -460,20 +462,16 @@ Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
               business_info: { ...insights.business_info, ...analysis.business_info },
               pain_points: [...new Set([...insights.pain_points, ...(analysis.pain_points || [])])],
               goals: [...new Set([...insights.goals, ...(analysis.goals || [])])],
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('lead_id', leadId);
         }
       }
-      
+
       // Actualizar el lead si hay cambios
       if (Object.keys(updates).length > 0) {
-        await supabase
-          .from('leads')
-          .update(updates)
-          .eq('id', leadId);
+        await supabase.from('leads').update(updates).eq('id', leadId);
       }
-      
     } catch (error) {
       console.error('Error updating lead from analysis:', error);
     }

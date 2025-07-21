@@ -35,3 +35,70 @@ Razona en profundidad cual es la mejor forma de implementar todo esto, desde sup
 
 La IA es la caracteristica mas valiosa de esta app, y la principal ventaja sobre settear por instagram, donde no tenemos ningun tipo de informacion de este estilo.
 Es por eso mismo, que de esta pestaña depende el exito de esta app. Dale la importancia que se merece, divide en tareas cada task que se necesita, y perfecciona todo al maximo. No te conformes con un analisis o un diseño mediocre. Debe ser inmejorable.
+
+
+
+
+
+Lee @CLAUDE.md , @README.md y taskmaster task.json y logs.\                                 │
+│   \                                                                                           │
+│   Comprueba el funcionamiento de esto que acabas de realizar:\                                │
+│   \                                                                                           │
+│   [Pasted text #1 +93 lines]\                                                                 │
+│   \                                                                                           │
+│   \                                                                                           │
+│   Recuerda mi prompt: [Pasted text #2 +37 lines]\                                             │
+│   \                                                                                           │
+│   \                                                                                           │
+│   Añade estas tasks a taskmaster, detallando en profundidad lo que se va a realizar en la     │
+│   tarea, dependencias, y checkeos para comprobar que todo se ha realizado correctamente.      │
+│   Realiza logeos en la carpeta de taskmaster/logs, y ves tarea por tarea, trabajando conmigo  │
+│   mano a mano. No hagas lo que te apetezca, me tienes que explicar y consultar para cada      │
+│   accion, para que así pueda estar al corriente de los cambios que realices.\                 │
+│   \                                                                                           │
+│   Las tareas son las siguientes:\                                                             │
+│   \                                                                                           │
+│   1- Revisar todo lo que he pedido y todo lo que se ha hecho\                                 │
+│   \                                                                                           │
+│   1.1- Revisar el estado de supabase con el MCP. Revisa las tablas, las sql y la eficiencia.  │
+│   Elimina tablas inutiles y optimiza todas las que puedas. Si se pueden fusionar ciertas      │
+│   tablas para ahorrar tiempo de carga o hacer la app más eficiente, hazlo. Evita un sistema   │
+│   de base de datos desordenado.\                                                              │
+│   \                                                                                           │
+│   2- Arreglar el codigo, los errores, warnings, eslint... y optimizalo, eliminando codigo     │
+│   obsoleto, repetido, y utiliza buenas practicas. Reformula siempre que haya algo que         │
+│   mejorar, por pequeño que sea. Debe quedar perfecto.\                                        │
+│   \                                                                                           │
+│   2.1- Arreglar las funciones que no estén funcionando correctamente. Revisando supabase      │
+│   podrás comprobar que hay funciones que no se están realizando, ya que las tablas no         │
+│   estarán recogiendo datos.\                                                                  │
+│   \                                                                                           │
+│   3- Una vez todo esté en orden, mejora en todo lo que sea posible el sistema de IA, tanto    │
+│   prompts, interfaz, sistemas... Añade funciones nuevas que agreguen valor al usuario que     │
+│   trabaje desde esta app.
+
+
+
+Lee @CLAUDE.md y @README.md , y añade una nueva   │
+│   task que consista en diseñar una interfaz         │
+│   premium, comoda de usar y que no tenga nada que   │
+│   envidiar a google calendar.\                      │
+│   \                                                 │
+│   Además, añade más funciones, como poder           │
+│   seleccionar varios calendarios a la vez, mover    │
+│   eventos arrastrando, haz que al pinchar en un     │
+│   evento, se abra un menú con todos los detalles,   │
+│   que aparezcan las fotos de google de los          │
+│   invitados... \                                    │
+│   \                                                 │
+│   En resumen, diseña y programa una interfaz de     │
+│   calendario digna de un saas millonario. No debe   │
+│   haber practicamente ninguna funcion en google     │
+│   calendar que no se pueda realizar desde aquí.\    │
+│   \                                                 │
+│   Es más, deben haber más funciones.\               │
+│   \                                                 │
+│   Razona, y crea las tasks necesarias para lograr   │
+│   esta meta paso por paso, revisando la calidad     │
+│   del codigo, y asegurandote de que cada funcion o  │
+│   cambio que implementas es exitoso 

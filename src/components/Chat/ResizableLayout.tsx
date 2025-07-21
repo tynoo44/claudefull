@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+// Global ResizeObserver declaration
+declare global {
+  interface Window {
+    ResizeObserver: typeof ResizeObserver;
+  }
+}
+
 interface ResizableLayoutProps {
   children: React.ReactNode[];
   darkMode: boolean;
@@ -14,9 +21,14 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
   onSidebarWidthChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(522); // Default 522px (5% wider than 497px)
+  const [sidebarWidth, setSidebarWidth] = useState(350); // Default to minimum width
   const [columnWidths, setColumnWidths] = useState<number[]>([0, 0, 0]);
   const [isResizing, setIsResizing] = useState<number | null>(null);
+
+  // Notify parent of initial sidebar width
+  useEffect(() => {
+    onSidebarWidthChange?.(sidebarWidth);
+  }, []); // Only on mount
 
   // Sidebar constraints (25% wider)
   const MIN_SIDEBAR_WIDTH = sidebarCollapsed ? 80 : 350; // 25% wider than original
@@ -45,24 +57,85 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
 
       const availableWidth = containerWidth - actualSidebarWidth;
 
-      // Default proportions for the 3 resizable columns (AI: 2/5, chat: 2/5, templates: 1/5)
-      const defaultProportions = [0.4, 0.4, 0.2]; // AI Chat, Conversación, Templates
+      // Templates column uses minimum width by default, only expands manually
+      const TEMPLATES_MIN_WIDTH = MIN_COLUMN_WIDTH; // 300px
 
       setColumnWidths(prevWidths => {
-        // If we have existing widths, maintain proportions
+        // If we have existing widths, maintain them but templates stays minimal unless manually resized
         const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
         if (currentTotal > 0) {
-          const scale = availableWidth / currentTotal;
-          return prevWidths.map(w => Math.max(MIN_COLUMN_WIDTH, w * scale));
+          // Keep templates column at minimum unless it was manually expanded
+          const templatesWidth =
+            prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
+          const remainingWidth = availableWidth - templatesWidth;
+
+          // Split remaining width proportionally between Conversation (50%) and AI Chat (50%)
+          const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+          const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+
+          return [conversationWidth, templatesWidth, aiChatWidth];
         }
 
-        // Otherwise use default proportions
-        return defaultProportions.map(p => Math.max(MIN_COLUMN_WIDTH, availableWidth * p));
+        // Initial load: Templates gets minimum width, rest split between Conversation and AI Chat
+        const templatesWidth = TEMPLATES_MIN_WIDTH;
+        const remainingWidth = availableWidth - templatesWidth;
+        const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+        const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+
+        return [conversationWidth, templatesWidth, aiChatWidth];
       });
     };
 
     calculateWidths();
-  }, [sidebarCollapsed, onSidebarWidthChange]); // Removed sidebarWidth to prevent recalcs during manual resize
+  }, [sidebarCollapsed, sidebarWidth, onSidebarWidthChange]);
+
+  // ResizeObserver for more accurate container size detection
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        if (entry.target === containerRef.current) {
+          const containerWidth = entry.contentRect.width;
+          const actualSidebarWidth = sidebarCollapsed ? 80 : sidebarWidth;
+          const availableWidth = containerWidth - actualSidebarWidth;
+
+          // Force recalculation with current dimensions
+          const TEMPLATES_MIN_WIDTH = MIN_COLUMN_WIDTH; // 300px
+
+          setColumnWidths(prevWidths => {
+            const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
+            if (currentTotal > 0) {
+              // Keep templates column at minimum unless it was manually expanded
+              const templatesWidth =
+                prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
+              const remainingWidth = availableWidth - templatesWidth;
+
+              // Split remaining width proportionally between Conversation (50%) and AI Chat (50%)
+              const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+              const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+
+              return [conversationWidth, templatesWidth, aiChatWidth];
+            }
+
+            // Initial load: Templates gets minimum width, rest split between Conversation and AI Chat
+            const templatesWidth = TEMPLATES_MIN_WIDTH;
+            const remainingWidth = availableWidth - templatesWidth;
+            const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+            const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+
+            return [conversationWidth, templatesWidth, aiChatWidth];
+          });
+        }
+      }
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [sidebarCollapsed, sidebarWidth]);
 
   // Handle window resize separately to recalculate columns when needed
   useEffect(() => {
@@ -76,8 +149,25 @@ export const ResizableLayout: React.FC<ResizableLayoutProps> = ({
       setColumnWidths(prevWidths => {
         const currentTotal = prevWidths.reduce((a, b) => a + b, 0);
         if (currentTotal > 0) {
-          const scale = availableWidth / currentTotal;
-          return prevWidths.map(w => Math.max(MIN_COLUMN_WIDTH, w * scale));
+          // Keep templates at minimum unless manually expanded, scale only Conversation and AI Chat
+          const TEMPLATES_MIN_WIDTH = MIN_COLUMN_WIDTH; // 300px
+          const templatesWidth =
+            prevWidths[1] > TEMPLATES_MIN_WIDTH ? prevWidths[1] : TEMPLATES_MIN_WIDTH;
+          const remainingWidth = availableWidth - templatesWidth;
+
+          // Calculate scale for conversation and AI chat columns only
+          const otherColumnsTotal = prevWidths[0] + prevWidths[2];
+          if (otherColumnsTotal > 0) {
+            const scale = remainingWidth / otherColumnsTotal;
+            const conversationWidth = Math.max(MIN_COLUMN_WIDTH, prevWidths[0] * scale);
+            const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, prevWidths[2] * scale);
+            return [conversationWidth, templatesWidth, aiChatWidth];
+          } else {
+            // Fallback: split remaining width equally
+            const conversationWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+            const aiChatWidth = Math.max(MIN_COLUMN_WIDTH, remainingWidth * 0.5);
+            return [conversationWidth, templatesWidth, aiChatWidth];
+          }
         }
         return prevWidths;
       });

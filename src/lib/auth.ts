@@ -30,7 +30,8 @@ export class AuthService {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: 'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+        scopes:
+          'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -48,7 +49,8 @@ export class AuthService {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: 'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+        scopes:
+          'email profile https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',

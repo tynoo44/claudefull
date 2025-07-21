@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Calendar,
-  Clock,
   Plus,
   ChevronLeft,
   ChevronRight,
   Settings,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -22,8 +21,18 @@ interface CalendarPageProps {
 }
 
 const months = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
@@ -37,21 +46,21 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
     upcomingEvents,
     calendarsLoading,
     eventsLoading,
-    isCreating,
-    isUpdating,
-    isDeleting,
+    isCreating: _isCreating,
+    isUpdating: _isUpdating,
+    isDeleting: _isDeleting,
     setView,
     setSelectedCalendarId,
     navigateDate,
     goToToday,
-    goToDate,
-    getEventsForDate,
+    goToDate: _goToDate,
+    getEventsForDate: _getEventsForDate,
     syncCalendars,
     syncEvents,
     createEvent,
     updateEvent,
     deleteEvent,
-    eventError
+    eventError,
   } = useCalendar();
 
   const [showEventModal, setShowEventModal] = useState(false);
@@ -135,7 +144,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
                 Gestiona tus eventos y citas
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={goToToday}
@@ -147,7 +156,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
               >
                 Hoy
               </button>
-              
+
               <button
                 onClick={handleCreateEvent}
                 disabled={!hasGoogleAccess}
@@ -156,7 +165,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
                 <Plus className="h-4 w-4" />
                 Nuevo Evento
               </button>
-              
+
               <button
                 onClick={() => setShowConnectModal(!showConnectModal)}
                 className={`p-2 rounded-lg transition-colors ${
@@ -174,9 +183,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
         {/* Error Messages */}
         {eventError && (
           <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg">
-            <p className="text-red-800 dark:text-red-200 text-sm">
-              {eventError?.message}
-            </p>
+            <p className="text-red-800 dark:text-red-200 text-sm">{eventError?.message}</p>
           </div>
         )}
 
@@ -214,7 +221,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({ darkMode }) => {
                     <ChevronLeft className="h-5 w-5" />
                   </button>
 
-                  <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h2
+                    className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                  >
                     {view === 'month' && `${months[currentMonth]} ${currentYear}`}
                     {view === 'week' && format(currentDate, 'MMMM yyyy', { locale: es })}
                     {view === 'day' && format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}

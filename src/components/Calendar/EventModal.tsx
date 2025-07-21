@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, MapPin, Users, Save, Trash2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
-import type { CalendarEvent, CreateEventRequest, UpdateEventRequest, GoogleCalendar } from '../../types/calendar';
+import type {
+  CalendarEvent,
+  CreateEventRequest,
+  UpdateEventRequest,
+  GoogleCalendar,
+} from '../../types/calendar';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -24,7 +29,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   calendars,
   darkMode,
   defaultDate,
-  defaultCalendarId
+  defaultCalendarId,
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -35,7 +40,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     is_all_day: false,
     google_calendar_id: '',
     attendees: [] as { email: string; display_name?: string }[],
-    reminders: [{ method: 'popup' as const, minutes: 15 }]
+    reminders: [{ method: 'popup' as const, minutes: 15 }],
   });
 
   const [newAttendeeEmail, setNewAttendeeEmail] = useState('');
@@ -55,9 +60,9 @@ export const EventModal: React.FC<EventModalProps> = ({
         google_calendar_id: event.google_calendar_id,
         attendees: event.attendees.map(att => ({
           email: att.email,
-          display_name: att.display_name
+          display_name: att.display_name,
         })),
-        reminders: event.reminders
+        reminders: event.reminders,
       });
     } else {
       // Creating new event
@@ -75,7 +80,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         is_all_day: false,
         google_calendar_id: defaultCalendarId || calendars[0]?.id || '',
         attendees: [],
-        reminders: [{ method: 'popup', minutes: 15 }]
+        reminders: [{ method: 'popup', minutes: 15 }],
       });
     }
   }, [event, defaultDate, defaultCalendarId, calendars]);
@@ -83,7 +88,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
     // Clear error when user starts typing
@@ -97,12 +102,12 @@ export const EventModal: React.FC<EventModalProps> = ({
       // Convert to all-day format
       const startDate = new Date(formData.start_datetime);
       const endDate = new Date(formData.end_datetime);
-      
+
       setFormData(prev => ({
         ...prev,
         is_all_day: true,
         start_datetime: format(startDate, "yyyy-MM-dd'T'00:00"),
-        end_datetime: format(endDate, "yyyy-MM-dd'T'23:59")
+        end_datetime: format(endDate, "yyyy-MM-dd'T'23:59"),
       }));
     } else {
       setFormData(prev => ({ ...prev, is_all_day: false }));
@@ -113,7 +118,7 @@ export const EventModal: React.FC<EventModalProps> = ({
     if (newAttendeeEmail && !formData.attendees.find(att => att.email === newAttendeeEmail)) {
       setFormData(prev => ({
         ...prev,
-        attendees: [...prev.attendees, { email: newAttendeeEmail }]
+        attendees: [...prev.attendees, { email: newAttendeeEmail }],
       }));
       setNewAttendeeEmail('');
     }
@@ -122,7 +127,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   const removeAttendee = (email: string) => {
     setFormData(prev => ({
       ...prev,
-      attendees: prev.attendees.filter(att => att.email !== email)
+      attendees: prev.attendees.filter(att => att.email !== email),
     }));
   };
 
@@ -147,7 +152,7 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     const eventData = {
@@ -173,9 +178,13 @@ export const EventModal: React.FC<EventModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+      <div
+        className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}
+      >
         {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div
+          className={`flex items-center justify-between p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+        >
           <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             {event ? 'Editar Evento' : 'Crear Evento'}
           </h2>
@@ -191,16 +200,18 @@ export const EventModal: React.FC<EventModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Título */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Título *
             </label>
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              onChange={e => handleInputChange('title', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900'
               } ${errors.title ? 'border-red-500' : ''}`}
               placeholder="Título del evento"
@@ -210,15 +221,17 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Calendario */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Calendario *
             </label>
             <select
               value={formData.google_calendar_id}
-              onChange={(e) => handleInputChange('google_calendar_id', e.target.value)}
+              onChange={e => handleInputChange('google_calendar_id', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } ${errors.google_calendar_id ? 'border-red-500' : ''}`}
             >
@@ -229,7 +242,9 @@ export const EventModal: React.FC<EventModalProps> = ({
                 </option>
               ))}
             </select>
-            {errors.google_calendar_id && <p className="text-red-500 text-sm mt-1">{errors.google_calendar_id}</p>}
+            {errors.google_calendar_id && (
+              <p className="text-red-500 text-sm mt-1">{errors.google_calendar_id}</p>
+            )}
           </div>
 
           {/* Todo el día */}
@@ -238,10 +253,13 @@ export const EventModal: React.FC<EventModalProps> = ({
               type="checkbox"
               id="all-day"
               checked={formData.is_all_day}
-              onChange={(e) => handleAllDayToggle(e.target.checked)}
+              onChange={e => handleAllDayToggle(e.target.checked)}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="all-day" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              htmlFor="all-day"
+              className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Todo el día
             </label>
           </div>
@@ -249,55 +267,75 @@ export const EventModal: React.FC<EventModalProps> = ({
           {/* Fechas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              >
                 Fecha de inicio *
               </label>
               <input
                 type={formData.is_all_day ? 'date' : 'datetime-local'}
-                value={formData.is_all_day ? formData.start_datetime.split('T')[0] : formData.start_datetime}
-                onChange={(e) => handleInputChange('start_datetime', 
-                  formData.is_all_day ? `${e.target.value}T00:00` : e.target.value
-                )}
+                value={
+                  formData.is_all_day
+                    ? formData.start_datetime.split('T')[0]
+                    : formData.start_datetime
+                }
+                onChange={e =>
+                  handleInputChange(
+                    'start_datetime',
+                    formData.is_all_day ? `${e.target.value}T00:00` : e.target.value,
+                  )
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              >
                 Fecha de fin *
               </label>
               <input
                 type={formData.is_all_day ? 'date' : 'datetime-local'}
-                value={formData.is_all_day ? formData.end_datetime.split('T')[0] : formData.end_datetime}
-                onChange={(e) => handleInputChange('end_datetime', 
-                  formData.is_all_day ? `${e.target.value}T23:59` : e.target.value
-                )}
+                value={
+                  formData.is_all_day ? formData.end_datetime.split('T')[0] : formData.end_datetime
+                }
+                onChange={e =>
+                  handleInputChange(
+                    'end_datetime',
+                    formData.is_all_day ? `${e.target.value}T23:59` : e.target.value,
+                  )
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } ${errors.end_datetime ? 'border-red-500' : ''}`}
               />
-              {errors.end_datetime && <p className="text-red-500 text-sm mt-1">{errors.end_datetime}</p>}
+              {errors.end_datetime && (
+                <p className="text-red-500 text-sm mt-1">{errors.end_datetime}</p>
+              )}
             </div>
           </div>
 
           {/* Ubicación */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Ubicación
             </label>
             <input
               type="text"
               value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
+              onChange={e => handleInputChange('location', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               placeholder="Ubicación del evento"
@@ -306,16 +344,18 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Descripción */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Descripción
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={e => handleInputChange('description', e.target.value)}
               rows={3}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               placeholder="Descripción del evento"
@@ -324,23 +364,25 @@ export const EventModal: React.FC<EventModalProps> = ({
 
           {/* Asistentes */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
               Asistentes
             </label>
-            
+
             {/* Agregar asistente */}
             <div className="flex gap-2 mb-3">
               <input
                 type="email"
                 value={newAttendeeEmail}
-                onChange={(e) => setNewAttendeeEmail(e.target.value)}
+                onChange={e => setNewAttendeeEmail(e.target.value)}
                 className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  darkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  darkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
                 placeholder="Email del asistente"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAttendee())}
+                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), addAttendee())}
               />
               <button
                 type="button"
@@ -391,15 +433,13 @@ export const EventModal: React.FC<EventModalProps> = ({
                 </button>
               )}
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 className={`px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                  darkMode 
-                    ? 'border-gray-600 text-gray-300' 
-                    : 'border-gray-300 text-gray-700'
+                  darkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-700'
                 }`}
               >
                 Cancelar

@@ -22,7 +22,7 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
   darkMode,
   onSync,
   onSelectCalendar,
-  selectedCalendarId
+  selectedCalendarId,
 }) => {
   const handleReAuth = async () => {
     try {
@@ -93,7 +93,9 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
 
       {calendars.length === 0 ? (
         <div className="text-center py-6">
-          <Calendar className={`h-8 w-8 mx-auto mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+          <Calendar
+            className={`h-8 w-8 mx-auto mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+          />
           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             No se encontraron calendarios
           </p>
@@ -111,22 +113,24 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
               key={calendar.id}
               className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
                 selectedCalendarId === calendar.google_calendar_id
-                  ? darkMode 
-                    ? 'border-blue-500 bg-blue-900/20' 
+                  ? darkMode
+                    ? 'border-blue-500 bg-blue-900/20'
                     : 'border-blue-500 bg-blue-50'
-                  : darkMode 
-                    ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' 
+                  : darkMode
+                    ? 'border-gray-700 bg-gray-700 hover:bg-gray-600'
                     : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
               }`}
               onClick={() => onSelectCalendar(calendar.google_calendar_id)}
             >
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="w-4 h-4 rounded-full border-2 border-white shadow"
                   style={{ backgroundColor: getCalendarColor(calendar.color_id) }}
                 />
                 <div>
-                  <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <div
+                    className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                  >
                     {calendar.name}
                     {calendar.is_primary && (
                       <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
@@ -146,11 +150,13 @@ export const GoogleCalendarConnect: React.FC<GoogleCalendarConnectProps> = ({
                 {selectedCalendarId === calendar.google_calendar_id && (
                   <CheckCircle className="h-4 w-4 text-blue-600" />
                 )}
-                <span className={`text-xs px-2 py-1 rounded ${
-                  calendar.access_role === 'owner' 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200'
-                }`}>
+                <span
+                  className={`text-xs px-2 py-1 rounded ${
+                    calendar.access_role === 'owner'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200'
+                  }`}
+                >
                   {calendar.access_role}
                 </span>
               </div>
@@ -191,6 +197,6 @@ function getCalendarColor(colorId?: string): string {
     '10': '#7CB342', // Basil
     '11': '#C0CA33', // Avocado
   };
-  
+
   return colors[colorId || '1'] || '#1976D2';
 }
