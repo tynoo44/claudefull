@@ -117,6 +117,11 @@ export class ConversationAnalyzer {
         hasSummary: !!analysis.summary
       });
       
+      console.log('[ConversationAnalyzer] Phase info being sent:', {
+        leadProfileKeys: Object.keys(analysis.leadProfile || {}),
+        leadProfileSample: JSON.stringify(analysis.leadProfile).substring(0, 200)
+      });
+      
       const result = await ConversationStateManager.updateConversationState({
         conversationId,
         leadId,

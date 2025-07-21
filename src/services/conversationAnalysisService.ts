@@ -208,7 +208,7 @@ class ConversationAnalysisService {
       console.log(`Found ${messages.length} messages for conversation ${conversationId}`);
 
       // Obtener información de la conversación y el lead
-      const { data: conversation } = await supabase
+      const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select(
           `
@@ -219,7 +219,21 @@ class ConversationAnalysisService {
         .eq('id', conversationId)
         .single();
 
-      if (!conversation) return;
+      if (convError) {
+        console.error(`Error fetching conversation ${conversationId}:`, convError);
+        return;
+      }
+
+      if (!conversation) {
+        console.error(`No conversation found for ${conversationId}`);
+        return;
+      }
+
+      console.log(`Conversation loaded for ${conversationId}:`, {
+        id: conversation.id,
+        lead_id: conversation.lead_id,
+        hasLeadData: !!conversation.leads,
+      });
 
       // Preparar mensajes para análisis
       const aiMessages = messages.map(msg => ({

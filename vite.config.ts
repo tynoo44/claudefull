@@ -19,7 +19,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     // 1) Permitir solo este hostname concreto:
-    allowedHosts: ['192.168.50.116.nip.io'],
+    allowedHosts: ['367816d18de5.ngrok-free.app'],
     strictPort: true, // Fail if port is already in use
   },
 });
