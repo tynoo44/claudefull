@@ -54,7 +54,7 @@ export const MonthViewEvent: React.FC<MonthViewEventProps> = ({
       end_datetime: newEnd.toISOString(),
     });
 
-    console.log('✅ Event updated:', updatedEvent.title);
+    console.log('✅ Event updated:', updatedEvent?.title || 'Unknown');
   };
 
   const { dragState, handlers } = useSimpleDrag(handleEventMove);
