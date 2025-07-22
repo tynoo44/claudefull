@@ -34,7 +34,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<LeadStatus | null>(null);
   const [procedenceFilter, setProcedenceFilter] = useState<LeadProcedence | null>(null);
-  const [tagFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortType>('time');
   const [sortAscending, setSortAscending] = useState(false); // Default descending for most sorts
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -122,8 +121,18 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   useEffect(() => {
     // Eliminar 'applyFilters' de las dependencias y llamarlo directamente
     // para evitar re-renders innecesarios cuando la función se recrea.
-    applyFilters(searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending);
-  }, [searchTerm, statusFilter, procedenceFilter, tagFilter, sortBy, sortAscending, applyFilters]);
+    applyFilters(searchTerm, statusFilter, procedenceFilter, '', sortBy, sortAscending);
+  }, [searchTerm, statusFilter, procedenceFilter, sortBy, sortAscending, applyFilters]);
+
+  // Asegurar que se apliquen los filtros iniciales al montar el componente
+  useEffect(() => {
+    // Aplicar filtros iniciales con ordenamiento por tiempo descendente
+    const timeoutId = setTimeout(() => {
+      applyFilters('', null, null, '', 'time', false);
+    }, 100);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   // Handle pending chat selection
   useEffect(() => {

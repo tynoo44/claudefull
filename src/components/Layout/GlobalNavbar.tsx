@@ -41,7 +41,7 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
     { path: '/chats', label: 'Chats', icon: MessageSquare },
     { path: '/leads', label: 'Leads', icon: Users },
     { path: '/templates', label: 'Plantillas', icon: FileText },
-    { path: '/calendar', label: 'Calendario', icon: Calendar },
+    { path: '/premium-calendar', label: 'Calendario', icon: Calendar },
     { path: '/analytics', label: 'Analíticas', icon: BarChart3 },
   ];
 
@@ -49,138 +49,144 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
     <nav
       className={`fixed top-0 left-0 right-0 z-50 ${
         darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-      } border-b px-6 py-3`}
+      } border-b`}
     >
-      <div className="flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center space-x-8">
-          <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            SetterAI
-          </h1>
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center space-x-8">
+            <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              SetterAI
+            </h1>
 
-          {/* Navigation Items */}
-          <div className="hidden md:flex space-x-6">
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? darkMode
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-blue-50 text-blue-600'
-                      : darkMode
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span className="text-sm font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="relative hidden md:block">
-            <Search
-              className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}
-            />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className={`pl-10 pr-4 py-2 w-64 rounded-lg border ${
-                darkMode
-                  ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
+            {/* Navigation Items */}
+            <div className="hidden md:flex items-center space-x-1 lg:space-x-3">
+              {navItems.map(item => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? darkMode
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-50 text-blue-600'
+                        : darkMode
+                          ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Notifications */}
-          <NotificationCenter darkMode={darkMode} />
+          {/* Right side */}
+          <div className="flex items-center space-x-4">
+            {/* Search */}
+            <div className="relative hidden md:block">
+              <Search
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}
+              />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className={`pl-10 pr-4 py-2 w-40 lg:w-64 rounded-lg border ${
+                  darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              />
+            </div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-lg transition-colors ${
-              darkMode
-                ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-            }`}
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+            {/* Notifications */}
+            <NotificationCenter darkMode={darkMode} />
 
-          {/* Profile Menu */}
-          <div className="relative">
+            {/* Dark Mode Toggle */}
             <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-lg transition-colors ${
                 darkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-800'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              {currentUser?.avatar_url ? (
-                <img
-                  src={currentUser.avatar_url}
-                  alt={currentUser.full_name || 'Usuario'}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-white" />
-                </div>
-              )}
-              <span
-                className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}
-              >
-                {currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Usuario'}
-              </span>
-              <ChevronDown size={16} />
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            {showProfileMenu && (
-              <div
-                className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border ${
-                  darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            {/* Profile Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className={`flex items-center space-x-2 p-2 rounded-lg transition-colors ${
+                  darkMode
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
-                <button
-                  onClick={() => {
-                    navigate('/settings');
-                    setShowProfileMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 ${
-                    darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                {currentUser?.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    alt={currentUser.full_name || 'Usuario'}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <User size={16} className="text-white" />
+                  </div>
+                )}
+                <span
+                  className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}
+                >
+                  {currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Usuario'}
+                </span>
+                <ChevronDown size={16} />
+              </button>
+
+              {showProfileMenu && (
+                <div
+                  className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border ${
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                   }`}
                 >
-                  <Settings size={16} />
-                  <span>Configuración</span>
-                </button>
-                <button
-                  onClick={() => {
-                    logout();
-                    setShowProfileMenu(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 ${
-                    darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <LogOut size={16} />
-                  <span>Cerrar Sesión</span>
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={() => {
+                      navigate('/settings');
+                      setShowProfileMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 ${
+                      darkMode
+                        ? 'text-gray-300 hover:bg-gray-700'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Settings size={16} />
+                    <span>Configuración</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowProfileMenu(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-2 ${
+                      darkMode
+                        ? 'text-gray-300 hover:bg-gray-700'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <LogOut size={16} />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

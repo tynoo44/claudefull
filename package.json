@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "tunnel": "lt --port 5173 --subdomain setter-ai",
     "build": "tsc && vite build",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",

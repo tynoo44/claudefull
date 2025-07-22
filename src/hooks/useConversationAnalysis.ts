@@ -19,12 +19,15 @@ interface ConversationAnalysis {
     overall: number;
     by_message: Array<{ message_id: string; score: number; emotion: string }>;
   };
-  phase_progress: Record<number, {
-    completed: boolean;
-    progress: number;
-    key_info: string[];
-    missing_info: string[];
-  }>;
+  phase_progress: Record<
+    number,
+    {
+      completed: boolean;
+      progress: number;
+      key_info: string[];
+      missing_info: string[];
+    }
+  >;
   key_insights: string[];
   warnings: string[];
   action_threads: string[];
@@ -51,7 +54,8 @@ export function useConversationAnalysis(conversationId?: string) {
         .eq('is_current', true)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // Ignorar error "no rows"
+      if (error && error.code !== 'PGRST116') {
+        // Ignorar error "no rows"
         throw error;
       }
 
@@ -66,21 +70,21 @@ export function useConversationAnalysis(conversationId?: string) {
   const refreshAnalysisMutation = useMutation({
     mutationFn: async () => {
       if (!conversationId) throw new Error('No conversation ID');
-      
+
       // Priorizar esta conversación para análisis inmediato
       conversationAnalysisService.prioritizeConversation(conversationId);
-      
+
       // Esperar un poco para que el análisis se complete
       await new Promise(resolve => setTimeout(resolve, 3000));
-      
+
       // Refetch el análisis
       return queryClient.invalidateQueries({
-        queryKey: ['conversation-analysis', conversationId]
+        queryKey: ['conversation-analysis', conversationId],
       });
     },
     onSuccess: () => {
       // Mostrar notificación de éxito si es necesario
-    }
+    },
   });
 
   // Suscripción a cambios en tiempo real
@@ -97,15 +101,15 @@ export function useConversationAnalysis(conversationId?: string) {
           table: 'conversation_analysis',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
+        payload => {
           // Actualizar cache cuando hay cambios
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             queryClient.setQueryData(
               ['conversation-analysis', conversationId],
-              payload.new as ConversationAnalysis
+              payload.new as ConversationAnalysis,
             );
           }
-        }
+        },
       )
       .subscribe();
 
@@ -135,9 +139,7 @@ export function useConversationAnalysis(conversationId?: string) {
     error: analysisQuery.error,
     refreshAnalysis: refreshAnalysisMutation.mutate,
     isRefreshing: refreshAnalysisMutation.isPending,
-    lastUpdated: analysisQuery.data?.updated_at 
-      ? new Date(analysisQuery.data.updated_at)
-      : null,
+    lastUpdated: analysisQuery.data?.updated_at ? new Date(analysisQuery.data.updated_at) : null,
   };
 }
 
@@ -187,22 +189,20 @@ export function useAIConversation(conversationId?: string) {
           .eq('conversation_id', conversationId);
       } else {
         // Crear nuevo
-        return supabase
-          .from('ai_conversations')
-          .insert({
-            conversation_id: conversationId,
-            lead_id: '', // Se debe pasar desde el componente
-            messages,
-            total_messages: messages.length,
-            last_message_at: new Date().toISOString(),
-          });
+        return supabase.from('ai_conversations').insert({
+          conversation_id: conversationId,
+          lead_id: '', // Se debe pasar desde el componente
+          messages,
+          total_messages: messages.length,
+          last_message_at: new Date().toISOString(),
+        });
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['ai-conversation', conversationId]
+        queryKey: ['ai-conversation', conversationId],
       });
-    }
+    },
   });
 
   return {

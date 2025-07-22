@@ -8,14 +8,27 @@ import { ChatsPage } from '@/pages/ChatsPage';
 import { LeadsPage } from '@/pages/LeadsPage';
 import { TemplatesPage } from '@/pages/TemplatesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
+import { PremiumCalendarAdvanced } from '@/pages/PremiumCalendarAdvanced';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
+import { CalendarCacheProvider } from './contexts/CalendarCacheContext';
 import { ProtectedRoute } from './components/Layout/ProtectedRoute';
+import { conversationAnalysisService } from './services/conversationAnalysisService';
 
 const AppLayout: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = React.useState(false);
+
+  // Start background analysis service when app loads
+  React.useEffect(() => {
+    conversationAnalysisService.startBackgroundAnalysis();
+
+    // Cleanup on unmount
+    return () => {
+      conversationAnalysisService.stopBackgroundAnalysis();
+    };
+  }, []);
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
@@ -46,6 +59,9 @@ const AppContent: React.FC = () => {
       />
       <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
 
+      {/* Test route for premium calendar - remove in production */}
+      <Route path="/test-premium" element={<PremiumCalendarAdvanced darkMode={darkMode} />} />
+
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage darkMode={darkMode} />} />
@@ -53,6 +69,14 @@ const AppContent: React.FC = () => {
           <Route path="/leads" element={<LeadsPage darkMode={darkMode} />} />
           <Route path="/templates" element={<TemplatesPage darkMode={darkMode} />} />
           <Route path="/calendar" element={<CalendarPage darkMode={darkMode} />} />
+          <Route
+            path="/premium-calendar"
+            element={
+              <CalendarCacheProvider>
+                <PremiumCalendarAdvanced darkMode={darkMode} />
+              </CalendarCacheProvider>
+            }
+          />
         </Route>
       </Route>
 

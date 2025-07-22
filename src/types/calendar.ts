@@ -90,10 +90,10 @@ export interface CreateEventRequest {
   start_datetime: string;
   end_datetime: string;
   is_all_day?: boolean;
-  google_calendar_id: string;
   attendees?: Omit<EventAttendee, 'response_status'>[];
   reminders?: EventReminder[];
   recurrence?: RecurrenceRule;
+  meeting_link?: string;
 }
 
 export interface UpdateEventRequest extends Partial<CreateEventRequest> {

@@ -73,9 +73,13 @@ export const useConversationPagination = () => {
         const offset = page * CONVERSATIONS_PER_PAGE;
 
         // Usar el RPC optimizado que incluye todos los datos en una sola query
-        const { data: conversationsData, error: convError } = await supabase
-          .rpc('get_conversations_with_details_optimized')
-          .range(offset, offset + CONVERSATIONS_PER_PAGE - 1);
+        const { data: conversationsData, error: convError } = await supabase.rpc(
+          'get_conversations_with_details_optimized',
+          {
+            p_limit: CONVERSATIONS_PER_PAGE,
+            p_offset: offset,
+          },
+        );
 
         if (convError) throw convError;
 

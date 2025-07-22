@@ -57,12 +57,12 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
   onDropdownToggle,
 }) => {
   return (
-    <div className="flex gap-2 mb-2">
+    <div className="flex gap-1 mb-2">
       {/* Status Filter */}
-      <div className="relative">
+      <div className="relative flex-1">
         <button
           onClick={() => onDropdownToggle('status')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
+          className={`flex items-center gap-1 px-2 py-1.5 rounded border text-xs transition-all w-full justify-center ${
             statusFilter
               ? `${getStatusClasses(statusFilter, darkMode)} border-transparent`
               : darkMode
@@ -70,8 +70,8 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          <Filter className="w-4 h-4" />
-          {statusFilter || 'Estado'}
+          <Filter className="w-3 h-3" />
+          <span className="truncate">{statusFilter || 'Estado'}</span>
         </button>
         {showStatusDropdown && (
           <div
@@ -126,10 +126,10 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
       </div>
 
       {/* Procedence Filter */}
-      <div className="relative">
+      <div className="relative flex-1">
         <button
           onClick={() => onDropdownToggle('procedence')}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
+          className={`flex items-center gap-1 px-2 py-1.5 rounded border text-xs transition-all w-full justify-center ${
             procedenceFilter
               ? procedenceFilter === 'Outbound'
                 ? darkMode
@@ -151,8 +151,8 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          <Hash className="w-4 h-4" />
-          {procedenceFilter || 'Procedencia'}
+          <Hash className="w-3 h-3" />
+          <span className="truncate">{procedenceFilter || 'Origen'}</span>
         </button>
         {showProcedenceDropdown && (
           <div
@@ -223,9 +223,9 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
       </div>
 
       {/* Sort */}
-      <div className="relative">
+      <div className="relative flex-1">
         <div
-          className={`flex items-center rounded-lg border text-sm transition-all ${
+          className={`flex items-center rounded border text-xs transition-all ${
             darkMode
               ? 'bg-gray-700 border-gray-600 text-gray-300'
               : 'bg-white border-gray-300 text-gray-700'
@@ -233,17 +233,17 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
         >
           <button
             onClick={() => onDropdownToggle('sort')}
-            className={`flex items-center gap-2 px-3 py-2 flex-1 rounded-l-lg transition-colors ${
+            className={`flex items-center gap-1 px-2 py-1.5 flex-1 rounded-l transition-colors justify-center ${
               darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
             }`}
           >
-            <SortAsc className="w-4 h-4" />
-            {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label}
+            <SortAsc className="w-3 h-3" />
+            <span className="truncate">{SORT_OPTIONS.find(opt => opt.value === sortBy)?.icon}</span>
           </button>
-          <div className={`w-px h-6 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
+          <div className={`w-px h-4 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
           <button
             onClick={() => onSortChange(sortBy, !sortAscending)}
-            className={`px-2 py-2 rounded-r-lg transition-colors ${
+            className={`px-1.5 py-1.5 rounded-r transition-colors ${
               darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
             }`}
             title={sortAscending ? 'Cambiar a descendente' : 'Cambiar a ascendente'}

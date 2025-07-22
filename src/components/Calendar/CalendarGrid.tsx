@@ -1,6 +1,15 @@
 import React from 'react';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
-import { format, isSameMonth, isToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { Clock, MapPin, Users } from 'lucide-react';
+import {
+  format,
+  isSameMonth,
+  isToday,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { CalendarEvent, CalendarView } from '../../types/calendar';
 
@@ -21,7 +30,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   events,
   darkMode,
   onDateClick,
-  onEventClick
+  onEventClick,
 }) => {
   const getEventsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -49,7 +58,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const monthEnd = endOfMonth(currentDate);
     const calendarStart = startOfWeek(monthStart);
     const calendarEnd = endOfWeek(monthEnd);
-    
+
     const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     return (
@@ -111,7 +120,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     key={event.id}
                     className={`text-xs p-1 rounded text-white cursor-pointer ${getStatusColor(event.status)} 
                                hover:opacity-80 transition-opacity`}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onEventClick(event);
                     }}
@@ -119,21 +128,18 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span className="truncate">
-                        {event.is_all_day 
-                          ? 'Todo el día' 
-                          : format(new Date(event.start_datetime), 'HH:mm')
-                        }
+                        {event.is_all_day
+                          ? 'Todo el día'
+                          : format(new Date(event.start_datetime), 'HH:mm')}
                       </span>
                     </div>
-                    <div className="truncate font-medium">
-                      {event.title}
-                    </div>
+                    <div className="truncate font-medium">{event.title}</div>
                   </div>
                 ))}
                 {dayEvents.length > 3 && (
                   <div
                     className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} cursor-pointer hover:underline`}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onDateClick(date);
                     }}
@@ -169,11 +175,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 {format(day, 'eee', { locale: es })}
               </div>
-              <div className={`text-lg font-semibold ${
-                isToday(day) 
-                  ? 'text-blue-600' 
-                  : darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <div
+                className={`text-lg font-semibold ${
+                  isToday(day) ? 'text-blue-600' : darkMode ? 'text-white' : 'text-gray-900'
+                }`}
+              >
                 {format(day, 'd')}
               </div>
             </div>
@@ -198,7 +204,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             {weekDays.map(day => {
               const dayEvents = getEventsForDate(day);
               return (
-                <div key={day.toISOString()} className="border-r border-gray-200 dark:border-gray-700 relative">
+                <div
+                  key={day.toISOString()}
+                  className="border-r border-gray-200 dark:border-gray-700 relative"
+                >
                   {hours.map(hour => (
                     <div
                       key={hour}
@@ -206,13 +215,16 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onClick={() => onDateClick(day)}
                     />
                   ))}
-                  
+
                   {/* Eventos posicionados */}
                   {dayEvents.map(event => {
                     const startHour = new Date(event.start_datetime).getHours();
                     const startMinute = new Date(event.start_datetime).getMinutes();
-                    const duration = (new Date(event.end_datetime).getTime() - new Date(event.start_datetime).getTime()) / (1000 * 60 * 60);
-                    
+                    const duration =
+                      (new Date(event.end_datetime).getTime() -
+                        new Date(event.start_datetime).getTime()) /
+                      (1000 * 60 * 60);
+
                     return (
                       <div
                         key={event.id}
@@ -222,7 +234,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                           top: `${(startHour + startMinute / 60) * 64}px`,
                           height: `${Math.max(duration * 64, 20)}px`,
                         }}
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           onEventClick(event);
                         }}
@@ -258,11 +270,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {format(currentDate, 'EEEE', { locale: es })}
             </div>
-            <div className={`text-2xl font-bold ${
-              isToday(currentDate) 
-                ? 'text-blue-600' 
-                : darkMode ? 'text-white' : 'text-gray-900'
-            }`}>
+            <div
+              className={`text-2xl font-bold ${
+                isToday(currentDate) ? 'text-blue-600' : darkMode ? 'text-white' : 'text-gray-900'
+              }`}
+            >
               {format(currentDate, 'd MMMM yyyy', { locale: es })}
             </div>
           </div>
@@ -296,8 +308,11 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
               {dayEvents.map(event => {
                 const startHour = new Date(event.start_datetime).getHours();
                 const startMinute = new Date(event.start_datetime).getMinutes();
-                const duration = (new Date(event.end_datetime).getTime() - new Date(event.start_datetime).getTime()) / (1000 * 60 * 60);
-                
+                const duration =
+                  (new Date(event.end_datetime).getTime() -
+                    new Date(event.start_datetime).getTime()) /
+                  (1000 * 60 * 60);
+
                 return (
                   <div
                     key={event.id}
@@ -307,14 +322,15 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                       top: `${(startHour + startMinute / 60) * 64}px`,
                       height: `${Math.max(duration * 64, 40)}px`,
                     }}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onEventClick(event);
                     }}
                   >
                     <div className="font-medium">{event.title}</div>
                     <div className="text-sm opacity-90">
-                      {format(new Date(event.start_datetime), 'HH:mm')} - {format(new Date(event.end_datetime), 'HH:mm')}
+                      {format(new Date(event.start_datetime), 'HH:mm')} -{' '}
+                      {format(new Date(event.end_datetime), 'HH:mm')}
                     </div>
                     {event.location && (
                       <div className="flex items-center gap-1 text-sm opacity-80">

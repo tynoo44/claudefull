@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  RefreshCw, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
-  Circle, 
+import {
+  RefreshCw,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  Circle,
   Target,
   Lightbulb,
-  MessageCircle,
   BarChart3,
   Eye,
-  EyeOff
+  EyeOff,
+  Tag,
+  User,
+  FileText,
 } from 'lucide-react';
 
 interface PhaseProgress {
@@ -45,6 +45,21 @@ interface ConversationStatusCardProps {
   isRefreshing: boolean;
   darkMode?: boolean;
   leadName?: string;
+  leadData?: {
+    tags?: string[];
+    notes?: string;
+    insights?: {
+      business_info?: {
+        type?: string;
+        details?: string;
+      };
+      personality_profile?: {
+        type?: string;
+        commitment?: string;
+      };
+      confidence_score?: number;
+    };
+  };
 }
 
 export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
@@ -53,7 +68,8 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
   onRefresh,
   isRefreshing,
   darkMode = false,
-  leadName = 'Lead'
+  leadName = 'Lead',
+  leadData,
 }) => {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
   const [showAllInsights, setShowAllInsights] = useState(false);
@@ -61,9 +77,9 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
   const phaseNames = {
     1: 'Situación Actual',
     2: 'Dolor',
-    3: 'Situación Deseada', 
+    3: 'Situación Deseada',
     4: 'Obstáculo',
-    5: 'Oferta'
+    5: 'Oferta',
   };
 
   const getSentimentIcon = (score: number) => {
@@ -80,22 +96,25 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
 
   const getScoreBar = (score: number, max: number = 10, color: string = 'blue') => {
     const percentage = (score / max) * 100;
-    const colorClass = {
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      yellow: 'bg-yellow-500',
-      red: 'bg-red-500'
-    }[color] || 'bg-gray-500';
+    const colorClass =
+      {
+        blue: 'bg-blue-500',
+        green: 'bg-green-500',
+        yellow: 'bg-yellow-500',
+        red: 'bg-red-500',
+      }[color] || 'bg-gray-500';
 
     return (
       <div className="flex items-center gap-2 text-sm">
-        <div className="flex-1 bg-gray-200 rounded-full h-2">
-          <div 
+        <div className={`flex-1 rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+          <div
             className={`h-2 rounded-full transition-all duration-500 ${colorClass}`}
             style={{ width: `${Math.min(percentage, 100)}%` }}
           />
         </div>
-        <span className="text-xs font-medium w-8">{score}/{max}</span>
+        <span className="text-xs font-medium w-8">
+          {score}/{max}
+        </span>
       </div>
     );
   };
@@ -105,7 +124,7 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    
+
     if (minutes < 1) return 'Hace menos de 1 min';
     if (minutes < 60) return `Hace ${minutes} min`;
     const hours = Math.floor(minutes / 60);
@@ -115,7 +134,9 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
 
   if (isLoading) {
     return (
-      <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div
+        className={`p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+      >
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-gray-300 rounded w-3/4"></div>
           <div className="h-3 bg-gray-300 rounded w-1/2"></div>
@@ -130,7 +151,9 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
 
   if (!status) {
     return (
-      <div className={`p-4 rounded-lg border-2 border-dashed text-center ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}>
+      <div
+        className={`p-4 rounded-lg border-2 border-dashed text-center ${darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'}`}
+      >
         <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm text-gray-500 mb-2">Sin análisis disponible</p>
         <button
@@ -145,9 +168,11 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
   }
 
   return (
-    <div className={`rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} overflow-hidden`}>
+    <div
+      className={`rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} overflow-hidden`}
+    >
       {/* Header con actualización */}
-      <div className="p-4 border-b border-gray-200">
+      <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-2">
           <h3 className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             Estado de {leadName}
@@ -164,27 +189,126 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
-        
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+
+        <div
+          className={`flex items-center gap-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+        >
           <Clock className="w-3 h-3" />
           Actualizado: {formatLastUpdate(status.updated_at)}
         </div>
       </div>
+
+      {/* Información del Lead */}
+      {leadData && ((leadData.tags?.length ?? 0) > 0 || leadData.notes || leadData.insights) && (
+        <div
+          className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} space-y-3`}
+        >
+          {/* Tags */}
+          {leadData.tags && leadData.tags.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1 mb-2">
+                <Tag className="w-3 h-3 text-gray-500" />
+                <span
+                  className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                >
+                  TAGS
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {leadData.tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className={`
+                      px-2 py-1 text-xs rounded-full
+                      ${
+                        tag === 'caliente'
+                          ? 'bg-red-100 text-red-700'
+                          : tag === 'tibio'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : tag === 'frío'
+                              ? 'bg-blue-100 text-blue-700'
+                              : tag === 'urgente'
+                                ? 'bg-purple-100 text-purple-700'
+                                : tag === 'alta-capacidad'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-700'
+                      }
+                    `}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notas */}
+          {leadData.notes && (
+            <div>
+              <div className="flex items-center gap-1 mb-2">
+                <FileText className="w-3 h-3 text-gray-500" />
+                <span
+                  className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                >
+                  RESUMEN
+                </span>
+              </div>
+              <div
+                className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'} whitespace-pre-line`}
+              >
+                {leadData.notes}
+              </div>
+            </div>
+          )}
+
+          {/* Info adicional de insights */}
+          {leadData.insights && (
+            <div className="flex items-center gap-4 text-xs">
+              {leadData.insights.personality_profile?.type && (
+                <div className="flex items-center gap-1">
+                  <User className="w-3 h-3 text-gray-500" />
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                    Perfil:{' '}
+                    <span className="font-medium">
+                      {leadData.insights.personality_profile.type}
+                    </span>
+                  </span>
+                </div>
+              )}
+              {leadData.insights.confidence_score !== undefined && (
+                <div className="flex items-center gap-1">
+                  <BarChart3 className="w-3 h-3 text-gray-500" />
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                    Confianza:{' '}
+                    <span className="font-medium">
+                      {Math.round(leadData.insights.confidence_score * 100)}%
+                    </span>
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Fase actual y métricas principales */}
       <div className="p-4 space-y-4">
         {/* Fase actual */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">FASE ACTUAL</span>
+            <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              FASE ACTUAL
+            </span>
             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
               {status.current_phase}/5
             </span>
           </div>
-          <div className="text-lg font-semibold text-blue-600 mb-1">
+          <div
+            className={`text-lg font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-1`}
+          >
             {status.current_phase} - {phaseNames[status.current_phase as keyof typeof phaseNames]}
           </div>
-          <div className="text-xs text-gray-600">
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Progreso: {status.phase_progress[status.current_phase]?.progress || 0}% completado
           </div>
         </div>
@@ -193,36 +317,53 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
         <div className="grid grid-cols-1 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium">SENTIMIENTO</span>
+              <span
+                className={`text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                SENTIMIENTO
+              </span>
               <span className={`text-sm ${getSentimentColor(status.sentiment_scores.overall)}`}>
-                {getSentimentIcon(status.sentiment_scores.overall)} 
-                {status.sentiment_scores.overall > 0.3 ? 'Positivo' : 
-                 status.sentiment_scores.overall > -0.3 ? 'Neutro' : 'Preocupado'}
+                {getSentimentIcon(status.sentiment_scores.overall)}
+                {status.sentiment_scores.overall > 0.3
+                  ? 'Positivo'
+                  : status.sentiment_scores.overall > -0.3
+                    ? 'Neutro'
+                    : 'Preocupado'}
               </span>
             </div>
           </div>
 
           <div>
-            <div className="text-xs font-medium mb-2">MÉTRICAS CLAVE</div>
+            <div
+              className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+            >
+              MÉTRICAS CLAVE
+            </div>
             <div className="space-y-2">
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div
+                  className={`flex justify-between text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   <span>🔥 Urgencia</span>
                   <span>{status.urgency_score}/10</span>
                 </div>
                 {getScoreBar(status.urgency_score, 10, 'red')}
               </div>
-              
+
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div
+                  className={`flex justify-between text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   <span>💰 Capacidad</span>
                   <span>{status.capacity_score}/10</span>
                 </div>
                 {getScoreBar(status.capacity_score, 10, 'green')}
               </div>
-              
+
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div
+                  className={`flex justify-between text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   <span>⚡ Engagement</span>
                   <span>{status.engagement_score}/10</span>
                 </div>
@@ -234,22 +375,30 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
       </div>
 
       {/* Progreso por fases */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="text-sm font-medium mb-3">PROGRESO POR FASES</div>
+      <div className={`border-t p-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          PROGRESO POR FASES
+        </div>
         <div className="space-y-2">
           {Object.entries(phaseNames).map(([phaseNum, phaseName]) => {
             const phase = parseInt(phaseNum);
             const progress = status.phase_progress[phase];
             const isExpanded = expandedPhase === phase;
-            const hasInfo = progress && (progress.key_info.length > 0 || progress.missing_info.length > 0);
+            const hasInfo =
+              progress && (progress.key_info.length > 0 || progress.missing_info.length > 0);
 
             return (
-              <div key={phase} className="border border-gray-200 rounded">
+              <div
+                key={phase}
+                className={`border ${darkMode ? 'border-gray-700' : 'border-gray-200'} rounded`}
+              >
                 <button
-                  onClick={() => hasInfo ? setExpandedPhase(isExpanded ? null : phase) : undefined}
+                  onClick={() =>
+                    hasInfo ? setExpandedPhase(isExpanded ? null : phase) : undefined
+                  }
                   className={`
                     w-full p-2 text-left flex items-center justify-between text-xs
-                    ${hasInfo ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'}
+                    ${hasInfo ? (darkMode ? 'hover:bg-gray-700 cursor-pointer' : 'hover:bg-gray-50 cursor-pointer') : 'cursor-default'}
                   `}
                 >
                   <div className="flex items-center gap-2">
@@ -260,39 +409,64 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
                     ) : (
                       <Circle className="w-4 h-4 text-gray-300" />
                     )}
-                    <span className={progress?.completed ? 'text-green-600 font-medium' : ''}>
+                    <span
+                      className={
+                        progress?.completed
+                          ? 'text-green-600 font-medium'
+                          : darkMode
+                            ? 'text-gray-300'
+                            : 'text-gray-700'
+                      }
+                    >
                       {phase}. {phaseName}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {progress && (
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      <span
+                        className={`text-xs ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} px-2 py-1 rounded`}
+                      >
                         {progress.progress}%
                       </span>
                     )}
-                    {hasInfo && (
-                      isExpanded ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />
-                    )}
+                    {hasInfo &&
+                      (isExpanded ? (
+                        <EyeOff
+                          className={`w-3 h-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                        />
+                      ) : (
+                        <Eye
+                          className={`w-3 h-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                        />
+                      ))}
                   </div>
                 </button>
 
                 {isExpanded && progress && (
-                  <div className="border-t border-gray-200 p-2 bg-gray-50 text-xs space-y-2">
+                  <div
+                    className={`border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-2 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} text-xs space-y-2`}
+                  >
                     {progress.key_info.length > 0 && (
                       <div>
-                        <div className="font-medium text-green-600 mb-1">✅ Información obtenida:</div>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
+                        <div className="font-medium text-green-600 mb-1">
+                          ✅ Información obtenida:
+                        </div>
+                        <ul
+                          className={`list-disc list-inside space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                        >
                           {progress.key_info.map((info, idx) => (
                             <li key={idx}>{info}</li>
                           ))}
                         </ul>
                       </div>
                     )}
-                    
+
                     {progress.missing_info.length > 0 && (
                       <div>
                         <div className="font-medium text-orange-600 mb-1">⏳ Falta obtener:</div>
-                        <ul className="list-disc list-inside space-y-1 text-gray-600">
+                        <ul
+                          className={`list-disc list-inside space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                        >
                           {progress.missing_info.map((info, idx) => (
                             <li key={idx}>{info}</li>
                           ))}
@@ -311,7 +485,9 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
       {status.key_insights.length > 0 && (
         <div className="border-t border-gray-200 p-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-medium">🎯 KEY INSIGHTS</div>
+            <div className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              🎯 KEY INSIGHTS
+            </div>
             {status.key_insights.length > 3 && (
               <button
                 onClick={() => setShowAllInsights(!showAllInsights)}
@@ -322,13 +498,14 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            {(showAllInsights ? status.key_insights : status.key_insights.slice(0, 3))
-              .map((insight, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-xs">
-                <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-600">{insight}</span>
-              </div>
-            ))}
+            {(showAllInsights ? status.key_insights : status.key_insights.slice(0, 3)).map(
+              (insight, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-xs">
+                  <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{insight}</span>
+                </div>
+              ),
+            )}
           </div>
         </div>
       )}
@@ -336,12 +513,16 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
       {/* Action Threads */}
       {status.action_threads.length > 0 && (
         <div className="border-t border-gray-200 p-4">
-          <div className="text-sm font-medium mb-2">🧵 HILOS PARA EXPLOTAR</div>
+          <div
+            className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+          >
+            🧵 HILOS PARA EXPLOTAR
+          </div>
           <div className="space-y-2">
             {status.action_threads.map((thread, idx) => (
               <div key={idx} className="flex items-start gap-2 text-xs">
                 <Target className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-600">{thread}</span>
+                <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{thread}</span>
               </div>
             ))}
           </div>
@@ -350,13 +531,17 @@ export const ConversationStatusCard: React.FC<ConversationStatusCardProps> = ({
 
       {/* Warnings */}
       {status.warnings.length > 0 && (
-        <div className="border-t border-gray-200 p-4 bg-red-50">
-          <div className="text-sm font-medium mb-2 text-red-800">⚠️ WARNINGS</div>
+        <div
+          className={`border-t p-4 ${darkMode ? 'border-gray-700 bg-red-900/20' : 'border-gray-200 bg-red-50'}`}
+        >
+          <div className={`text-sm font-medium mb-2 ${darkMode ? 'text-red-400' : 'text-red-800'}`}>
+            ⚠️ WARNINGS
+          </div>
           <div className="space-y-2">
             {status.warnings.map((warning, idx) => (
               <div key={idx} className="flex items-start gap-2 text-xs">
                 <AlertTriangle className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
-                <span className="text-red-700">{warning}</span>
+                <span className={darkMode ? 'text-red-300' : 'text-red-700'}>{warning}</span>
               </div>
             ))}
           </div>

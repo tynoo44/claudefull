@@ -6,10 +6,11 @@ import { incrementTemplateUsage, updateMessageTemplate } from '../lib/supabase';
 import { useConversationsQuery } from '../hooks/useConversationsQuery';
 import { useMessagesPagination } from '../hooks/useMessagesPagination';
 import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
+import { useLeadWithInsights } from '../hooks/useLeadWithInsights';
 import { ChatSidebar } from '../components/Chat/ChatSidebar';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { ChatTemplatesView } from '../components/Chat/ChatTemplatesView';
-import { AIChatSidebar } from '../components/Chat/AIChatSidebar';
+import { EnhancedAIChatSidebar } from '../components/Chat/EnhancedAIChatSidebar';
 import { ResizableLayout } from '../components/Chat/ResizableLayout';
 import { ErrorState } from '../components/Chat/ErrorState';
 
@@ -39,6 +40,9 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
     loadMoreMessages,
     totalCount: totalMessages,
   } = useMessagesPagination(selectedChat?.id || null);
+
+  // Obtener información del lead con insights
+  const { data: leadData } = useLeadWithInsights(selectedChat?.leadId);
 
   const allTemplates = templatesData?.pages.flatMap(page => page.data) || [];
 
@@ -95,8 +99,10 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
   }
 
   return (
-    <div className={`h-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="flex-1 overflow-hidden">
+    <div
+      className={`h-full w-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-hidden`}
+    >
+      <div className="flex-1 min-h-0 overflow-hidden">
         <ResizableLayout
           darkMode={darkMode}
           sidebarCollapsed={sidebarCollapsed}
@@ -142,7 +148,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             onToggleFavorite={handleToggleFavorite}
           />
 
-          <AIChatSidebar
+          <EnhancedAIChatSidebar
             darkMode={darkMode}
             conversationContext={
               selectedChat ? `Chat con ${selectedChat.leadName || 'lead'}` : undefined
@@ -157,6 +163,8 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             }
             conversationId={selectedChat?.id}
             leadId={selectedChat?.leadId}
+            leadName={selectedChat?.leadName}
+            leadData={leadData || undefined}
           />
         </ResizableLayout>
       </div>

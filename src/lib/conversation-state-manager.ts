@@ -63,14 +63,66 @@ export class ConversationStateManager {
     params: AppendConversationMemoryParams,
   ): Promise<AppendConversationMemoryResult> {
     try {
+      // Validate UUIDs
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      if (!params.conversationId || !uuidRegex.test(params.conversationId)) {
+        console.error('[ConversationStateManager] Invalid conversationId:', params.conversationId);
+        return {
+          success: false,
+          conversation_id: params.conversationId,
+          lead_id: params.leadId,
+          current_phase: params.currentPhase || 1,
+          previous_phase: params.currentPhase || 1,
+          phase_changed: false,
+          qualification_score: 0,
+          error: `Invalid conversationId: ${params.conversationId}`,
+        };
+      }
+
+      if (!params.leadId || !uuidRegex.test(params.leadId)) {
+        console.error('[ConversationStateManager] Invalid leadId:', params.leadId);
+        return {
+          success: false,
+          conversation_id: params.conversationId,
+          lead_id: params.leadId,
+          current_phase: params.currentPhase || 1,
+          previous_phase: params.currentPhase || 1,
+          phase_changed: false,
+          qualification_score: 0,
+          error: `Invalid leadId: ${params.leadId}`,
+        };
+      }
+
+      console.log('[ConversationStateManager] Calling RPC with params:', {
+        p_conversation_id: params.conversationId,
+        p_lead_id: params.leadId,
+        p_current_phase: params.currentPhase,
+        hasUserMessage: !!params.userMessage,
+        hasAiResponse: !!params.aiResponse,
+        phaseInfoKeys: params.phaseInfo ? Object.keys(params.phaseInfo) : [],
+      });
+
+      // Ensure phase_info is a valid JSON object
+      let phaseInfo = {};
+      try {
+        if (params.phaseInfo && typeof params.phaseInfo === 'object') {
+          // Clean the object to ensure it's JSON-serializable
+          phaseInfo = JSON.parse(JSON.stringify(params.phaseInfo));
+        }
+      } catch (e) {
+        console.error('[ConversationStateManager] Error serializing phase_info:', e);
+        phaseInfo = {};
+      }
+
       // TODO: Create a new RPC 'update_conversation_details' that operates on the conversations table
       const { data, error } = await supabase.rpc('update_conversation_details', {
         p_conversation_id: params.conversationId,
         p_lead_id: params.leadId,
-        p_user_message: params.userMessage,
-        p_ai_response: params.aiResponse,
-        p_current_phase: params.currentPhase,
-        p_phase_info: params.phaseInfo || {},
+        p_user_message: params.userMessage || '',
+        p_ai_response: params.aiResponse || '',
+        p_current_phase: params.currentPhase || 1,
+        p_phase_info: phaseInfo,
         p_detected_intent: params.detectedIntent || null,
       });
 
@@ -88,7 +140,72 @@ export class ConversationStateManager {
         };
       }
 
-      return data as AppendConversationMemoryResult;
+      console.log('[ConversationStateManager] RPC response:', {
+        hasData: !!data,
+        hasError: !!error,
+        dataType: typeof data,
+        isArray: Array.isArray(data),
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
+      });
+
+      // RPC functions return arrays, get first element
+      const result = Array.isArray(data) ? data[0] : data;
+
+      console.log('[ConversationStateManager] RPC result extracted:', {
+        hasResult: !!result,
+        resultType: typeof result,
+        resultKeys: result ? Object.keys(result) : [],
+        success: result?.success,
+        error: result?.error,
+        fullResult: result,
+      });
+
+      // Check if we got a valid result
+      if (!result) {
+        console.error('RPC function returned null/undefined result');
+        return {
+          success: false,
+          conversation_id: params.conversationId,
+          lead_id: params.leadId,
+          current_phase: params.currentPhase,
+          previous_phase: params.currentPhase,
+          phase_changed: false,
+          qualification_score: 0,
+          error: 'RPC function returned no data',
+        };
+      }
+
+      // Check if the RPC function itself returned an error
+      if (result && !result.success) {
+        console.error('RPC function returned error:', result.error);
+        console.error('Full result object:', result);
+        return {
+          success: false,
+          conversation_id: params.conversationId,
+          lead_id: params.leadId,
+          current_phase: params.currentPhase,
+          previous_phase: params.currentPhase,
+          phase_changed: false,
+          qualification_score: 0,
+          error: result.error || 'Unknown RPC error',
+        };
+      }
+
+      // Ensure the result has the expected structure
+      const finalResult: AppendConversationMemoryResult = {
+        success: true,
+        memory_id: result.memory_id || params.conversationId,
+        conversation_id: result.conversation_id || params.conversationId,
+        lead_id: result.lead_id || params.leadId,
+        current_phase: result.current_phase || params.currentPhase,
+        previous_phase: result.previous_phase || params.currentPhase,
+        phase_changed: result.phase_changed || false,
+        qualification_score: result.qualification_score || 0,
+        score_breakdown: result.score_breakdown,
+        error: result.error,
+      };
+
+      return finalResult;
     } catch (error) {
       console.error('Exception in updateConversationState:', error);
       return {
@@ -111,6 +228,12 @@ export class ConversationStateManager {
    * @returns Promise with memory data or null if not found
    */
   static async getConversationMemory(conversationId: string): Promise<Conversation | null> {
+    // Validate conversationId
+    if (!conversationId || conversationId === 'undefined' || conversationId === 'null') {
+      console.warn('Invalid conversationId provided to getConversationMemory:', conversationId);
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('conversations')

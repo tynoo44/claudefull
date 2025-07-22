@@ -16,7 +16,10 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
     port: 5173,
+    // 1) Permitir solo este hostname concreto:
+    allowedHosts: ['horses-wise-detailed-legitimate.trycloudflare.com'],
     strictPort: true, // Fail if port is already in use
   },
 });

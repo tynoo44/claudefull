@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Lead, LeadStatus, LeadProcedence } from '../../lib/supabase';
+import { TagInput } from './TagInput';
 
 interface LeadModalProps {
   darkMode: boolean;
@@ -25,7 +26,6 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     status: 'Open' as LeadStatus,
     procedence: 'Inbound' as LeadProcedence,
   });
-  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     if (editingLead) {
@@ -49,21 +49,8 @@ export const LeadModal: React.FC<LeadModalProps> = ({
     }
   }, [editingLead]);
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()],
-      }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove),
-    }));
+  const handleTagsChange = (newTags: string[]) => {
+    setFormData(prev => ({ ...prev, tags: newTags }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -238,53 +225,14 @@ export const LeadModal: React.FC<LeadModalProps> = ({
                 darkMode ? 'text-gray-300' : 'text-gray-700'
               }`}
             >
-              Tags
+              Etiquetas
             </label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                className={`flex-1 px-4 py-2 rounded-lg border transition-all ${
-                  darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
-                } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-                placeholder="Añadir tag..."
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
-                    darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-red-500 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-            </div>
+            <TagInput
+              tags={formData.tags}
+              onTagsChange={handleTagsChange}
+              darkMode={darkMode}
+              placeholder="Agregar etiqueta..."
+            />
           </div>
         </form>
 

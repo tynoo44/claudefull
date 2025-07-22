@@ -1,9 +1,10 @@
 import React from 'react';
-import { MessageCircle, Calendar, Trash2, MoreVertical, Hash } from 'lucide-react';
+import { MessageCircle, Calendar, Trash2, MoreVertical } from 'lucide-react';
 import { Lead } from '../../types';
 import { useConversationsQuery } from '../../hooks/useConversationsQuery';
 import { useNavigate } from 'react-router-dom';
 import { getStatusClasses } from '../../utils/statusUtils';
+import { TagsPopover } from './TagsPopover';
 
 interface LeadCardProps {
   darkMode: boolean;
@@ -100,25 +101,8 @@ export const LeadCard: React.FC<LeadCardProps> = ({
           )}
 
           {lead.tags && lead.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {(lead.tags || []).slice(0, 2).map((tag, index) => (
-                <span
-                  key={index}
-                  className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
-                    darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Hash className="w-3 h-3" />
-                  {tag}
-                </span>
-              ))}
-              {(lead.tags || []).length > 2 && (
-                <span
-                  className={`text-xs px-2 py-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
-                >
-                  +{(lead.tags || []).length - 2}
-                </span>
-              )}
+            <div className="mb-3">
+              <TagsPopover tags={lead.tags} darkMode={darkMode} maxVisible={2} />
             </div>
           )}
 
@@ -204,19 +188,7 @@ export const LeadCard: React.FC<LeadCardProps> = ({
           </span>
         </td>
         <td className="px-6 py-4">
-          <div className="flex flex-wrap gap-1">
-            {lead.tags?.map((tag, index) => (
-              <span
-                key={index}
-                className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
-                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                <Hash className="w-3 h-3" />
-                {tag}
-              </span>
-            ))}
-          </div>
+          <TagsPopover tags={lead.tags || []} darkMode={darkMode} maxVisible={3} />
         </td>
         <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           {new Date(lead.updated_at || Date.now()).toLocaleDateString('es-ES')}

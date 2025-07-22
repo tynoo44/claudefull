@@ -1,104 +1,75 @@
+// Refactored conversation analysis service - modularized version
 import { supabase } from '../lib/supabase';
-import { generateAIResponse } from '../lib/gemini';
-import { analyzeConversation } from '../lib/conversation-analyzer';
+import ConversationAnalyzer from '../lib/conversation-analyzer';
 import { detectIntent } from '../lib/intent-detector';
 import { analyzeLeadProfile } from '../lib/lead-personalizer';
 
-interface AnalysisResult {
-  conversation_id: string;
-  lead_id: string;
-  analysis_data: {
-    summary: string;
-    current_phase: number;
-    phase_details: Record<number, PhaseDetail>;
-    sentiment_timeline: SentimentPoint[];
-    overall_sentiment: string;
-    key_moments: KeyMoment[];
-  };
-  sentiment_scores: {
-    overall: number;
-    by_message: Array<{ message_id: string; score: number; emotion: string }>;
-  };
-  phase_progress: {
-    [key: number]: {
-      completed: boolean;
-      progress: number;
-      key_info: string[];
-      missing_info: string[];
-    };
-  };
-  key_insights: string[];
-  warnings: string[];
-  action_threads: string[];
-  urgency_score: number;
-  capacity_score: number;
-  engagement_score: number;
-}
-
-interface PhaseDetail {
-  name: string;
-  status: 'not_started' | 'in_progress' | 'completed';
-  progress: number;
-  information_gathered: string[];
-  next_steps: string[];
-}
-
-interface SentimentPoint {
-  timestamp: Date;
-  score: number;
-  emotion: string;
-}
-
-interface KeyMoment {
-  message_index: number;
-  type: 'positive_shift' | 'negative_shift' | 'objection' | 'buying_signal' | 'pain_point';
-  description: string;
-}
+// Import modular components
+import { AnalysisResult, ConversationMessage, ConversationData } from './analysis/types';
+import { analyzeSentiments } from './analysis/sentimentAnalyzer';
+import { generateEnrichedAnalysis } from './analysis/enrichmentService';
+import { updateLeadFromAnalysis } from './analysis/leadUpdateService';
+import { QueueManager } from './analysis/queueManager';
 
 class ConversationAnalysisService {
-  private analysisQueue: Set<string> = new Set();
-  private isRunning = false;
-  private analysisInterval: NodeJS.Timeout | null = null;
-  private messageDelay = 2 * 60 * 1000; // 2 minutos
+  private queueManager: QueueManager;
 
-  // Iniciar el servicio de análisis
-  start() {
-    if (this.isRunning) return;
-    
-    this.isRunning = true;
-    // Ejecutar cada 30 segundos
-    this.analysisInterval = setInterval(() => {
-      this.processAnalysisQueue();
-    }, 30000);
-    
-    // Ejecutar inmediatamente
-    this.processAnalysisQueue();
+  constructor() {
+    this.queueManager = new QueueManager({
+      messageDelay: 30 * 1000, // 30 seconds
+      maxConcurrentAnalyses: 5,
+      checkInterval: 10000, // 10 seconds
+    });
   }
 
-  // Detener el servicio
+  // Start the analysis service
+  start() {
+    this.queueManager.start(() => this.processAnalysisQueue());
+  }
+
+  // Stop the service
   stop() {
-    this.isRunning = false;
-    if (this.analysisInterval) {
-      clearInterval(this.analysisInterval);
-      this.analysisInterval = null;
+    this.queueManager.stop();
+  }
+
+  // Process analysis queue with priority system
+  private async processAnalysisQueue() {
+    if (!this.queueManager.canProcess()) return;
+
+    try {
+      // Process priority queue first
+      await this.processPriorityQueue();
+
+      // Then process normal queue if capacity allows
+      if (this.queueManager.canProcess()) {
+        await this.processNormalQueue();
+      }
+    } catch (error) {
+      console.error('Error in analysis queue processing:', error);
     }
   }
 
-  // Priorizar una conversación específica
-  prioritizeConversation(conversationId: string) {
-    this.analysisQueue.add(conversationId);
-    // Ejecutar análisis inmediatamente para conversaciones priorizadas
-    this.analyzeConversation(conversationId, true);
+  // Process high priority conversations
+  private async processPriorityQueue() {
+    const priorityArray = this.queueManager.getPriorityQueue();
+
+    for (const conversationId of priorityArray) {
+      if (!this.queueManager.canProcess()) break;
+
+      if (!this.queueManager.isInQueue(conversationId)) {
+        this.queueManager.removeFromQueues(conversationId);
+        this.analyzeConversation(conversationId, true); // No await - process in parallel
+      }
+    }
   }
 
-  // Procesar la cola de análisis
-  private async processAnalysisQueue() {
-    if (!this.isRunning) return;
-
+  // Process normal queue
+  private async processNormalQueue() {
     try {
-      // Obtener conversaciones que necesitan análisis
-      const { data: conversationsNeedingAnalysis, error } = await supabase
-        .rpc('get_conversations_needing_analysis');
+      // Get conversations needing analysis
+      const { data: conversationsNeedingAnalysis, error } = await supabase.rpc(
+        'get_conversations_needing_analysis',
+      );
 
       if (error) {
         console.error('Error getting conversations needing analysis:', error);
@@ -106,44 +77,76 @@ class ConversationAnalysisService {
       }
 
       if (!conversationsNeedingAnalysis || conversationsNeedingAnalysis.length === 0) {
+        console.log('📭 No conversations need analysis at this time');
         return;
       }
 
-      // Procesar conversaciones en orden de prioridad
+      console.log(
+        `📋 Processing ${conversationsNeedingAnalysis.length} conversations from normal queue`,
+      );
+
+      // Process conversations not already in processing
       for (const conv of conversationsNeedingAnalysis) {
-        if (!this.isRunning) break;
-        
-        // Verificar si ha pasado suficiente tiempo desde el último mensaje
+        if (!this.queueManager.canProcess()) break;
+
+        const conversationId = conv.conversation_id;
+
+        // Skip if already processing
+        if (this.queueManager.isInQueue(conversationId)) {
+          continue;
+        }
+
+        // Check if enough time has passed since last message
         const lastMessageTime = new Date(conv.last_message_at).getTime();
         const timeSinceLastMessage = Date.now() - lastMessageTime;
-        
-        if (timeSinceLastMessage >= this.messageDelay) {
-          await this.analyzeConversation(conv.conversation_id);
-          // Esperar un poco entre análisis para no sobrecargar
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        const { messageDelay } = this.queueManager.getStatus();
+
+        if (timeSinceLastMessage >= messageDelay) {
+          this.analyzeConversation(conversationId, false); // No await - process in parallel
+          await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between starts
         }
       }
     } catch (error) {
-      console.error('Error in analysis queue processing:', error);
+      console.error('Error in normal queue processing:', error);
     }
   }
 
-  // Analizar una conversación específica
+  // Analyze a specific conversation
   private async analyzeConversation(conversationId: string, isPriority = false) {
+    // Validate conversationId
+    if (!conversationId || conversationId === 'undefined') {
+      console.error('Invalid conversationId received:', conversationId);
+      console.trace();
+      return;
+    }
+
+    console.log(`Starting analysis for conversation: ${conversationId}, isPriority: ${isPriority}`);
+
+    // Mark as processing
+    this.queueManager.markAsProcessing(conversationId);
+
     try {
-      // Obtener mensajes de la conversación
+      // Fetch messages
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (messagesError || !messages || messages.length === 0) {
+      if (messagesError) {
+        console.error(`Error fetching messages for ${conversationId}:`, messagesError);
         return;
       }
 
-      // Obtener información de la conversación y el lead
-      const { data: conversation } = await supabase
+      if (!messages || messages.length === 0) {
+        console.log(`No messages found for conversation ${conversationId}`);
+        return;
+      }
+
+      console.log(`Found ${messages.length} messages for conversation ${conversationId}`);
+
+      // Fetch conversation and lead data
+      const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select(`
           *,
@@ -152,56 +155,82 @@ class ConversationAnalysisService {
         .eq('id', conversationId)
         .single();
 
-      if (!conversation) return;
+      if (convError) {
+        console.error(`Error fetching conversation ${conversationId}:`, convError);
+        return;
+      }
 
-      // Preparar mensajes para análisis
-      const aiMessages = messages.map(msg => ({
-        role: msg.sender_type === 'setter' ? 'assistant' : 'user',
-        content: msg.text,
+      if (!conversation) {
+        console.error(`No conversation found for ${conversationId}`);
+        return;
+      }
+
+      // Convert messages to proper type
+      const typedMessages: ConversationMessage[] = messages.map(msg => ({
+        id: msg.id,
+        text: msg.text,
+        sender_type: msg.sender_type,
+        created_at: msg.created_at,
       }));
 
-      // Análisis de sentimientos y emociones
-      const sentimentAnalysis = this.analyzeSentiments(messages);
-      
-      // Análisis de intenciones del último mensaje del lead
+      // Perform analyses
+      const sentimentAnalysis = analyzeSentiments(typedMessages);
+
+      // Analyze intent of last lead message
       const leadMessages = messages.filter(m => m.sender_type === 'lead');
       const lastLeadMessage = leadMessages[leadMessages.length - 1];
       const intent = lastLeadMessage ? detectIntent(lastLeadMessage.text) : null;
 
-      // Análisis del perfil del lead
+      // Analyze lead profile
       const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text));
 
-      // Análisis completo de la conversación
-      const conversationAnalysis = await analyzeConversation(
-        aiMessages as any,
-        conversation.current_phase
-      );
-
-      // Generar análisis enriquecido con IA
-      const enrichedAnalysis = await this.generateEnrichedAnalysis(
+      // Full conversation analysis
+      console.log(`Calling ConversationAnalyzer.analyzeConversation for ${conversationId}`);
+      const conversationAnalysis = await ConversationAnalyzer.analyzeConversation({
+        conversationId,
+        leadId: conversation.lead_id,
         messages,
-        conversation,
-        conversationAnalysis,
+        forceReanalyze: true,
+      });
+
+      if (!conversationAnalysis.success) {
+        console.log(
+          `ConversationAnalyzer failed for ${conversationId}: ${conversationAnalysis.error}`,
+        );
+        return;
+      }
+
+      console.log(`ConversationAnalyzer successful for ${conversationId}`);
+
+      // Generate enriched analysis with AI
+      const enrichedAnalysis = await generateEnrichedAnalysis(
+        typedMessages,
+        conversation as ConversationData,
+        conversationAnalysis.memory || null,
         intent,
-        leadProfile
+        leadProfile,
       );
 
-      // Guardar análisis en la base de datos
+      // Save analysis result
       const analysisResult: AnalysisResult = {
         conversation_id: conversationId,
         lead_id: conversation.lead_id,
         analysis_data: enrichedAnalysis.analysis_data,
-        sentiment_scores: sentimentAnalysis,
+        sentiment_scores: sentimentAnalysis as any,
         phase_progress: enrichedAnalysis.phase_progress,
         key_insights: enrichedAnalysis.key_insights,
         warnings: enrichedAnalysis.warnings,
         action_threads: enrichedAnalysis.action_threads,
-        urgency_score: intent?.urgencyLevel || 5,
-        capacity_score: conversationAnalysis.qualification.capacityToPay * 10,
-        engagement_score: conversationAnalysis.qualification.engagementLevel * 10,
+        urgency_score: Math.round(intent?.urgencyLevel || 5),
+        capacity_score: Math.round(
+          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
+        ),
+        engagement_score: Math.round(
+          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
+        ),
       };
 
-      // Guardar en la base de datos
+      // Save to database
       const { error: saveError } = await supabase
         .from('conversation_analysis')
         .insert(analysisResult);
@@ -211,274 +240,134 @@ class ConversationAnalysisService {
         return;
       }
 
-      // Actualizar lead si es necesario
-      await this.updateLeadFromAnalysis(conversation.lead_id, enrichedAnalysis);
+      console.log(`✅ Analysis saved for conversation ${conversationId}`);
 
-      // Si es prioritario, emitir evento para actualización en tiempo real
+      // Update lead with analysis info
+      await updateLeadFromAnalysis(
+        conversation.lead_id,
+        enrichedAnalysis,
+        conversationAnalysis,
+      );
+
+      // Update last analyzed timestamp if priority
       if (isPriority) {
         await supabase
           .from('conversations')
-          .update({ 
-            last_analyzed_at: new Date().toISOString() 
+          .update({
+            last_analyzed_at: new Date().toISOString(),
           })
           .eq('id', conversationId);
       }
-
     } catch (error) {
       console.error('Error analyzing conversation:', error);
+    } finally {
+      // Always mark as completed
+      this.queueManager.markAsCompleted(conversationId);
     }
   }
 
-  // Analizar sentimientos de los mensajes
-  private analyzeSentiments(messages: any[]): any {
-    const sentimentMap = {
-      'muy_positivo': 1,
-      'positivo': 0.5,
-      'neutral': 0,
-      'negativo': -0.5,
-      'muy_negativo': -1
-    };
+  // Public methods for external use
+  async startBackgroundAnalysis() {
+    console.log('🚀 Starting background conversation analysis service...');
+    const status = this.queueManager.getStatus();
+    console.log(`⚙️ Configuration: 
+      - Message delay: ${status.messageDelay / 1000}s
+      - Max concurrent analyses: ${status.maxConcurrent}
+      - Check interval: 10s
+      - Queue wait time: 2-10s`);
 
-    const emotionKeywords = {
-      frustración: ['frustrado', 'harto', 'cansado', 'difícil', 'problema', 'no puedo'],
-      entusiasmo: ['genial', 'perfecto', 'me encanta', 'increíble', 'excelente'],
-      duda: ['no sé', 'quizás', 'tal vez', 'no estoy seguro', 'puede ser'],
-      urgencia: ['ya', 'ahora', 'urgente', 'necesito', 'cuanto antes'],
-      escepticismo: ['no creo', 'suena bien pero', 'a ver', 'veremos'],
-    };
-
-    const byMessage = messages.map(msg => {
-      const text = msg.text.toLowerCase();
-      let score = 0;
-      let emotion = 'neutral';
-
-      // Detectar emoción dominante
-      for (const [emo, keywords] of Object.entries(emotionKeywords)) {
-        if (keywords.some(kw => text.includes(kw))) {
-          emotion = emo;
-          break;
-        }
-      }
-
-      // Calcular score básico
-      if (text.includes('!') || text.includes('genial') || text.includes('perfecto')) {
-        score = 0.5;
-      } else if (text.includes('no') || text.includes('problema') || text.includes('difícil')) {
-        score = -0.5;
-      }
-
-      return {
-        message_id: msg.id,
-        score,
-        emotion
-      };
-    });
-
-    const overall = byMessage.reduce((acc, curr) => acc + curr.score, 0) / byMessage.length;
-
-    return {
-      overall,
-      by_message: byMessage
-    };
+    this.queueManager.setProcessing(true);
+    this.start();
+    this.processQueue();
   }
 
-  // Generar análisis enriquecido con IA
-  private async generateEnrichedAnalysis(
-    messages: any[],
-    conversation: any,
-    baseAnalysis: any,
-    intent: any,
-    leadProfile: any
-  ): Promise<any> {
-    const prompt = `
-Analiza esta conversación de ventas y proporciona un análisis PROFESIONAL y ACCIONABLE.
+  stopBackgroundAnalysis() {
+    console.log('Stopping background conversation analysis...');
+    this.queueManager.setProcessing(false);
+    this.queueManager.clearQueues();
+    this.stop();
+  }
 
-CONVERSACIÓN:
-${messages.map(m => `${m.sender_type}: ${m.text}`).join('\n')}
+  private async processQueue() {
+    const status = this.queueManager.getStatus();
+    
+    while (status.isProcessing) {
+      try {
+        // Check for conversations needing analysis
+        const { data: conversations, error } = await supabase
+          .rpc('get_conversations_needing_analysis')
+          .limit(50);
 
-ANÁLISIS BASE:
-- Fase actual: ${conversation.current_phase}
-- Cualificación: ${baseAnalysis.qualification.score}
-- Intención detectada: ${intent?.primaryIntent || 'general'}
-- Perfil del lead: ${leadProfile.type}
+        if (error) {
+          console.error('Error fetching conversations for analysis:', error);
+        } else if (conversations && conversations.length > 0) {
+          console.log(`📊 Found ${conversations.length} conversations needing analysis`);
 
-NECESITO:
+          // Add to queue
+          for (const conv of conversations) {
+            this.queueManager.addToQueue(conv.conversation_id);
+          }
+        }
 
-1. PROGRESO POR FASE (información REAL extraída, no genérica):
-   - Qué información específica obtuvimos
-   - Qué falta por obtener
-   - Próximo paso concreto
+        // Process queues
+        await this.processAnalysisQueue();
 
-2. KEY INSIGHTS (máximo 5, solo los importantes):
-   - Información crítica para cerrar la venta
-   - Puntos de dolor específicos mencionados
-   - Señales de compra detectadas
+        // Wait before next check
+        const waitTime = 
+          status.queueSize === 0 && status.priorityQueueSize === 0 ? 10000 : 2000;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      } catch (error) {
+        console.error('Error in background analysis process:', error);
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+    }
+  }
 
-3. WARNINGS (solo si son relevantes):
-   - Objeciones no resueltas
-   - Competencia mencionada
-   - Señales de pérdida de interés
+  prioritizeConversation(conversationId: string) {
+    this.queueManager.addToQueue(conversationId, true);
+    console.log(`Prioritized conversation ${conversationId} for analysis`);
+  }
 
-4. ACTION THREADS (hilos para explotar):
-   - Temas mencionados que podemos profundizar
-   - Preguntas sin responder
-   - Oportunidades detectadas
+  async refreshAnalysis(conversationId: string): Promise<AnalysisResult | null> {
+    if (!conversationId) {
+      console.error('Cannot refresh analysis: conversationId is undefined');
+      return null;
+    }
 
-Formato JSON, sin fluff, solo información ÚTIL y ESPECÍFICA.`;
+    this.queueManager.markAsProcessing(conversationId);
 
     try {
-      const response = await generateAIResponse({
-        messages: [{
-          role: 'user',
-          content: prompt
-        }],
-        model: 'gemini-2.5-pro',
-      });
+      await this.analyzeConversation(conversationId, true);
 
-      // Parsear la respuesta JSON
-      return JSON.parse(response);
+      // Fetch the analysis result
+      const { data: analysis } = await supabase
+        .from('conversation_analysis')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .single();
+
+      return analysis as AnalysisResult;
     } catch (error) {
-      // Fallback a análisis básico si falla la IA
-      return this.generateBasicAnalysis(messages, conversation, baseAnalysis);
+      console.error('Error refreshing analysis:', error);
+      return null;
+    } finally {
+      this.queueManager.markAsCompleted(conversationId);
     }
   }
 
-  // Generar análisis básico como fallback
-  private generateBasicAnalysis(messages: any[], conversation: any, baseAnalysis: any): any {
-    return {
-      analysis_data: {
-        summary: `Conversación en fase ${conversation.current_phase}`,
-        current_phase: conversation.current_phase,
-        phase_details: this.generatePhaseDetails(messages, conversation.current_phase),
-        sentiment_timeline: [],
-        overall_sentiment: 'neutral',
-        key_moments: []
-      },
-      phase_progress: this.generatePhaseProgress(messages, conversation.current_phase),
-      key_insights: [],
-      warnings: [],
-      action_threads: []
-    };
-  }
-
-  // Generar detalles de fases
-  private generatePhaseDetails(messages: any[], currentPhase: number): Record<number, PhaseDetail> {
-    const phases: Record<number, PhaseDetail> = {};
+  getAnalysisStatus() {
+    const status = this.queueManager.getStatus();
     
-    for (let i = 1; i <= 5; i++) {
-      phases[i] = {
-        name: this.getPhaseName(i),
-        status: i < currentPhase ? 'completed' : i === currentPhase ? 'in_progress' : 'not_started',
-        progress: i < currentPhase ? 100 : i === currentPhase ? 50 : 0,
-        information_gathered: [],
-        next_steps: []
-      };
-    }
-    
-    return phases;
-  }
+    console.log(`📈 Analysis Service Status:
+      - Processing: ${status.isProcessing ? '✅' : '❌'}
+      - Priority Queue: ${status.priorityQueueSize} conversations
+      - Normal Queue: ${status.queueSize} conversations
+      - Active Analyses: ${status.activeAnalyses}/${status.maxConcurrent}
+      - Message Delay: ${status.messageDelay / 1000}s`);
 
-  // Generar progreso de fases
-  private generatePhaseProgress(messages: any[], currentPhase: number): any {
-    const progress: any = {};
-    
-    for (let i = 1; i <= 5; i++) {
-      progress[i] = {
-        completed: i < currentPhase,
-        progress: i < currentPhase ? 100 : i === currentPhase ? 50 : 0,
-        key_info: [],
-        missing_info: []
-      };
-    }
-    
-    return progress;
-  }
-
-  // Obtener nombre de fase
-  private getPhaseName(phase: number): string {
-    const phaseNames = {
-      1: 'Situación Actual',
-      2: 'Dolor',
-      3: 'Situación Deseada',
-      4: 'Obstáculo',
-      5: 'Oferta'
-    };
-    return phaseNames[phase as keyof typeof phaseNames] || 'Desconocida';
-  }
-
-  // Actualizar lead basado en el análisis
-  private async updateLeadFromAnalysis(leadId: string, analysis: any) {
-    try {
-      // Determinar si hay cambios significativos
-      const updates: any = {};
-      
-      // Actualizar fase si cambió
-      if (analysis.suggested_phase_change) {
-        updates.current_phase = analysis.suggested_phase_change;
-      }
-      
-      // Actualizar tags automáticos
-      if (analysis.auto_tags && analysis.auto_tags.length > 0) {
-        const { data: currentLead } = await supabase
-          .from('leads')
-          .select('tags')
-          .eq('id', leadId)
-          .single();
-          
-        const currentTags = currentLead?.tags || [];
-        const newTags = [...new Set([...currentTags, ...analysis.auto_tags])];
-        
-        if (newTags.length > currentTags.length) {
-          updates.tags = newTags;
-        }
-      }
-      
-      // Actualizar notas si hay información relevante
-      if (analysis.key_insights && analysis.key_insights.length > 0) {
-        const { data: insights } = await supabase
-          .from('lead_insights')
-          .select('*')
-          .eq('lead_id', leadId)
-          .single();
-          
-        if (!insights) {
-          // Crear nuevo registro de insights
-          await supabase
-            .from('lead_insights')
-            .insert({
-              lead_id: leadId,
-              business_info: analysis.business_info || {},
-              pain_points: analysis.pain_points || [],
-              goals: analysis.goals || [],
-              personality_profile: analysis.personality_profile || {}
-            });
-        } else {
-          // Actualizar insights existentes
-          await supabase
-            .from('lead_insights')
-            .update({
-              business_info: { ...insights.business_info, ...analysis.business_info },
-              pain_points: [...new Set([...insights.pain_points, ...(analysis.pain_points || [])])],
-              goals: [...new Set([...insights.goals, ...(analysis.goals || [])])],
-              updated_at: new Date().toISOString()
-            })
-            .eq('lead_id', leadId);
-        }
-      }
-      
-      // Actualizar el lead si hay cambios
-      if (Object.keys(updates).length > 0) {
-        await supabase
-          .from('leads')
-          .update(updates)
-          .eq('id', leadId);
-      }
-      
-    } catch (error) {
-      console.error('Error updating lead from analysis:', error);
-    }
+    return status;
   }
 }
 
-// Exportar instancia singleton
+// Export singleton instance
 export const conversationAnalysisService = new ConversationAnalysisService();

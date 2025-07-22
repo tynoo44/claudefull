@@ -15,7 +15,7 @@ export const UpcomingEventsSidebar: React.FC<UpcomingEventsSidebarProps> = ({
   events,
   darkMode,
   onEventClick,
-  onCreateEvent
+  onCreateEvent,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -38,11 +38,11 @@ export const UpcomingEventsSidebar: React.FC<UpcomingEventsSidebarProps> = ({
 
   const groupEventsByDate = (events: CalendarEvent[]) => {
     const grouped: { [key: string]: CalendarEvent[] } = {};
-    
+
     events.forEach(event => {
       const date = new Date(event.start_datetime);
       const dateKey = format(date, 'yyyy-MM-dd');
-      
+
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
@@ -51,9 +51,9 @@ export const UpcomingEventsSidebar: React.FC<UpcomingEventsSidebarProps> = ({
 
     return Object.entries(grouped).map(([dateKey, events]) => ({
       date: new Date(dateKey + 'T00:00:00'),
-      events: events.sort((a, b) => 
-        new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime()
-      )
+      events: events.sort(
+        (a, b) => new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime(),
+      ),
     }));
   };
 
@@ -92,11 +92,11 @@ export const UpcomingEventsSidebar: React.FC<UpcomingEventsSidebarProps> = ({
             {groupedEvents.map(({ date, events }) => (
               <div key={date.toISOString()}>
                 {/* Fecha */}
-                <div className={`text-sm font-medium mb-2 ${
-                  isToday(date) 
-                    ? 'text-blue-600' 
-                    : darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <div
+                  className={`text-sm font-medium mb-2 ${
+                    isToday(date) ? 'text-blue-600' : darkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}
+                >
                   {getRelativeDate(date)}
                 </div>
 
@@ -106,85 +106,90 @@ export const UpcomingEventsSidebar: React.FC<UpcomingEventsSidebarProps> = ({
                     <div
                       key={event.id}
                       className={`p-3 rounded-lg border cursor-pointer transition-all hover:scale-[1.02] ${
-                        darkMode 
-                          ? 'border-gray-700 bg-gray-700 hover:bg-gray-600' 
+                        darkMode
+                          ? 'border-gray-700 bg-gray-700 hover:bg-gray-600'
                           : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                       }`}
                       onClick={() => onEventClick(event)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(event.status)}`}></div>
-                          <span className={`text-sm font-medium ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {event.is_all_day 
-                              ? 'Todo el día' 
-                              : format(new Date(event.start_datetime), 'HH:mm')
-                            }
+                          <div
+                            className={`w-2 h-2 rounded-full ${getStatusColor(event.status)}`}
+                          ></div>
+                          <span
+                            className={`text-sm font-medium ${
+                              darkMode ? 'text-white' : 'text-gray-900'
+                            }`}
+                          >
+                            {event.is_all_day
+                              ? 'Todo el día'
+                              : format(new Date(event.start_datetime), 'HH:mm')}
                           </span>
                         </div>
-                        <ChevronRight className={`h-4 w-4 ${
-                          darkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`} />
+                        <ChevronRight
+                          className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                        />
                       </div>
 
-                      <h4 className={`text-sm font-medium mb-1 ${
-                        darkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
+                      <h4
+                        className={`text-sm font-medium mb-1 ${
+                          darkMode ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
                         {event.title}
                       </h4>
 
                       {!event.is_all_day && (
                         <div className="flex items-center gap-1 mb-1">
-                          <Clock className={`h-3 w-3 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <span className={`text-xs ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            {format(new Date(event.start_datetime), 'HH:mm')} - {format(new Date(event.end_datetime), 'HH:mm')}
+                          <Clock
+                            className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          />
+                          <span
+                            className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          >
+                            {format(new Date(event.start_datetime), 'HH:mm')} -{' '}
+                            {format(new Date(event.end_datetime), 'HH:mm')}
                           </span>
                         </div>
                       )}
 
                       {event.location && (
                         <div className="flex items-center gap-1 mb-1">
-                          <MapPin className={`h-3 w-3 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <span className={`text-xs ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            {event.location.length > 30 
-                              ? `${event.location.substring(0, 30)}...` 
-                              : event.location
-                            }
+                          <MapPin
+                            className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          />
+                          <span
+                            className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          >
+                            {event.location.length > 30
+                              ? `${event.location.substring(0, 30)}...`
+                              : event.location}
                           </span>
                         </div>
                       )}
 
                       {event.attendees.length > 0 && (
                         <div className="flex items-center gap-1 mb-1">
-                          <Users className={`h-3 w-3 ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`} />
-                          <span className={`text-xs ${
-                            darkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            {event.attendees.length} asistente{event.attendees.length !== 1 ? 's' : ''}
+                          <Users
+                            className={`h-3 w-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          />
+                          <span
+                            className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                          >
+                            {event.attendees.length} asistente
+                            {event.attendees.length !== 1 ? 's' : ''}
                           </span>
                         </div>
                       )}
 
                       {event.description && (
-                        <p className={`text-xs mt-2 ${
-                          darkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          {event.description.length > 80 
-                            ? `${event.description.substring(0, 80)}...` 
-                            : event.description
-                          }
+                        <p
+                          className={`text-xs mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                        >
+                          {event.description.length > 80
+                            ? `${event.description.substring(0, 80)}...`
+                            : event.description}
                         </p>
                       )}
                     </div>

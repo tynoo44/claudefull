@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LeadStatus, LeadProcedence } from '../../lib/supabase';
 import { getStatusClasses } from '../../utils/statusUtils';
+import { TagsDropdown } from '../common/TagsDropdown';
 
 interface LeadsHeaderProps {
   darkMode: boolean;
@@ -71,7 +72,7 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
   selectedTags = [],
   selectedStatus = 'all',
   selectedProcedence = 'all',
-  availableTags = [],
+  // availableTags = [], // Unused
   onSearchChange = () => {},
   onTagToggle = () => {},
   onStatusChange = () => {},
@@ -255,33 +256,14 @@ export const LeadsHeader: React.FC<LeadsHeaderProps> = ({
               </div>
             </div>
 
-            {/* Tags - Compact */}
-            {availableTags.length > 0 && (
-              <div className="flex items-center gap-1">
-                {availableTags.slice(0, 3).map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => onTagToggle(tag)}
-                    className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                      selectedTags.includes(tag)
-                        ? darkMode
-                          ? 'bg-blue-600/20 text-blue-400'
-                          : 'bg-blue-100 text-blue-700'
-                        : darkMode
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-                {availableTags.length > 3 && (
-                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    +{availableTags.length - 3}
-                  </span>
-                )}
-              </div>
-            )}
+            {/* Tags Dropdown */}
+            <TagsDropdown
+              selectedTags={selectedTags}
+              onToggleTag={onTagToggle}
+              onClearTags={() => {
+                selectedTags.forEach(tag => onTagToggle(tag));
+              }}
+            />
 
             {/* Clear Filters */}
             {hasActiveFilters && (
