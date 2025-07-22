@@ -15,7 +15,8 @@ import {
   GEMINI_MODELS,
   type GeminiModel,
   type AIMessage as GeminiAIMessage,
-} from '../../lib/gemini';
+  convertToAIMessages,
+} from '../../lib/ai-service';
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
 import { ConversationStateIndicator } from './ConversationStateIndicator';
@@ -83,8 +84,11 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
       // Detect current phase from conversation
       const currentPhase = promptManager.detectCurrentPhase(messages.concat(userMessage));
 
+      // Convert to AI service format
+      const aiMessages = convertToAIMessages(messages.concat(userMessage));
+      
       const response = await generateAIResponse({
-        messages: messages.concat(userMessage),
+        messages: aiMessages,
         model: selectedModel,
         conversationContext: fullContext,
         currentPhase,
@@ -124,12 +128,14 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     setIsTyping(true);
 
     // Convert current conversation to AI messages format
-    const conversationMessages: GeminiAIMessage[] = Array.isArray(currentConversation?.messages)
+    const rawMessages = Array.isArray(currentConversation?.messages)
       ? (currentConversation.messages as Record<string, unknown>[]).map(msg => ({
           role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
           content: String(msg.text || msg.content || ''),
         }))
       : [];
+    
+    const conversationMessages: GeminiAIMessage[] = convertToAIMessages(rawMessages);
 
     if (!Array.isArray(currentConversation?.messages) || conversationMessages.length === 0) {
       setConversationError('Esta conversación no tiene mensajes');

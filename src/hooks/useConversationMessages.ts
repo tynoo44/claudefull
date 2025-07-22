@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Message } from '../lib/supabase';
 import { getMessagesForConversation, subscribeToMessages } from '../lib/supabase-functions';
-import { ConversationAnalyzer } from '../lib/conversation-analyzer';
+import { analyzeConversation } from '../lib/ai-service';
 
 interface ConversationMessagesResult {
   messages: Message[];
@@ -69,10 +69,13 @@ export const useConversationMessages = (
       setAnalysisError(undefined);
 
       try {
-        const result = await ConversationAnalyzer.analyzeConversation({
+        const result = await analyzeConversation({
           conversationId,
           leadId,
-          messages,
+          messages: messages.map(m => ({
+            role: m.sender_type === 'lead' ? 'user' : 'assistant',
+            content: m.text
+          })),
           forceReanalyze: false,
         });
 

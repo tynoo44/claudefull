@@ -1,6 +1,8 @@
 // AI enrichment service - handles AI-powered analysis generation
 
-import { generateAIResponse, DEFAULT_MODEL } from '../../lib/gemini';
+import { generateAIResponse, GEMINI_MODELS } from '../../lib/ai-service';
+
+const DEFAULT_MODEL = 'gemini-2.5-flash' as const;
 import { generatePhaseDetails, generatePhaseProgress } from './phaseAnalyzer';
 import { ConversationMessage } from './types';
 

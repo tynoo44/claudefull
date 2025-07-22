@@ -335,7 +335,7 @@ MAIN TASK: [Objective]
 VITE_GEMINI_API_KEY=AIzaSyCKeLG_pcE2nHNgyxddFgwCvGwzC1vS17w
 VITE_SUPABASE_URL=https://awyslztbkykhjhhykacf.supabase.co
 VITE_SUPABASE_ANON_KEY=[your_key]
-VITE_USER_ID=4435e069-4294-4e44-8fd3-25840e5a3aa0
+# VITE_USER_ID - REMOVED: Now using real Supabase Auth session.user.id
 ```
 
 ## Essential Rules Summary (UPDATED 2025-01-20)

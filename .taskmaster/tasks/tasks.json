@@ -583,7 +583,7 @@
         "description": "Migrar toda la lógica de Gemini API del frontend a una Edge Function segura en Supabase. Incluye response-generator.ts, conversation-analyzer.ts y quick-actions.ts.",
         "details": "La function debe recibir conversación del frontend, usar GEMINI_API_KEY desde secrets de Supabase, procesar con prompt-manager y response-validator, y retornar respuesta segura.",
         "testStrategy": "",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -594,7 +594,7 @@
         "description": "Crear ai-service.ts que reemplace las llamadas directas a Gemini API con llamadas HTTP a la Edge Function.",
         "details": "Refactorizar AIChatSidebar.tsx y otros componentes para usar el nuevo servicio. Eliminar todas las referencias a VITE_GEMINI_API_KEY del frontend.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -605,7 +605,7 @@
         "description": "Migrar toda la lógica de Google Calendar API del frontend a una Edge Function segura.",
         "details": "Implementar OAuth2 server-side flow, manejar tokens de forma segura, y crear endpoints para todas las operaciones CRUD de calendario sin exponer credentials al frontend.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -627,7 +627,7 @@
         "description": "Reemplazar VITE_USER_ID hardcoded con autenticación real usando Supabase Auth.",
         "details": "Implementar login/registro real, usar auth.uid() dinámicamente, crear páginas de autenticación, y refactorizar todos los componentes para usar el usuario autenticado actual.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -690,7 +690,7 @@
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-22T02:14:27.828Z",
+      "updated": "2025-07-22T03:19:17.988Z",
       "description": "Tasks for master context"
     }
   }

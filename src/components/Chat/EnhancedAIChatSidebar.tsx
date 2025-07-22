@@ -12,10 +12,12 @@ import {
   generateAIResponse,
   generateQuickActions,
   GEMINI_MODELS,
-  DEFAULT_MODEL,
   type GeminiModel,
   type AIMessage as GeminiAIMessage,
-} from '../../lib/gemini';
+  convertToAIMessages,
+} from '../../lib/ai-service';
+
+const DEFAULT_MODEL = 'gemini-2.5-flash' as const;
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
 import { ConversationStatusCard } from './ConversationStatusCard';

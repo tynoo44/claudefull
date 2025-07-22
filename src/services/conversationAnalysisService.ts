@@ -1,6 +1,6 @@
 // Refactored conversation analysis service - modularized version
 import { supabase } from '../lib/supabase';
-import ConversationAnalyzer from '../lib/conversation-analyzer';
+import { analyzeConversation } from '../lib/ai-service';
 import { detectIntent } from '../lib/intent-detector';
 import { analyzeLeadProfile } from '../lib/lead-personalizer';
 
@@ -185,11 +185,14 @@ class ConversationAnalysisService {
       const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text));
 
       // Full conversation analysis
-      console.log(`Calling ConversationAnalyzer.analyzeConversation for ${conversationId}`);
-      const conversationAnalysis = await ConversationAnalyzer.analyzeConversation({
+      console.log(`Calling analyzeConversation for ${conversationId}`);
+      const conversationAnalysis = await analyzeConversation({
         conversationId,
         leadId: conversation.lead_id,
-        messages,
+        messages: messages.map(m => ({
+          role: m.sender_type === 'lead' ? 'user' : 'assistant',
+          content: m.text
+        })),
         forceReanalyze: true,
       });
 
