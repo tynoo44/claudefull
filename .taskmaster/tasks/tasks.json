@@ -576,11 +576,121 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 102,
+        "title": "FASE 1.1: Crear Edge Function para AI/Gemini",
+        "description": "Migrar toda la lógica de Gemini API del frontend a una Edge Function segura en Supabase. Incluye response-generator.ts, conversation-analyzer.ts y quick-actions.ts.",
+        "details": "La function debe recibir conversación del frontend, usar GEMINI_API_KEY desde secrets de Supabase, procesar con prompt-manager y response-validator, y retornar respuesta segura.",
+        "testStrategy": "",
+        "status": "in-progress",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 103,
+        "title": "FASE 1.2: Crear servicio cliente AI para frontend",
+        "description": "Crear ai-service.ts que reemplace las llamadas directas a Gemini API con llamadas HTTP a la Edge Function.",
+        "details": "Refactorizar AIChatSidebar.tsx y otros componentes para usar el nuevo servicio. Eliminar todas las referencias a VITE_GEMINI_API_KEY del frontend.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 104,
+        "title": "FASE 2.1: Crear Edge Function para Google Calendar API",
+        "description": "Migrar toda la lógica de Google Calendar API del frontend a una Edge Function segura.",
+        "details": "Implementar OAuth2 server-side flow, manejar tokens de forma segura, y crear endpoints para todas las operaciones CRUD de calendario sin exponer credentials al frontend.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 105,
+        "title": "FASE 2.2: Crear servicio cliente Calendar para frontend",
+        "description": "Crear calendar-service.ts que reemplace las llamadas directas a Google Calendar API con llamadas HTTP a la Edge Function.",
+        "details": "Refactorizar PremiumCalendarAdvanced.tsx y componentes relacionados. Eliminar google-calendar.ts del frontend y mover toda la lógica al backend.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 106,
+        "title": "FASE 3.1: Implementar autenticación real y eliminar USER_ID hardcoded",
+        "description": "Reemplazar VITE_USER_ID hardcoded con autenticación real usando Supabase Auth.",
+        "details": "Implementar login/registro real, usar auth.uid() dinámicamente, crear páginas de autenticación, y refactorizar todos los componentes para usar el usuario autenticado actual.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 107,
+        "title": "FASE 3.2: Implementar Row Level Security (RLS) completo",
+        "description": "Crear políticas de RLS para todas las tablas de la base de datos para garantizar que los usuarios solo accedan a sus propios datos.",
+        "details": "Implementar políticas para leads, conversations, messages, prompts, y todas las demás tablas. Cada usuario debe ver solo sus datos mediante auth.uid().",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 108,
+        "title": "FASE 4.1: Configurar Supabase Secrets y variables de entorno seguras",
+        "description": "Configurar secrets de Supabase para API keys sensibles y reestructurar variables de entorno.",
+        "details": "Mover GEMINI_API_KEY y GOOGLE_CLIENT_SECRET a Supabase secrets. Mantener solo variables públicas como VITE_SUPABASE_URL en el frontend. Crear script de configuración de secrets.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 109,
+        "title": "FASE 5.1: Implementar validación y sanitización de datos",
+        "description": "Agregar validación robusta de inputs y sanitización de datos en todas las Edge Functions.",
+        "details": "Validar longitud de mensajes, sanitizar HTML/SQL injection, implementar esquemas de validación con Zod o similar, y agregar rate limiting por usuario.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 110,
+        "title": "FASE 6.1: Configurar logging seguro y monitoring",
+        "description": "Implementar sistema de logging seguro que no exponga datos sensibles y configurar monitoring de costos.",
+        "details": "Crear logs estructurados sin datos de usuario, configurar alertas para uso anómalo de APIs, dashboard de costos y límites, y métricas de rendimiento de Edge Functions.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 111,
+        "title": "FASE 7: Testing y validación de seguridad",
+        "description": "Crear tests de seguridad y validar que no hay leaks de API keys en el build de producción.",
+        "details": "Auditar build final, tests de penetración básicos, verificar que todas las APIs funcionan desde backend, y crear checklist de seguridad para futuros deploys.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-05T01:28:13.734Z",
-      "updated": "2025-07-21T10:39:17.910Z",
+      "updated": "2025-07-22T02:14:27.828Z",
       "description": "Tasks for master context"
     }
   }
