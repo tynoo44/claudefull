@@ -209,7 +209,7 @@ class ConversationAnalysisService {
       const enrichedAnalysis = await generateEnrichedAnalysis(
         typedMessages,
         conversation as ConversationData,
-        conversationAnalysis.memory || null,
+        null, // Memory not available from new AI service
         intent,
         leadProfile,
       );
@@ -225,12 +225,8 @@ class ConversationAnalysisService {
         warnings: enrichedAnalysis.warnings,
         action_threads: enrichedAnalysis.action_threads,
         urgency_score: Math.round(intent?.urgencyLevel || 5),
-        capacity_score: Math.round(
-          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
-        ),
-        engagement_score: Math.round(
-          (conversationAnalysis.memory?.qualification_score?.score || 0.5) * 10,
-        ),
+        capacity_score: Math.round(0.5 * 10), // Default score during migration
+        engagement_score: Math.round(0.5 * 10), // Default score during migration
       };
 
       // Save to database

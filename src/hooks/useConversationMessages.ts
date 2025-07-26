@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Message } from '../lib/supabase';
 import { getMessagesForConversation, subscribeToMessages } from '../lib/supabase-functions';
-import { analyzeConversation } from '../lib/ai-service';
 
 interface ConversationMessagesResult {
   messages: Message[];
@@ -69,25 +68,8 @@ export const useConversationMessages = (
       setAnalysisError(undefined);
 
       try {
-        const result = await analyzeConversation({
-          conversationId,
-          leadId,
-          messages: messages.map(m => ({
-            role: m.sender_type === 'lead' ? 'user' : 'assistant',
-            content: m.text
-          })),
-          forceReanalyze: false,
-        });
-
-        if (!result.success) {
-          setAnalysisError(result.error);
-        } else if (result.isNewAnalysis) {
-          console.log('Conversation analyzed successfully:', {
-            conversationId,
-            phase: result.memory?.current_phase,
-            score: result.memory?.qualification_score?.score,
-          });
-        }
+        // TODO: Re-implement conversation analysis with new AI service
+        console.log('Conversation analysis temporarily disabled during migration');
       } catch (error) {
         console.error('Error analyzing conversation:', error);
         setAnalysisError('Error al analizar la conversación');

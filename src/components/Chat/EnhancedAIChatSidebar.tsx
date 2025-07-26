@@ -14,7 +14,6 @@ import {
   GEMINI_MODELS,
   type GeminiModel,
   type AIMessage as GeminiAIMessage,
-  convertToAIMessages,
 } from '../../lib/ai-service';
 
 const DEFAULT_MODEL = 'gemini-2.5-flash' as const;
@@ -46,10 +45,17 @@ interface EnhancedAIChatSidebarProps {
 
 interface AIMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
+
+// Helper function to convert local AIMessage to ai-service AIMessage
+const convertToServiceMessage = (message: AIMessage): GeminiAIMessage => ({
+  role: message.role,
+  content: message.content,
+  timestamp: message.timestamp.toISOString()
+});
 
 interface MessageSuggestion {
   id: string;
@@ -156,7 +162,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       const currentPhase = promptManager.detectCurrentPhase(messages.concat(userMessage));
 
       const response = await generateAIResponse({
-        messages: messages.concat(userMessage),
+        messages: messages.concat(userMessage).map(convertToServiceMessage),
         model: selectedModel,
         conversationContext: fullContext,
         currentPhase,
