@@ -1,8 +1,6 @@
-/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -18,8 +16,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    // 1) Permitir solo este hostname concreto:
-    allowedHosts: ['horses-wise-detailed-legitimate.trycloudflare.com'],
-    strictPort: true, // Fail if port is already in use
+    strictPort: true,
+    hmr: {
+      clientPort: 443,
+      protocol: 'wss',
+      host: 'app.srv802330.hstgr.cloud',
+      port: 5173
+    }
   },
 });
