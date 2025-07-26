@@ -96,7 +96,7 @@ export async function sendMessageToConversation(
 ) {
   try {
     if (senderType === 'Setter') {
-      // For messages sent by you (Setter) - send to webhook
+      // For messages sent by you (Setter) - use Edge Function
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select('lead_id, leads(instagram_id)')
@@ -110,32 +110,22 @@ export async function sendMessageToConversation(
 
       const typedConversation = conversation as unknown as ConversationWithLead;
 
-      // Send HTTP request to webhook
-      const webhookUrl =
-        'https://n8n.srv802330.hstgr.cloud/webhook/8217af76-a02c-4766-8396-a47cd0cd6f1a';
-      const response = await globalThis.fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call Edge Function instead of webhook
+      const { data, error } = await supabase.functions.invoke('send-message', {
+        body: {
           instagram_id: typedConversation.leads?.instagram_id,
           message: text,
-        }),
+          conversation_id: conversationId,
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`Webhook request failed: ${response.status} ${response.statusText}`);
+      if (error) {
+        console.error('Error calling Edge Function:', error);
+        throw new Error(`Error al enviar mensaje: ${error.message}`);
       }
 
-      // Update conversation timestamp
-      await supabase
-        .from('conversations')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', conversationId);
-
-      return {
-        id: `webhook-${Date.now()}`,
+      return data.message || {
+        id: `edge-${Date.now()}`,
         conversation_id: conversationId,
         text,
         sender_type: senderType,

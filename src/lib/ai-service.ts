@@ -110,7 +110,7 @@ export async function generateAIResponse(params: {
       phase: request.currentPhase
     });
 
-    const { data, error } = await supabase.functions.invoke('ai-response', {
+    const { data, error } = await supabase.functions.invoke('ai-response-simple', {
       body: request,
     });
 
@@ -163,7 +163,7 @@ export async function analyzeConversation(params: {
       forceReanalyze: request.forceReanalyze
     });
 
-    const { data, error } = await supabase.functions.invoke('ai-analyze', {
+    const { data, error } = await supabase.functions.invoke('ai-analyze-simple', {
       body: request,
     });
 
@@ -216,7 +216,7 @@ export const generateQuickActions = {
 
       console.log('[AI Service] Generating conversation summary via Edge Function');
 
-      const { data, error } = await supabase.functions.invoke('ai-quick-actions', {
+      const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 
@@ -252,7 +252,7 @@ export const generateQuickActions = {
 
       console.log('[AI Service] Analyzing sales phase via Edge Function');
 
-      const { data, error } = await supabase.functions.invoke('ai-quick-actions', {
+      const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 
@@ -295,7 +295,7 @@ export const generateQuickActions = {
 
       console.log('[AI Service] Generating message suggestions via Edge Function');
 
-      const { data, error } = await supabase.functions.invoke('ai-quick-actions', {
+      const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 

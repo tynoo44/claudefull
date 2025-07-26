@@ -147,9 +147,18 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     setIsTyping(true);
 
     try {
-      // Build conversation context
+      // Build conversation context and messages from actual conversation
       let fullContext = conversationContext || '';
+      let allMessages: GeminiAIMessage[] = [];
+      
       if (currentConversation?.messages && Array.isArray(currentConversation.messages)) {
+        // Convert conversation messages to AI format
+        allMessages = (currentConversation.messages as Record<string, unknown>[])
+          .map(msg => ({
+            role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
+            content: String(msg.text || msg.content || ''),
+          }));
+          
         const conversationMessages = (currentConversation.messages as Record<string, unknown>[])
           .map(
             msg =>
@@ -158,11 +167,14 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
           .join('\n');
         fullContext = `Conversación actual con ${leadName || 'el lead'}:\n${conversationMessages}`;
       }
+      
+      // Add the user's question to the conversation
+      allMessages.push(convertToServiceMessage(userMessage));
 
-      const currentPhase = promptManager.detectCurrentPhase(messages.concat(userMessage));
+      const currentPhase = promptManager.detectCurrentPhase(allMessages);
 
       const response = await generateAIResponse({
-        messages: messages.concat(userMessage).map(convertToServiceMessage),
+        messages: allMessages,
         model: selectedModel,
         conversationContext: fullContext,
         currentPhase,
@@ -227,39 +239,94 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     }
   };
 
-  const parseSuggestionsFromResponse = (_response: string, phase: number): MessageSuggestion[] => {
-    // Esta función debería parsear el response de la IA y extraer las sugerencias
-    // Por ahora, devolvemos sugerencias de ejemplo
-    return [
-      {
-        id: '1',
+  const parseSuggestionsFromResponse = (response: string, phase: number): MessageSuggestion[] => {
+    try {
+      // Split the response by double newlines to get individual suggestions
+      const suggestionTexts = response
+        .split('\n\n')
+        .filter(text => text.trim())
+        .slice(0, 3);
+
+      if (suggestionTexts.length === 0) {
+        // If no suggestions parsed, split by single newlines
+        const altSuggestions = response
+          .split('\n')
+          .filter(text => text.trim() && text.length > 20)
+          .slice(0, 3);
+        
+        if (altSuggestions.length > 0) {
+          suggestionTexts.push(...altSuggestions);
+        }
+      }
+
+      // Map suggestions to the expected format
+      const suggestions: MessageSuggestion[] = suggestionTexts.map((text, index) => {
+        // Determine type based on position and content
+        let type: 'direct' | 'exploratory' | 'creative' = 'direct';
+        let strategy = '';
+        let confidence = 0.7;
+        
+        if (index === 0) {
+          type = 'direct';
+          strategy = 'Respuesta directa que va al punto principal';
+          confidence = 0.85;
+        } else if (index === 1) {
+          type = 'exploratory';
+          strategy = 'Pregunta exploratoria para profundizar';
+          confidence = 0.75;
+        } else {
+          type = 'creative';
+          strategy = 'Enfoque creativo y personalizado';
+          confidence = 0.65;
+        }
+
+        // Analyze content for better classification
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes('?') || lowerText.includes('cómo') || lowerText.includes('qué')) {
+          type = 'exploratory';
+          strategy = 'Pregunta estratégica para obtener más información';
+        } else if (lowerText.includes('imagino') || lowerText.includes('entiendo')) {
+          type = 'creative';
+          strategy = 'Conexión empática con el lead';
+        }
+
+        return {
+          id: `suggestion-${Date.now()}-${index}`,
+          type,
+          message: text.trim(),
+          strategy,
+          confidence,
+          phase,
+          reasoning: `Sugerencia optimizada para fase ${phase} del proceso de ventas`,
+        };
+      });
+
+      // If no suggestions were parsed, return a default set
+      if (suggestions.length === 0) {
+        return [{
+          id: 'default-1',
+          type: 'direct',
+          message: 'Cuéntame más sobre tu situación actual...',
+          strategy: 'Pregunta abierta para obtener más contexto',
+          confidence: 0.6,
+          phase,
+          reasoning: 'Respuesta genérica cuando no hay suficiente contexto',
+        }];
+      }
+
+      return suggestions;
+    } catch (error) {
+      console.error('Error parsing suggestions:', error);
+      return [{
+        id: 'error-1',
         type: 'direct',
-        message: `Entiendo perfectamente esa situación. Cuéntame, qué es lo que más te frustra de esto ahora mismo?`,
-        strategy: 'Profundizar en el dolor específico para crear conexión emocional',
-        confidence: 0.85,
+        message: 'Háblame más sobre lo que necesitas...',
+        strategy: 'Pregunta de recuperación',
+        confidence: 0.5,
         phase,
-        reasoning:
-          'El lead ha expresado frustración. Es momento de profundizar en el dolor específico.',
-      },
-      {
-        id: '2',
-        type: 'exploratory',
-        message: `Vale, y has probado alguna solución antes para esto o es la primera vez que lo abordas?`,
-        strategy: 'Explorar intentos previos para entender el nivel de urgencia',
-        confidence: 0.78,
-        phase,
-        reasoning: 'Conocer intentos previos nos ayuda a posicionar mejor nuestra solución.',
-      },
-      {
-        id: '3',
-        type: 'creative',
-        message: `Joder, imagino que eso debe ser bastante agobiante. Mira, déjame preguntarte una cosa...`,
-        strategy: 'Generar empatía con lenguaje casual antes de la siguiente pregunta',
-        confidence: 0.72,
-        phase,
-        reasoning: 'El lead usa lenguaje informal. Espejear su estilo genera más rapport.',
-      },
-    ];
+        reasoning: 'Fallback cuando hay error en el parseo',
+      }];
+    }
   };
 
   const handleCopyMessage = async (message: string) => {
