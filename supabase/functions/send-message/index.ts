@@ -2,6 +2,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../shared/utils.ts';
+import { sendToN8N, N8N_EVENTS, createN8NPayload } from '../shared/n8n-webhook.ts';
 
 interface SendMessageRequest {
   instagram_id: string;
@@ -68,19 +69,23 @@ serve(async (req) => {
       );
     }
 
-    // Get N8N endpoint from secret
-    const n8nWebhookUrl = Deno.env.get('N8N_ENDPOINT');
+    // Get N8N endpoint from secret (for legacy support)
+    const n8nEndpoint = Deno.env.get('N8N_ENDPOINT');
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || n8nEndpoint;
+    
     if (!n8nWebhookUrl) {
       return new Response(
-        JSON.stringify({ error: 'N8N_ENDPOINT not configured' }),
+        JSON.stringify({ error: 'N8N webhook URL not configured' }),
         { 
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
-    
-    const n8nResponse = await fetch(n8nWebhookUrl, {
+
+    // Use the legacy endpoint for message sending
+    const messageEndpoint = n8nEndpoint || n8nWebhookUrl;
+    const n8nResponse = await fetch(messageEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -118,6 +123,26 @@ serve(async (req) => {
       // If n8n doesn't return JSON, just return success
       n8nData = { success: true };
     }
+
+    // Send event to n8n webhook for tracking
+    await sendToN8N(
+      createN8NPayload(
+        N8N_EVENTS.MESSAGE_SENT,
+        {
+          instagram_id,
+          message,
+          conversation_id,
+          senderType: 'Setter',
+          platform: 'instagram',
+          n8nResponse: n8nData,
+        },
+        'send-message',
+        {
+          userId: user.id,
+          conversationId: conversation_id,
+        }
+      )
+    );
 
     // Return the n8n response to the client
     return new Response(

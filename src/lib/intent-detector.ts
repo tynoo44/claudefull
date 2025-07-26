@@ -1,5 +1,8 @@
 // Sistema avanzado de detección de intenciones para conversaciones de ventas
 // Analiza el mensaje del lead para entender su verdadera intención
+// Integrado con n8n para automatización de workflows
+
+import { n8nIntegration } from './n8n-integration';
 
 export interface DetectedIntent {
   primaryIntent: string;
@@ -183,7 +186,7 @@ const EMOTIONAL_TONES = {
 };
 
 // Función principal de detección
-export function detectIntent(message: string): DetectedIntent {
+export function detectIntent(message: string, metadata?: { conversationId?: string; leadId?: string }): DetectedIntent {
   const lowerMessage = message.toLowerCase();
   const detectedIntents: { intent: string; matches: number }[] = [];
 
@@ -245,7 +248,7 @@ export function detectIntent(message: string): DetectedIntent {
       lowerMessage.includes('mejor que'),
   };
 
-  return {
+  const result: DetectedIntent = {
     primaryIntent,
     confidence,
     secondaryIntents,
@@ -255,6 +258,18 @@ export function detectIntent(message: string): DetectedIntent {
     urgencyLevel,
     context,
   };
+
+  // Send to n8n webhook if enabled
+  if (n8nIntegration.isEnabled() && metadata) {
+    n8nIntegration.onIntentDetected({
+      conversationId: metadata.conversationId,
+      leadId: metadata.leadId,
+      message,
+      intent: result
+    }).catch(err => console.error('[Intent Detector] N8N webhook error:', err));
+  }
+
+  return result;
 }
 
 // Calcular señales de compra

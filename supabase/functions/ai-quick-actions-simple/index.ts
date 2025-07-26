@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { sendToN8N, N8N_EVENTS, createN8NPayload } from '../shared/n8n-webhook.ts';
 
 // CORS headers
 const corsHeaders = {
@@ -241,6 +242,26 @@ ${conversationText}
       response.result = suggestions.join('\n\n');
     } else {
       response.result = responseText.trim();
+    }
+
+    // Send to n8n webhook for suggestions
+    if (request.action === 'suggest_messages' && response.suggestions) {
+      await sendToN8N(
+        createN8NPayload(
+          N8N_EVENTS.AI_SUGGESTIONS_GENERATED,
+          {
+            action: request.action,
+            suggestions: response.suggestions,
+            phase: request.currentPhase,
+            leadType: request.leadType,
+            messageCount: request.messages.length,
+          },
+          'ai-quick-actions-simple',
+          {
+            userId: user.id,
+          }
+        )
+      );
     }
 
     return new Response(

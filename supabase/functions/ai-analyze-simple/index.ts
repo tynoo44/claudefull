@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { sendToN8N, N8N_EVENTS, createN8NPayload } from '../shared/n8n-webhook.ts';
 
 // CORS headers
 const corsHeaders = {
@@ -335,6 +336,31 @@ ${conversationText}
     if (saveError) {
       console.error('Error saving analysis:', saveError);
     }
+
+    // Send to n8n webhook
+    await sendToN8N(
+      createN8NPayload(
+        N8N_EVENTS.CONVERSATION_ANALYZED,
+        {
+          conversationId: request.conversationId,
+          leadId: request.leadId,
+          analysis,
+          messageCount: request.messages.length,
+          isNewAnalysis: true,
+          scores: {
+            qualification: analysis.qualificationScore,
+            urgency: Math.round(analysis.qualificationScore * 10),
+            engagement: Math.round(engagementRate * 10),
+          },
+        },
+        'ai-analyze-simple',
+        {
+          userId: user.id,
+          conversationId: request.conversationId,
+          leadId: request.leadId,
+        }
+      )
+    )
 
     return new Response(
       JSON.stringify({

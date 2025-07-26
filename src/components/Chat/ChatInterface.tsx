@@ -2,6 +2,7 @@ import React, { useState, useCallback, memo } from 'react';
 import { Chat, Template } from '@/types';
 import { Message } from '../../lib/supabase';
 import { sendMessageToConversation } from '../../lib/supabase-functions';
+import { n8nIntegration } from '../../lib/n8n-integration';
 import { ChatHeader } from './ChatHeader';
 import { MessageList } from './MessageList';
 import { MessageInputOptimized } from './MessageInputOptimized';
@@ -55,6 +56,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(
       setSending(true);
       try {
         await sendMessageToConversation(selectedChat.id, message);
+        
+        // Send to n8n webhook for tracking
+        if (n8nIntegration.isEnabled()) {
+          n8nIntegration.onMessageSent({
+            conversationId: selectedChat.id,
+            leadId: selectedChat.lead_id,
+            message,
+            senderType: 'Setter',
+            platform: 'web-app'
+          }).catch(err => console.error('[ChatInterface] N8N webhook error:', err));
+        }
+        
         onMessageChange('');
         if (showAISuggestion) {
           onToggleAISuggestion();

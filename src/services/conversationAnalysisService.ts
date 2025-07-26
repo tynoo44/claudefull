@@ -179,10 +179,15 @@ class ConversationAnalysisService {
       // Analyze intent of last lead message
       const leadMessages = messages.filter(m => m.sender_type === 'lead');
       const lastLeadMessage = leadMessages[leadMessages.length - 1];
-      const intent = lastLeadMessage ? detectIntent(lastLeadMessage.text) : null;
+      const intent = lastLeadMessage ? detectIntent(lastLeadMessage.text, {
+        conversationId,
+        leadId: conversation.lead_id
+      }) : null;
 
       // Analyze lead profile
-      const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text));
+      const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text), {
+        leadId: conversation.lead_id
+      });
 
       // Full conversation analysis
       console.log(`Calling analyzeConversation for ${conversationId}`);

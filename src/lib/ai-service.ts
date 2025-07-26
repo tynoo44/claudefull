@@ -1,7 +1,9 @@
 // AI Service Client - Secure API communication with Edge Functions
 // Replaces direct Gemini API calls with secure backend requests
+// Integrated with n8n webhooks for workflow automation
 
 import { supabase } from './supabase';
+import { n8nIntegration } from './n8n-integration';
 
 // Types for API requests and responses
 export interface AIMessage {
@@ -132,6 +134,18 @@ export async function generateAIResponse(params: {
       intent: response.metadata?.intent
     });
 
+    // Send to n8n webhook
+    if (n8nIntegration.isEnabled()) {
+      n8nIntegration.onAIResponseGenerated({
+        conversationId: params.conversationId,
+        leadId: params.leadId,
+        messages: params.messages,
+        response: response.response || '',
+        model: params.model,
+        metadata: response.metadata
+      }).catch(err => console.error('[AI Service] N8N webhook error:', err));
+    }
+
     return response.response || 'Lo siento, no pude generar una respuesta en este momento.';
 
   } catch (error) {
@@ -187,6 +201,16 @@ export async function analyzeConversation(params: {
       phase: response.analysis?.currentPhase,
       score: response.analysis?.qualificationScore
     });
+
+    // Send to n8n webhook
+    if (n8nIntegration.isEnabled() && response.success) {
+      n8nIntegration.onConversationAnalyzed({
+        conversationId: params.conversationId,
+        leadId: params.leadId,
+        analysis: response.analysis,
+        isNewAnalysis: response.isNewAnalysis || false
+      }).catch(err => console.error('[AI Service] N8N webhook error:', err));
+    }
 
     return response;
 
@@ -308,6 +332,17 @@ export const generateQuickActions = {
 
       if (!response.success) {
         throw new Error(response.error || 'Message suggestion failed');
+      }
+
+      // Send suggestions to n8n webhook
+      if (n8nIntegration.isEnabled() && response.suggestions) {
+        n8nIntegration.onSuggestionsGenerated({
+          conversationId: undefined, // Not available in this context
+          leadId: undefined,
+          suggestions: response.suggestions,
+          phase: currentPhase || 1,
+          leadType
+        }).catch(err => console.error('[AI Service] N8N webhook error:', err));
       }
 
       return response.result || 'No se pudieron generar sugerencias de mensajes.';

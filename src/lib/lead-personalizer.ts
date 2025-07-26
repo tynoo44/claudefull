@@ -49,13 +49,29 @@ export function analyzeLeadProfile(messages: string[]): LeadProfile {
   // Detectar estilo de toma de decisiones
   const decisionMakingStyle = detectDecisionStyle(messages);
 
-  return {
+  const profile: LeadProfile = {
     type,
     ageGroup,
     communicationStyle,
     techSavviness,
     decisionMakingStyle,
   };
+
+  // Send to n8n webhook if enabled
+  if (n8nIntegration.isEnabled() && metadata?.leadId) {
+    n8nIntegration.onLeadProfileAnalyzed({
+      leadId: metadata.leadId,
+      profile,
+      insights: {
+        messageCount: messages.length,
+        averageMessageLength: messages.reduce((sum, msg) => sum + msg.length, 0) / messages.length,
+        vocabulary: communicationStyle,
+        engagement: 'medium' // Could be calculated based on response rate
+      }
+    }).catch(err => console.error('[Lead Personalizer] N8N webhook error:', err));
+  }
+
+  return profile;
 }
 
 // Detectar grupo de edad
