@@ -6,6 +6,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   logout: () => Promise<void>;
 }
 
@@ -14,17 +15,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setIsLoading(false);
     });
 
-    // Get initial session
+    // Get initial session from localStorage
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setIsLoading(false);
     });
 
     return () => {
@@ -41,9 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       user,
       isAuthenticated: !!session,
+      isLoading,
       logout,
     }),
-    [session, user],
+    [session, user, isLoading],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
