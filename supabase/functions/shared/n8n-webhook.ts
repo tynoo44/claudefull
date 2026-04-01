@@ -16,11 +16,11 @@ interface N8NWebhookPayload {
 
 export async function sendToN8N(
   payload: N8NWebhookPayload,
-  n8nUrl?: string
+  n8nUrl?: string,
 ): Promise<{ success: boolean; error?: string }> {
   // Get N8N webhook URL from environment or parameter
   const webhookUrl = n8nUrl || Deno.env.get('N8N_WEBHOOK_URL');
-  
+
   if (!webhookUrl) {
     console.log('N8N webhook URL not configured, skipping webhook');
     return { success: true };
@@ -60,20 +60,20 @@ export const N8N_EVENTS = {
   AI_RESPONSE_GENERATED: 'ai_response_generated',
   AI_ANALYSIS_COMPLETED: 'ai_analysis_completed',
   AI_SUGGESTIONS_GENERATED: 'ai_suggestions_generated',
-  
+
   // Message Events
   MESSAGE_SENT: 'message_sent',
   MESSAGE_RECEIVED: 'message_received',
-  
+
   // Lead Events
   LEAD_PROFILE_ANALYZED: 'lead_profile_analyzed',
   LEAD_SCORE_UPDATED: 'lead_score_updated',
   LEAD_PHASE_CHANGED: 'lead_phase_changed',
-  
+
   // Conversation Events
   CONVERSATION_STARTED: 'conversation_started',
   CONVERSATION_ANALYZED: 'conversation_analyzed',
-  
+
   // System Events
   ERROR_OCCURRED: 'error_occurred',
   WEBHOOK_RECEIVED: 'webhook_received',
@@ -84,7 +84,7 @@ export function createN8NPayload(
   event: string,
   data: any,
   edgeFunction: string,
-  additionalMetadata?: Partial<N8NWebhookPayload['metadata']>
+  additionalMetadata?: Partial<N8NWebhookPayload['metadata']>,
 ): N8NWebhookPayload {
   return {
     event,

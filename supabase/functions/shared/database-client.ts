@@ -7,11 +7,11 @@ export function initSupabaseClient() {
   if (!supabaseClient) {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase environment variables are not set');
     }
-    
+
     supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
   }
   return supabaseClient;
@@ -63,7 +63,7 @@ export class EdgePromptManager {
     promptType: string,
     phase?: number,
     leadType?: string,
-    conversationContext?: any
+    conversationContext?: any,
   ) {
     try {
       // Get base prompt
@@ -85,7 +85,7 @@ export class EdgePromptManager {
           .eq('phase', phase)
           .eq('active', true)
           .order('priority', { ascending: false });
-        
+
         scriptTemplates = data || [];
       }
 
@@ -98,7 +98,7 @@ export class EdgePromptManager {
           .eq('phase', phase)
           .eq('active', true)
           .limit(3);
-        
+
         fewShotExamples = data || [];
       }
 
@@ -118,21 +118,19 @@ export class EdgePromptManager {
   }
 
   formatScriptTemplates(templates: ScriptTemplate[]): string {
-    return templates
-      .map((template) => `- ${template.content}`)
-      .join('\n');
+    return templates.map(template => `- ${template.content}`).join('\n');
   }
 
   formatFewShotExamples(examples: FewShotExample[]): string {
     return examples
-      .map((example) => `Lead: ${example.example_input}\nSetter: ${example.example_output}`)
+      .map(example => `Lead: ${example.example_input}\nSetter: ${example.example_output}`)
       .join('\n\n');
   }
 
   detectCurrentPhase(messages: any[]): number {
     // Simple phase detection logic
     if (messages.length === 0) return 1;
-    
+
     const userMessages = messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
     const allText = userMessages.join(' ');
 
@@ -140,16 +138,24 @@ export class EdgePromptManager {
     if (allText.includes('reunion') || allText.includes('llamada') || allText.includes('hablar')) {
       return 5; // Offer phase
     }
-    if (allText.includes('problema') || allText.includes('frustra') || allText.includes('dificulta')) {
+    if (
+      allText.includes('problema') ||
+      allText.includes('frustra') ||
+      allText.includes('dificulta')
+    ) {
       return 2; // Pain phase
     }
     if (allText.includes('quiero') || allText.includes('objetivo') || allText.includes('lograr')) {
       return 3; // Desired situation
     }
-    if (allText.includes('pero') || allText.includes('sin embargo') || allText.includes('no puedo')) {
+    if (
+      allText.includes('pero') ||
+      allText.includes('sin embargo') ||
+      allText.includes('no puedo')
+    ) {
       return 4; // Obstacle phase
     }
-    
+
     return Math.min(Math.floor(messages.length / 4) + 1, 5);
   }
 }
@@ -166,7 +172,7 @@ export async function updateConversationState(params: {
 }) {
   try {
     const supabase = initSupabaseClient();
-    
+
     const { data, error } = await supabase.rpc('update_conversation_state', {
       p_conversation_id: params.conversationId,
       p_lead_id: params.leadId,

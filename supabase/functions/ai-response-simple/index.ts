@@ -38,7 +38,7 @@ interface GenerateResponseResponse {
   };
 }
 
-serve(async (req) => {
+serve(async req => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -48,13 +48,10 @@ serve(async (req) => {
     // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Initialize Supabase client
@@ -73,40 +70,34 @@ serve(async (req) => {
     });
 
     // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Parse request body
     const request: GenerateResponseRequest = await req.json();
 
     if (!request.messages || !request.model) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check API key
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Build conversation context
@@ -121,7 +112,7 @@ serve(async (req) => {
       2: 'Calificación - Identifica necesidades',
       3: 'Presentación - Muestra valor',
       4: 'Manejo de objeciones - Resuelve dudas',
-      5: 'Cierre - Solicita acción'
+      5: 'Cierre - Solicita acción',
     };
 
     // Get prompts and templates from database
@@ -148,7 +139,7 @@ serve(async (req) => {
 
     // Build enhanced prompt with database content
     let systemPrompt = activePrompt?.content || `Eres un setter profesional de Quantum Creators.`;
-    
+
     if (scriptTemplate) {
       systemPrompt += `\n\n📋 TEMPLATE PARA FASE ${phase}:\n${scriptTemplate.content}`;
     }
@@ -170,7 +161,7 @@ serve(async (req) => {
         .select('conversation_state, lead_profile')
         .eq('id', request.conversationId)
         .single();
-      
+
       if (conversationData?.lead_profile) {
         leadAnalysis = `\n\n👤 PERFIL DEL LEAD:\n${JSON.stringify(conversationData.lead_profile, null, 2)}`;
       }
@@ -198,35 +189,42 @@ ${conversationText}
 ✍️ Tu respuesta natural y humana:`;
 
     // Call Gemini API
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 150,
+          },
+        }),
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.8,
-          maxOutputTokens: 150,
-        }
-      }),
-    });
+    );
 
     if (!geminiResponse.ok) {
       console.error('Gemini API error:', await geminiResponse.text());
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          error: 'AI service unavailable' 
+          error: 'AI service unavailable',
         }),
-        { 
+        {
           status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
 
@@ -238,10 +236,10 @@ ${conversationText}
     let detectedIntent = 'neutral';
     let emotionalTone = 'neutral';
     let buyingSignals = 0;
-    
+
     if (lastUserMessage) {
       const content = lastUserMessage.content.toLowerCase();
-      
+
       // Intent detection
       if (content.match(/\b(precio|cuesta|costo|pagar|vale|cobr|tarifa|inversi)\b/)) {
         detectedIntent = 'price_inquiry';
@@ -259,7 +257,7 @@ ${conversationText}
         detectedIntent = 'question';
         buyingSignals += 2;
       }
-      
+
       // Emotional tone detection
       if (content.match(/\b(genial|incre[ií]ble|wow|excelente|perfecto)\b/)) {
         emotionalTone = 'excited';
@@ -270,7 +268,7 @@ ${conversationText}
       } else if (content.match(/\b(no s[eé]|quiz[aá]|tal vez|puede ser)\b/)) {
         emotionalTone = 'uncertain';
       }
-      
+
       // Cap buying signals
       buyingSignals = Math.max(0, Math.min(10, buyingSignals));
     }
@@ -285,9 +283,9 @@ ${conversationText}
         personalization: {
           tone: emotionalTone,
           style: buyingSignals > 5 ? 'enthusiastic' : 'friendly',
-          buyingSignals: buyingSignals
-        }
-      }
+          buyingSignals: buyingSignals,
+        },
+      },
     };
 
     // Update conversation state if tracking is enabled
@@ -302,8 +300,8 @@ ${conversationText}
               last_emotion: emotionalTone,
               buying_signals: buyingSignals,
               last_ai_response: responseText,
-              updated_at: new Date().toISOString()
-            }
+              updated_at: new Date().toISOString(),
+            },
           })
           .eq('id', request.conversationId);
       } catch (updateError) {
@@ -329,30 +327,26 @@ ${conversationText}
           userId: user.id,
           conversationId: request.conversationId,
           leadId: request.leadId,
-        }
-      )
-    )
-
-    return new Response(
-      JSON.stringify(response),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        },
+      ),
     );
 
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error in ai-response-simple function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });

@@ -10,7 +10,7 @@ interface SendMessageRequest {
   conversation_id?: string;
 }
 
-serve(async (req) => {
+serve(async req => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -20,13 +20,10 @@ serve(async (req) => {
     // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Initialize Supabase client to verify authentication
@@ -45,42 +42,39 @@ serve(async (req) => {
     });
 
     // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Parse request body
-    const { instagram_id, message, conversation_id } = await req.json() as SendMessageRequest;
+    const { instagram_id, message, conversation_id } = (await req.json()) as SendMessageRequest;
 
     if (!instagram_id || !message) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: instagram_id, message' }),
-        { 
+        {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
 
     // Get N8N endpoint from secret (for legacy support)
     const n8nEndpoint = Deno.env.get('N8N_ENDPOINT');
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL') || n8nEndpoint;
-    
+
     if (!n8nWebhookUrl) {
-      return new Response(
-        JSON.stringify({ error: 'N8N webhook URL not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'N8N webhook URL not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Use the legacy endpoint for message sending
@@ -103,15 +97,15 @@ serve(async (req) => {
       const errorText = await n8nResponse.text();
       console.error('n8n webhook error:', errorText);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Failed to send message via n8n',
           status: n8nResponse.status,
-          details: errorText
+          details: errorText,
         }),
-        { 
+        {
           status: n8nResponse.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
 
@@ -140,8 +134,8 @@ serve(async (req) => {
         {
           userId: user.id,
           conversationId: conversation_id,
-        }
-      )
+        },
+      ),
     );
 
     // Return the n8n response to the client
@@ -154,23 +148,22 @@ serve(async (req) => {
         n8n_response: n8nData,
         timestamp: new Date().toISOString(),
       }),
-      { 
+      {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
-
   } catch (error) {
     console.error('Error in send-message function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });

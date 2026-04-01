@@ -94,19 +94,20 @@ export const AgendaViewList: React.FC<AgendaViewListProps> = ({
       const dateB = new Date(b.start_datetime);
 
       switch (sortBy) {
-        case 'calendar':
+        case 'calendar': {
           const calendarCompare = a.google_calendar_id.localeCompare(b.google_calendar_id);
           return calendarCompare !== 0 ? calendarCompare : dateA.getTime() - dateB.getTime();
-        case 'priority':
-          // Priority based on status and attendee count
+        }
+        case 'priority': {
           const getPriority = (event: CalendarEvent) => {
             if (event.status === 'cancelled') return 3;
             if (event.status === 'tentative') return 2;
-            return event.attendees?.length || 0 > 0 ? 0 : 1;
+            return (event.attendees?.length || 0) > 0 ? 0 : 1;
           };
           const priorityCompare = getPriority(a) - getPriority(b);
           return priorityCompare !== 0 ? priorityCompare : dateA.getTime() - dateB.getTime();
-        default: // date
+        }
+        default:
           return dateA.getTime() - dateB.getTime();
       }
     });

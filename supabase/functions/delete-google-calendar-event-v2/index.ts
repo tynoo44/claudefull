@@ -2,7 +2,13 @@
 // Deletes an event from Google Calendar using provider token
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createSuccessResponse, createErrorResponse, validateRequiredFields, logSecurely, handleCors } from '../shared/utils.ts';
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  validateRequiredFields,
+  logSecurely,
+  handleCors,
+} from '../shared/utils.ts';
 import { createValidatedGoogleClient } from '../shared/google-calendar-client.ts';
 
 interface DeleteCalendarEventRequest {
@@ -11,7 +17,7 @@ interface DeleteCalendarEventRequest {
   eventId: string;
 }
 
-serve(async (req) => {
+serve(async req => {
   try {
     // Handle CORS preflight
     const corsResponse = await handleCors(req);
@@ -24,7 +30,7 @@ serve(async (req) => {
 
     // Parse and validate request
     const requestData: DeleteCalendarEventRequest = await req.json();
-    
+
     const validationError = validateRequiredFields(requestData, ['providerToken', 'eventId']);
     if (validationError) {
       return createErrorResponse(validationError);
@@ -42,7 +48,7 @@ serve(async (req) => {
     logSecurely('Google Calendar event deletion requested', {
       action: 'delete_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-      eventId: requestData.eventId.substring(0, 8) + '...'
+      eventId: requestData.eventId.substring(0, 8) + '...',
     });
 
     // Create validated Google Calendar client
@@ -54,30 +60,35 @@ serve(async (req) => {
     logSecurely('Google Calendar event deleted successfully', {
       action: 'delete_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-      eventId: requestData.eventId.substring(0, 8) + '...'
+      eventId: requestData.eventId.substring(0, 8) + '...',
     });
 
-    return createSuccessResponse({ 
+    return createSuccessResponse({
       success: true,
       message: 'Event deleted successfully',
-      eventId: requestData.eventId
+      eventId: requestData.eventId,
     });
-
   } catch (error) {
     console.error('Error in delete-google-calendar-event-v2:', error);
-    
+
     logSecurely('Calendar event deletion failed', {
       error: error.message,
-      action: 'delete_calendar_event'
+      action: 'delete_calendar_event',
     });
 
     // Handle specific Google API errors
     if (error.message.includes('Invalid or expired')) {
-      return createErrorResponse('Google Calendar access token is invalid or expired. Please re-authenticate.', 401);
+      return createErrorResponse(
+        'Google Calendar access token is invalid or expired. Please re-authenticate.',
+        401,
+      );
     }
 
     if (error.message.includes('insufficient')) {
-      return createErrorResponse('Insufficient permissions to delete calendar events. Please grant calendar permissions.', 403);
+      return createErrorResponse(
+        'Insufficient permissions to delete calendar events. Please grant calendar permissions.',
+        403,
+      );
     }
 
     if (error.message.includes('notFound')) {
@@ -86,10 +97,10 @@ serve(async (req) => {
 
     if (error.message.includes('Gone')) {
       // Event already deleted
-      return createSuccessResponse({ 
+      return createSuccessResponse({
         success: true,
         message: 'Event was already deleted',
-        eventId: requestData.eventId
+        eventId: requestData.eventId,
       });
     }
 

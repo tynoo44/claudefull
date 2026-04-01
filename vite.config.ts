@@ -20,8 +20,8 @@ export default defineConfig({
     hmr: {
       clientPort: 443,
       protocol: 'wss',
-      host: 'app.srv802330.hstgr.cloud',
-      port: 5173
-    }
+      host: 'code-vsc-server.ioefpm.easypanel.host',
+      port: 5173,
+    },
   },
-})
+});

@@ -109,7 +109,7 @@ export async function generateAIResponse(params: {
       model: request.model,
       messageCount: request.messages.length,
       conversationId: request.conversationId,
-      phase: request.currentPhase
+      phase: request.currentPhase,
     });
 
     const { data, error } = await supabase.functions.invoke('ai-response-simple', {
@@ -131,23 +131,24 @@ export async function generateAIResponse(params: {
     console.log('[AI Service] AI response generated successfully:', {
       phase: response.metadata?.phase,
       score: response.metadata?.score,
-      intent: response.metadata?.intent
+      intent: response.metadata?.intent,
     });
 
     // Send to n8n webhook
     if (n8nIntegration.isEnabled()) {
-      n8nIntegration.onAIResponseGenerated({
-        conversationId: params.conversationId,
-        leadId: params.leadId,
-        messages: params.messages,
-        response: response.response || '',
-        model: params.model,
-        metadata: response.metadata
-      }).catch(err => console.error('[AI Service] N8N webhook error:', err));
+      n8nIntegration
+        .onAIResponseGenerated({
+          conversationId: params.conversationId,
+          leadId: params.leadId,
+          messages: params.messages,
+          response: response.response || '',
+          model: params.model,
+          metadata: response.metadata,
+        })
+        .catch(err => console.error('[AI Service] N8N webhook error:', err));
     }
 
     return response.response || 'Lo siento, no pude generar una respuesta en este momento.';
-
   } catch (error) {
     console.error('[AI Service] Error generating AI response:', error);
     throw error;
@@ -174,7 +175,7 @@ export async function analyzeConversation(params: {
     console.log('[AI Service] Analyzing conversation via Edge Function:', {
       conversationId: request.conversationId,
       messageCount: request.messages.length,
-      forceReanalyze: request.forceReanalyze
+      forceReanalyze: request.forceReanalyze,
     });
 
     const { data, error } = await supabase.functions.invoke('ai-analyze-simple', {
@@ -199,21 +200,22 @@ export async function analyzeConversation(params: {
     console.log('[AI Service] Conversation analysis completed:', {
       isNewAnalysis: response.isNewAnalysis,
       phase: response.analysis?.currentPhase,
-      score: response.analysis?.qualificationScore
+      score: response.analysis?.qualificationScore,
     });
 
     // Send to n8n webhook
     if (n8nIntegration.isEnabled() && response.success) {
-      n8nIntegration.onConversationAnalyzed({
-        conversationId: params.conversationId,
-        leadId: params.leadId,
-        analysis: response.analysis,
-        isNewAnalysis: response.isNewAnalysis || false
-      }).catch(err => console.error('[AI Service] N8N webhook error:', err));
+      n8nIntegration
+        .onConversationAnalyzed({
+          conversationId: params.conversationId,
+          leadId: params.leadId,
+          analysis: response.analysis,
+          isNewAnalysis: response.isNewAnalysis || false,
+        })
+        .catch(err => console.error('[AI Service] N8N webhook error:', err));
     }
 
     return response;
-
   } catch (error) {
     console.error('[AI Service] Error analyzing conversation:', error);
     return {
@@ -256,7 +258,6 @@ export const generateQuickActions = {
       }
 
       return response.result || 'No se pudo generar un resumen de la conversación.';
-
     } catch (error) {
       console.error('[AI Service] Error summarizing conversation:', error);
       throw error;
@@ -292,7 +293,6 @@ export const generateQuickActions = {
       }
 
       return response.result || 'No se pudo analizar la fase de ventas.';
-
     } catch (error) {
       console.error('[AI Service] Error analyzing sales phase:', error);
       throw error;
@@ -306,7 +306,7 @@ export const generateQuickActions = {
     messages: AIMessage[],
     model: GeminiModel,
     currentPhase?: number,
-    leadType?: string
+    leadType?: string,
   ): Promise<string> => {
     try {
       const request: QuickActionRequest = {
@@ -336,17 +336,18 @@ export const generateQuickActions = {
 
       // Send suggestions to n8n webhook
       if (n8nIntegration.isEnabled() && response.suggestions) {
-        n8nIntegration.onSuggestionsGenerated({
-          conversationId: undefined, // Not available in this context
-          leadId: undefined,
-          suggestions: response.suggestions,
-          phase: currentPhase || 1,
-          leadType
-        }).catch(err => console.error('[AI Service] N8N webhook error:', err));
+        n8nIntegration
+          .onSuggestionsGenerated({
+            conversationId: undefined, // Not available in this context
+            leadId: undefined,
+            suggestions: response.suggestions,
+            phase: currentPhase || 1,
+            leadType,
+          })
+          .catch(err => console.error('[AI Service] N8N webhook error:', err));
       }
 
       return response.result || 'No se pudieron generar sugerencias de mensajes.';
-
     } catch (error) {
       console.error('[AI Service] Error suggesting messages:', error);
       throw error;
@@ -371,13 +372,11 @@ export function convertToAIMessages(messages: any[]): AIMessage[] {
 export async function checkAIServiceHealth(): Promise<boolean> {
   try {
     // Simple health check with a minimal request
-    const healthMessages: AIMessage[] = [
-      { role: 'user', content: 'health check' }
-    ];
+    const healthMessages: AIMessage[] = [{ role: 'user', content: 'health check' }];
 
     const result = await generateQuickActions.summarizeConversation(
       healthMessages,
-      'gemini-2.5-flash'
+      'gemini-2.5-flash',
     );
 
     return typeof result === 'string' && result.length > 0;

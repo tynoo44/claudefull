@@ -2,8 +2,18 @@
 // Updates an existing event in Google Calendar using provider token
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createSuccessResponse, createErrorResponse, validateRequiredFields, sanitizeInput, logSecurely, handleCors } from '../shared/utils.ts';
-import { createValidatedGoogleClient, GoogleCalendarEvent } from '../shared/google-calendar-client.ts';
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  validateRequiredFields,
+  sanitizeInput,
+  logSecurely,
+  handleCors,
+} from '../shared/utils.ts';
+import {
+  createValidatedGoogleClient,
+  GoogleCalendarEvent,
+} from '../shared/google-calendar-client.ts';
 
 interface UpdateCalendarEventRequest {
   providerToken: string;
@@ -12,7 +22,7 @@ interface UpdateCalendarEventRequest {
   event: Partial<GoogleCalendarEvent>;
 }
 
-serve(async (req) => {
+serve(async req => {
   try {
     // Handle CORS preflight
     const corsResponse = await handleCors(req);
@@ -25,8 +35,12 @@ serve(async (req) => {
 
     // Parse and validate request
     const requestData: UpdateCalendarEventRequest = await req.json();
-    
-    const validationError = validateRequiredFields(requestData, ['providerToken', 'eventId', 'event']);
+
+    const validationError = validateRequiredFields(requestData, [
+      'providerToken',
+      'eventId',
+      'event',
+    ]);
     if (validationError) {
       return createErrorResponse(validationError);
     }
@@ -47,7 +61,9 @@ serve(async (req) => {
     }
 
     if (requestData.event.description !== undefined) {
-      sanitizedEvent.description = requestData.event.description ? sanitizeInput(requestData.event.description, 2000) : undefined;
+      sanitizedEvent.description = requestData.event.description
+        ? sanitizeInput(requestData.event.description, 2000)
+        : undefined;
     }
 
     if (requestData.event.start !== undefined) {
@@ -59,7 +75,9 @@ serve(async (req) => {
     }
 
     if (requestData.event.location !== undefined) {
-      sanitizedEvent.location = requestData.event.location ? sanitizeInput(requestData.event.location, 500) : undefined;
+      sanitizedEvent.location = requestData.event.location
+        ? sanitizeInput(requestData.event.location, 500)
+        : undefined;
     }
 
     if (requestData.event.attendees !== undefined) {
@@ -91,38 +109,47 @@ serve(async (req) => {
       action: 'update_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
       eventId: requestData.eventId.substring(0, 8) + '...',
-      fieldsToUpdate: Object.keys(sanitizedEvent)
+      fieldsToUpdate: Object.keys(sanitizedEvent),
     });
 
     // Create validated Google Calendar client
     const googleClient = await createValidatedGoogleClient(requestData.providerToken);
 
     // Update the event
-    const updatedEvent = await googleClient.updateEvent(calendarId, requestData.eventId, sanitizedEvent);
+    const updatedEvent = await googleClient.updateEvent(
+      calendarId,
+      requestData.eventId,
+      sanitizedEvent,
+    );
 
     logSecurely('Google Calendar event updated', {
       action: 'update_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-      eventId: updatedEvent.id?.substring(0, 8) + '...'
+      eventId: updatedEvent.id?.substring(0, 8) + '...',
     });
 
     return createSuccessResponse(updatedEvent);
-
   } catch (error) {
     console.error('Error in update-google-calendar-event-v2:', error);
-    
+
     logSecurely('Calendar event update failed', {
       error: error.message,
-      action: 'update_calendar_event'
+      action: 'update_calendar_event',
     });
 
     // Handle specific Google API errors
     if (error.message.includes('Invalid or expired')) {
-      return createErrorResponse('Google Calendar access token is invalid or expired. Please re-authenticate.', 401);
+      return createErrorResponse(
+        'Google Calendar access token is invalid or expired. Please re-authenticate.',
+        401,
+      );
     }
 
     if (error.message.includes('insufficient')) {
-      return createErrorResponse('Insufficient permissions to update calendar events. Please grant calendar permissions.', 403);
+      return createErrorResponse(
+        'Insufficient permissions to update calendar events. Please grant calendar permissions.',
+        403,
+      );
     }
 
     if (error.message.includes('notFound')) {

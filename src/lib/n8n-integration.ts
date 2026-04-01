@@ -26,7 +26,7 @@ class N8NIntegrationService {
   constructor() {
     this.webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
     this.enabled = !!this.webhookUrl;
-    
+
     if (this.enabled) {
       console.log('✅ N8N Integration enabled:', this.webhookUrl);
     } else {
@@ -342,7 +342,7 @@ class N8NIntegrationService {
     // Mask the URL for security
     const url = new URL(this.webhookUrl);
     const maskedUrl = `${url.protocol}//${url.hostname}/***`;
-    
+
     return {
       enabled: true,
       url: maskedUrl,

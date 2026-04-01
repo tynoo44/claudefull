@@ -83,11 +83,13 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
         <h4 className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
           Añadir recordatorio
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Method */}
           <div>
-            <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label
+              className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+            >
               Método
             </label>
             <select
@@ -106,7 +108,9 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
 
           {/* Time */}
           <div>
-            <label className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <label
+              className={`block text-xs font-medium mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+            >
               Tiempo
             </label>
             <select
@@ -143,7 +147,9 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
       {/* Current reminders */}
       {reminders.length > 0 && (
         <div>
-          <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <h4
+            className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Recordatorios configurados ({reminders.length})
           </h4>
           <div className="space-y-2">
@@ -157,11 +163,15 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${
-                      reminder.method === 'email' ? 'text-blue-500' : 'text-green-500'
-                    }`} />
+                    <Icon
+                      className={`w-4 h-4 ${
+                        reminder.method === 'email' ? 'text-blue-500' : 'text-green-500'
+                      }`}
+                    />
                     <div>
-                      <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <p
+                        className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                      >
                         {getMethodText(reminder.method)}
                       </p>
                       <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -173,7 +183,9 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
                     type="button"
                     onClick={() => removeReminder(index)}
                     className={`p-1 rounded-full hover:bg-red-100 hover:text-red-600 ${
-                      darkMode ? 'text-gray-400 hover:bg-red-900/20 hover:text-red-400' : 'text-gray-400'
+                      darkMode
+                        ? 'text-gray-400 hover:bg-red-900/20 hover:text-red-400'
+                        : 'text-gray-400'
                     }`}
                   >
                     <X className="w-4 h-4" />
@@ -195,13 +207,16 @@ export const RemindersTab: React.FC<RemindersTabProps> = ({
       )}
 
       {/* Default reminders note */}
-      <div className={`p-4 rounded-lg border-l-4 border-green-500 ${
-        darkMode ? 'bg-green-900/10 border-green-400' : 'bg-green-50'
-      }`}>
+      <div
+        className={`p-4 rounded-lg border-l-4 border-green-500 ${
+          darkMode ? 'bg-green-900/10 border-green-400' : 'bg-green-50'
+        }`}
+      >
         <div className="flex">
           <div className="ml-3">
             <p className={`text-sm ${darkMode ? 'text-green-300' : 'text-green-800'}`}>
-              Tip: Si no añades recordatorios, se usarán los recordatorios por defecto de tu calendario.
+              Tip: Si no añades recordatorios, se usarán los recordatorios por defecto de tu
+              calendario.
             </p>
           </div>
         </div>

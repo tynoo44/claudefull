@@ -8,10 +8,7 @@ interface UseSyncOperationsProps {
   googleCalendarService: React.MutableRefObject<GoogleCalendarService>;
 }
 
-export const useSyncOperations = ({
-  dispatch,
-  googleCalendarService,
-}: UseSyncOperationsProps) => {
+export const useSyncOperations = ({ dispatch, googleCalendarService }: UseSyncOperationsProps) => {
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startBackgroundSync = useCallback(async () => {

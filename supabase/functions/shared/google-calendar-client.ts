@@ -52,21 +52,18 @@ export class GoogleCalendarClient {
     this.accessToken = accessToken;
   }
 
-  private async makeRequest(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<any> {
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const headers: HeadersInit = {
-      'Authorization': `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${this.accessToken}`,
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
     logSecurely('Google Calendar API request', {
       endpoint: endpoint.split('?')[0], // Log endpoint without query params
-      method: options.method || 'GET'
+      method: options.method || 'GET',
     });
 
     const response = await fetch(url, {
@@ -78,7 +75,7 @@ export class GoogleCalendarClient {
       const errorData = await response.text();
       logSecurely('Google Calendar API error', {
         status: response.status,
-        endpoint: endpoint.split('?')[0]
+        endpoint: endpoint.split('?')[0],
       });
       throw new Error(`Google Calendar API error: ${response.status} - ${errorData}`);
     }
@@ -92,17 +89,19 @@ export class GoogleCalendarClient {
   async getCalendarList(): Promise<GoogleCalendarInfo[]> {
     try {
       const response = await this.makeRequest('/users/me/calendarList');
-      
-      return response.items?.map((cal: any) => ({
-        id: cal.id,
-        summary: cal.summary || 'Sin nombre',
-        description: cal.description,
-        timeZone: cal.timeZone || 'UTC',
-        colorId: cal.colorId,
-        primary: cal.primary || false,
-        accessRole: cal.accessRole,
-        hidden: cal.hidden || false,
-      })) || [];
+
+      return (
+        response.items?.map((cal: any) => ({
+          id: cal.id,
+          summary: cal.summary || 'Sin nombre',
+          description: cal.description,
+          timeZone: cal.timeZone || 'UTC',
+          colorId: cal.colorId,
+          primary: cal.primary || false,
+          accessRole: cal.accessRole,
+          hidden: cal.hidden || false,
+        })) || []
+      );
     } catch (error) {
       console.error('Error getting calendar list:', error);
       throw error;
@@ -116,7 +115,7 @@ export class GoogleCalendarClient {
     calendarId: string = 'primary',
     timeMin?: string,
     timeMax?: string,
-    maxResults: number = 2500
+    maxResults: number = 2500,
   ): Promise<GoogleCalendarEvent[]> {
     try {
       const params = new URLSearchParams({
@@ -131,19 +130,21 @@ export class GoogleCalendarClient {
       const endpoint = `/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`;
       const response = await this.makeRequest(endpoint);
 
-      return response.items?.map((event: any) => ({
-        id: event.id,
-        summary: event.summary || 'Sin título',
-        description: event.description,
-        start: event.start,
-        end: event.end,
-        location: event.location,
-        attendees: event.attendees,
-        reminders: event.reminders,
-        colorId: event.colorId,
-        visibility: event.visibility,
-        status: event.status,
-      })) || [];
+      return (
+        response.items?.map((event: any) => ({
+          id: event.id,
+          summary: event.summary || 'Sin título',
+          description: event.description,
+          start: event.start,
+          end: event.end,
+          location: event.location,
+          attendees: event.attendees,
+          reminders: event.reminders,
+          colorId: event.colorId,
+          visibility: event.visibility,
+          status: event.status,
+        })) || []
+      );
     } catch (error) {
       console.error('Error getting calendar events:', error);
       throw error;
@@ -155,11 +156,11 @@ export class GoogleCalendarClient {
    */
   async createEvent(
     calendarId: string = 'primary',
-    event: GoogleCalendarEvent
+    event: GoogleCalendarEvent,
   ): Promise<GoogleCalendarEvent> {
     try {
       const endpoint = `/calendars/${encodeURIComponent(calendarId)}/events`;
-      
+
       const response = await this.makeRequest(endpoint, {
         method: 'POST',
         body: JSON.stringify(event),
@@ -190,11 +191,11 @@ export class GoogleCalendarClient {
   async updateEvent(
     calendarId: string = 'primary',
     eventId: string,
-    event: Partial<GoogleCalendarEvent>
+    event: Partial<GoogleCalendarEvent>,
   ): Promise<GoogleCalendarEvent> {
     try {
       const endpoint = `/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`;
-      
+
       const response = await this.makeRequest(endpoint, {
         method: 'PUT',
         body: JSON.stringify(event),
@@ -222,20 +223,17 @@ export class GoogleCalendarClient {
   /**
    * Delete an event
    */
-  async deleteEvent(
-    calendarId: string = 'primary',
-    eventId: string
-  ): Promise<void> {
+  async deleteEvent(calendarId: string = 'primary', eventId: string): Promise<void> {
     try {
       const endpoint = `/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`;
-      
+
       await this.makeRequest(endpoint, {
         method: 'DELETE',
       });
-      
+
       logSecurely('Calendar event deleted', {
         calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-        eventId: eventId.substring(0, 8) + '...'
+        eventId: eventId.substring(0, 8) + '...',
       });
     } catch (error) {
       console.error('Error deleting calendar event:', error);
@@ -260,8 +258,10 @@ export class GoogleCalendarClient {
         const tokenInfo = await response.json();
         // Check if token has calendar scope
         const scopes = tokenInfo.scope?.split(' ') || [];
-        return scopes.some((scope: string) => 
-          scope.includes('calendar') || scope.includes('https://www.googleapis.com/auth/calendar')
+        return scopes.some(
+          (scope: string) =>
+            scope.includes('calendar') ||
+            scope.includes('https://www.googleapis.com/auth/calendar'),
         );
       }
 
@@ -283,13 +283,15 @@ export function createGoogleCalendarClient(providerToken: string): GoogleCalenda
 /**
  * Validate provider token and create client
  */
-export async function createValidatedGoogleClient(providerToken: string): Promise<GoogleCalendarClient> {
+export async function createValidatedGoogleClient(
+  providerToken: string,
+): Promise<GoogleCalendarClient> {
   if (!providerToken) {
     throw new Error('Provider token is required');
   }
 
   const client = new GoogleCalendarClient(providerToken);
-  
+
   const isValid = await client.validateToken();
   if (!isValid) {
     throw new Error('Invalid or expired Google Calendar access token');

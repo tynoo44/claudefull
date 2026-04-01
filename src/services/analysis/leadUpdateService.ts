@@ -108,10 +108,7 @@ export async function updateLeadFromAnalysis(
       leadUpdates.notes = newNotes;
     }
 
-    const { error: leadError } = await supabase
-      .from('leads')
-      .update(leadUpdates)
-      .eq('id', leadId);
+    const { error: leadError } = await supabase.from('leads').update(leadUpdates).eq('id', leadId);
 
     if (leadError) {
       console.error('Error updating lead:', leadError);

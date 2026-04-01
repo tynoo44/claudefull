@@ -124,13 +124,15 @@ export async function sendMessageToConversation(
         throw new Error(`Error al enviar mensaje: ${error.message}`);
       }
 
-      return data.message || {
-        id: `edge-${Date.now()}`,
-        conversation_id: conversationId,
-        text,
-        sender_type: senderType,
-        created_at: new Date().toISOString(),
-      };
+      return (
+        data.message || {
+          id: `edge-${Date.now()}`,
+          conversation_id: conversationId,
+          text,
+          sender_type: senderType,
+          created_at: new Date().toISOString(),
+        }
+      );
     } else {
       // For Lead messages - save to Supabase as before
       const { data, error } = await supabase

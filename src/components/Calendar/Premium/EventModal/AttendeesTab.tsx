@@ -124,11 +124,13 @@ export const AttendeesTab: React.FC<AttendeesTabProps> = ({
       {/* Attendees list */}
       {attendees.length > 0 && (
         <div>
-          <h4 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <h4
+            className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+          >
             Invitados ({attendees.length})
           </h4>
           <div className="space-y-2">
-            {attendees.map((attendee) => (
+            {attendees.map(attendee => (
               <div
                 key={attendee.email}
                 className={`flex items-center justify-between p-3 border rounded-lg ${
@@ -144,19 +146,23 @@ export const AttendeesTab: React.FC<AttendeesTabProps> = ({
                     {attendee.name?.charAt(0) || attendee.email.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                    >
                       {attendee.name || attendee.email}
                     </p>
                     {attendee.name && (
-                      <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <p
+                        className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                      >
                         {attendee.email}
                       </p>
                     )}
                   </div>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      darkMode 
-                        ? 'bg-gray-600 text-gray-300 border-gray-500' 
+                      darkMode
+                        ? 'bg-gray-600 text-gray-300 border-gray-500'
                         : getStatusColor(attendee.status)
                     }`}
                   >
@@ -167,7 +173,9 @@ export const AttendeesTab: React.FC<AttendeesTabProps> = ({
                   type="button"
                   onClick={() => removeAttendee(attendee.email)}
                   className={`ml-3 p-1 rounded-full hover:bg-red-100 hover:text-red-600 ${
-                    darkMode ? 'text-gray-400 hover:bg-red-900/20 hover:text-red-400' : 'text-gray-400'
+                    darkMode
+                      ? 'text-gray-400 hover:bg-red-900/20 hover:text-red-400'
+                      : 'text-gray-400'
                   }`}
                 >
                   <X className="w-4 h-4" />
@@ -189,9 +197,11 @@ export const AttendeesTab: React.FC<AttendeesTabProps> = ({
 
       {/* Send invitations note */}
       {attendees.length > 0 && (
-        <div className={`p-4 rounded-lg border-l-4 border-blue-500 ${
-          darkMode ? 'bg-blue-900/10 border-blue-400' : 'bg-blue-50'
-        }`}>
+        <div
+          className={`p-4 rounded-lg border-l-4 border-blue-500 ${
+            darkMode ? 'bg-blue-900/10 border-blue-400' : 'bg-blue-50'
+          }`}
+        >
           <div className="flex">
             <div className="ml-3">
               <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>

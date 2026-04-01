@@ -20,7 +20,10 @@ import { GoogleCalendarService } from '../lib/google-calendar';
 
 // Layout components
 import { CalendarToolbar } from '../components/Calendar/Premium/Layout/CalendarToolbar';
-import { CalendarNavigation, ViewType } from '../components/Calendar/Premium/Layout/CalendarNavigation';
+import {
+  CalendarNavigation,
+  ViewType,
+} from '../components/Calendar/Premium/Layout/CalendarNavigation';
 import { CalendarSidebar } from '../components/Calendar/Premium/Layout/CalendarSidebar';
 import { CalendarStatusBar } from '../components/Calendar/Premium/Layout/CalendarStatusBar';
 
@@ -91,7 +94,7 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
   const [showSettings, setShowSettings] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Use global calendar cache
   const { events, calendars, isLoading, forceRefresh, loadMonth } = useCalendarCache();
 
@@ -210,10 +213,11 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
     switch (currentView) {
       case 'month':
         return format(currentDate, 'MMMM yyyy', { locale: es });
-      case 'week':
+      case 'week': {
         const weekStart = startOfWeek(currentDate, { weekStartsOn: settings.weekStartsOn });
         const weekEnd = endOfWeek(currentDate, { weekStartsOn: settings.weekStartsOn });
         return `${format(weekStart, 'dd MMM')} - ${format(weekEnd, 'dd MMM yyyy', { locale: es })}`;
+      }
       case 'day':
         return format(currentDate, 'EEEE, dd MMMM yyyy', { locale: es });
       case 'year':
@@ -420,7 +424,9 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
           />
         );
       default:
-        return <PlaceholderView currentView={currentView} darkMode={darkMode} isLoading={isLoading} />;
+        return (
+          <PlaceholderView currentView={currentView} darkMode={darkMode} isLoading={isLoading} />
+        );
     }
   };
 
@@ -458,9 +464,11 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
               selectedDate={selectedDate}
               calendars={calendars}
               todayEventsCount={filteredEvents.filter(event => isToday(event.start)).length}
-              weekEventsCount={filteredEvents.filter(event => isSameWeek(event.start, new Date())).length}
+              weekEventsCount={
+                filteredEvents.filter(event => isSameWeek(event.start, new Date())).length
+              }
               onDateSelect={setSelectedDate}
-              onMonthChange={(date) => {
+              onMonthChange={date => {
                 setCurrentDate(date);
                 loadMonth(date);
               }}
@@ -471,9 +479,7 @@ export const PremiumCalendarAdvanced: React.FC<PremiumCalendarAdvancedProps> = (
           {/* Main content area */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className={`flex-1 overflow-auto ${darkMode ? 'bg-gray-900' : 'bg-white'} p-4`}>
-              <div className="h-full overflow-hidden">
-                {renderCurrentView()}
-              </div>
+              <div className="h-full overflow-hidden">{renderCurrentView()}</div>
             </div>
 
             <CalendarStatusBar

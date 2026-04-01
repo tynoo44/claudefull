@@ -116,10 +116,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         <div className="space-y-2">
           {calendars.map(calendar => (
             <div key={calendar.id} className="flex items-center space-x-3 group">
-              <button
-                onClick={() => onCalendarToggle(calendar)}
-                className="flex-shrink-0"
-              >
+              <button onClick={() => onCalendarToggle(calendar)} className="flex-shrink-0">
                 <div
                   className={`w-3 h-3 rounded-full border-2 ${
                     calendar.visible ? '' : 'bg-transparent'
@@ -165,15 +162,11 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         <div className="space-y-1 text-xs">
           <div className="flex justify-between">
             <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Eventos hoy</span>
-            <span className={darkMode ? 'text-gray-200' : 'text-gray-900'}>
-              {todayEventsCount}
-            </span>
+            <span className={darkMode ? 'text-gray-200' : 'text-gray-900'}>{todayEventsCount}</span>
           </div>
           <div className="flex justify-between">
             <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>Esta semana</span>
-            <span className={darkMode ? 'text-gray-200' : 'text-gray-900'}>
-              {weekEventsCount}
-            </span>
+            <span className={darkMode ? 'text-gray-200' : 'text-gray-900'}>{weekEventsCount}</span>
           </div>
         </div>
       </div>

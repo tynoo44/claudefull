@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Calendar,
-  Zap,
-  Users,
-  Shield,
-  Globe,
-  RefreshCw,
-} from 'lucide-react';
+import { Calendar, Zap, Users, Shield, Globe, RefreshCw } from 'lucide-react';
 
 interface PlaceholderViewProps {
   currentView: string;
@@ -29,15 +22,9 @@ export const PlaceholderView: React.FC<PlaceholderViewProps> = ({
   return (
     <div className="text-center py-20">
       <Calendar
-        className={`h-24 w-24 mx-auto mb-6 ${
-          darkMode ? 'text-gray-600' : 'text-gray-300'
-        }`}
+        className={`h-24 w-24 mx-auto mb-6 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`}
       />
-      <h3
-        className={`text-2xl font-semibold mb-2 ${
-          darkMode ? 'text-gray-200' : 'text-gray-800'
-        }`}
-      >
+      <h3 className={`text-2xl font-semibold mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
         Vista {currentView} próximamente
       </h3>
       <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -65,18 +52,11 @@ export const PlaceholderView: React.FC<PlaceholderViewProps> = ({
             >
               <Icon
                 className={`h-8 w-8 mx-auto mb-2 ${
-                  [
-                    'text-blue-500',
-                    'text-green-500',
-                    'text-purple-500',
-                    'text-orange-500',
-                  ][index]
+                  ['text-blue-500', 'text-green-500', 'text-purple-500', 'text-orange-500'][index]
                 }`}
               />
               <h4
-                className={`font-semibold text-sm ${
-                  darkMode ? 'text-gray-200' : 'text-gray-800'
-                }`}
+                className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}
               >
                 {feature.label}
               </h4>

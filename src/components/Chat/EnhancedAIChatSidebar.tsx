@@ -54,7 +54,7 @@ interface AIMessage {
 const convertToServiceMessage = (message: AIMessage): GeminiAIMessage => ({
   role: message.role,
   content: message.content,
-  timestamp: message.timestamp.toISOString()
+  timestamp: message.timestamp.toISOString(),
 });
 
 interface MessageSuggestion {
@@ -94,14 +94,9 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     isLoading: analysisLoading,
     refreshAnalysis,
     isRefreshing,
-    lastUpdated: _lastUpdated,
   } = useConversationAnalysis(conversationId);
 
-  const {
-    aiConversation,
-    saveAIConversation,
-    isLoading: _aiConversationLoading,
-  } = useAIConversation(conversationId);
+  const { aiConversation, saveAIConversation } = useAIConversation(conversationId);
 
   // Cargar conversación AI existente
   useEffect(() => {
@@ -150,15 +145,14 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       // Build conversation context and messages from actual conversation
       let fullContext = conversationContext || '';
       let allMessages: GeminiAIMessage[] = [];
-      
+
       if (currentConversation?.messages && Array.isArray(currentConversation.messages)) {
         // Convert conversation messages to AI format
-        allMessages = (currentConversation.messages as Record<string, unknown>[])
-          .map(msg => ({
-            role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
-            content: String(msg.text || msg.content || ''),
-          }));
-          
+        allMessages = (currentConversation.messages as Record<string, unknown>[]).map(msg => ({
+          role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
+          content: String(msg.text || msg.content || ''),
+        }));
+
         const conversationMessages = (currentConversation.messages as Record<string, unknown>[])
           .map(
             msg =>
@@ -167,7 +161,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
           .join('\n');
         fullContext = `Conversación actual con ${leadName || 'el lead'}:\n${conversationMessages}`;
       }
-      
+
       // Add the user's question to the conversation
       allMessages.push(convertToServiceMessage(userMessage));
 
@@ -253,7 +247,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
           .split('\n')
           .filter(text => text.trim() && text.length > 20)
           .slice(0, 3);
-        
+
         if (altSuggestions.length > 0) {
           suggestionTexts.push(...altSuggestions);
         }
@@ -265,7 +259,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         let type: 'direct' | 'exploratory' | 'creative' = 'direct';
         let strategy = '';
         let confidence = 0.7;
-        
+
         if (index === 0) {
           type = 'direct';
           strategy = 'Respuesta directa que va al punto principal';
@@ -303,29 +297,33 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
 
       // If no suggestions were parsed, return a default set
       if (suggestions.length === 0) {
-        return [{
-          id: 'default-1',
-          type: 'direct',
-          message: 'Cuéntame más sobre tu situación actual...',
-          strategy: 'Pregunta abierta para obtener más contexto',
-          confidence: 0.6,
-          phase,
-          reasoning: 'Respuesta genérica cuando no hay suficiente contexto',
-        }];
+        return [
+          {
+            id: 'default-1',
+            type: 'direct',
+            message: 'Cuéntame más sobre tu situación actual...',
+            strategy: 'Pregunta abierta para obtener más contexto',
+            confidence: 0.6,
+            phase,
+            reasoning: 'Respuesta genérica cuando no hay suficiente contexto',
+          },
+        ];
       }
 
       return suggestions;
     } catch (error) {
       console.error('Error parsing suggestions:', error);
-      return [{
-        id: 'error-1',
-        type: 'direct',
-        message: 'Háblame más sobre lo que necesitas...',
-        strategy: 'Pregunta de recuperación',
-        confidence: 0.5,
-        phase,
-        reasoning: 'Fallback cuando hay error en el parseo',
-      }];
+      return [
+        {
+          id: 'error-1',
+          type: 'direct',
+          message: 'Háblame más sobre lo que necesitas...',
+          strategy: 'Pregunta de recuperación',
+          confidence: 0.5,
+          phase,
+          reasoning: 'Fallback cuando hay error en el parseo',
+        },
+      ];
     }
   };
 

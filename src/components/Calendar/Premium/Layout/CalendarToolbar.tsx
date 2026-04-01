@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Calendar,
-  Plus,
-  Search,
-  Settings,
-  Sidebar,
-  RefreshCw,
-} from 'lucide-react';
+import { Calendar, Plus, Search, Settings, Sidebar, RefreshCw } from 'lucide-react';
 
 interface CalendarToolbarProps {
   darkMode: boolean;

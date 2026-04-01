@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+.idea
+*.md
+AI_GUIDE
+.taskmaster
+N8N_INTEGRATION_GUIDE.md
+CLAUDE.md

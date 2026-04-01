@@ -30,7 +30,7 @@ interface QuickActionResponse {
   error?: string;
 }
 
-serve(async (req) => {
+serve(async req => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -40,13 +40,10 @@ serve(async (req) => {
     // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Initialize Supabase client
@@ -65,40 +62,34 @@ serve(async (req) => {
     });
 
     // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Parse request body
     const request: QuickActionRequest = await req.json();
 
     if (!request.messages || !request.model || !request.action) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check API key
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Build conversation context
@@ -107,16 +98,16 @@ serve(async (req) => {
       .join('\n');
 
     let prompt = '';
-    
+
     switch (request.action) {
       case 'summarize':
         prompt = `Resume esta conversación de ventas en 2-3 líneas, destacando lo más importante:\n\n${conversationText}`;
         break;
-        
+
       case 'analyze_phase':
         prompt = `Analiza en qué fase de ventas (1-5) se encuentra esta conversación y explica por qué en 2-3 líneas:\n\n${conversationText}`;
         break;
-        
+
       case 'suggest_messages':
         const phase = request.currentPhase || 1;
         const phaseGoals = {
@@ -124,7 +115,7 @@ serve(async (req) => {
           2: 'identificar dolor/necesidad y calificar',
           3: 'presentar valor y casos de éxito',
           4: 'resolver objeciones y generar urgencia',
-          5: 'cerrar siguiente paso concreto'
+          5: 'cerrar siguiente paso concreto',
         };
 
         // Get script templates for current phase
@@ -162,9 +153,10 @@ serve(async (req) => {
         // Analyze last messages for context
         const lastMessages = request.messages.slice(-3);
         const lastUserMessage = lastMessages.filter(m => m.role === 'user').pop();
-        const messageContext = lastUserMessage ? 
-          `\n🔍 ÚLTIMO MENSAJE DEL LEAD: "${lastUserMessage.content}"` : '';
-        
+        const messageContext = lastUserMessage
+          ? `\n🔍 ÚLTIMO MENSAJE DEL LEAD: "${lastUserMessage.content}"`
+          : '';
+
         prompt = `Eres un setter experto de Quantum Creators. Genera 3 respuestas diferentes para continuar esta conversación.
 
 🎯 SITUACIÓN ACTUAL:
@@ -190,37 +182,44 @@ ${conversationText}
     }
 
     // Call Gemini API
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: request.action === 'suggest_messages' ? 0.9 : 0.7,
+            maxOutputTokens: request.action === 'suggest_messages' ? 800 : 500,
+            topP: 0.95,
+            topK: 40,
+          },
+        }),
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: request.action === 'suggest_messages' ? 0.9 : 0.7,
-          maxOutputTokens: request.action === 'suggest_messages' ? 800 : 500,
-          topP: 0.95,
-          topK: 40
-        }
-      }),
-    });
+    );
 
     if (!geminiResponse.ok) {
       console.error('Gemini API error:', await geminiResponse.text());
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          error: 'AI service unavailable' 
+          error: 'AI service unavailable',
         }),
-        { 
+        {
           status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
 
@@ -237,7 +236,7 @@ ${conversationText}
         .filter(line => line.trim())
         .slice(0, 3)
         .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim());
-        
+
       response.suggestions = suggestions;
       response.result = suggestions.join('\n\n');
     } else {
@@ -259,31 +258,27 @@ ${conversationText}
           'ai-quick-actions-simple',
           {
             userId: user.id,
-          }
-        )
+          },
+        ),
       );
     }
 
-    return new Response(
-      JSON.stringify(response),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error in ai-quick-actions-simple function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });

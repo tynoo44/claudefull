@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Grid3X3,
-  List,
-  LayoutGrid,
-  Calendar,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Grid3X3, List, LayoutGrid, Calendar } from 'lucide-react';
 
 export type ViewType = 'month' | 'week' | 'day' | 'agenda' | 'year';
 

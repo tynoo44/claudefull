@@ -74,9 +74,13 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
     location: '',
     calendarId: calendars.find(cal => cal.visible)?.id || '',
     startDate: format(selectedDate || new Date(), 'yyyy-MM-dd'),
-    startTime: selectedHour ? format(addHours(startOfDay(new Date()), selectedHour), 'HH:mm') : '09:00',
+    startTime: selectedHour
+      ? format(addHours(startOfDay(new Date()), selectedHour), 'HH:mm')
+      : '09:00',
     endDate: format(selectedDate || new Date(), 'yyyy-MM-dd'),
-    endTime: selectedHour ? format(addHours(startOfDay(new Date()), selectedHour + 1), 'HH:mm') : '10:00',
+    endTime: selectedHour
+      ? format(addHours(startOfDay(new Date()), selectedHour + 1), 'HH:mm')
+      : '10:00',
     isAllDay: false,
     meetingLink: '',
     attendees: [],
@@ -112,9 +116,13 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
           location: '',
           calendarId: calendars.find(cal => cal.visible)?.id || '',
           startDate: format(selectedDate || new Date(), 'yyyy-MM-dd'),
-          startTime: selectedHour ? format(addHours(startOfDay(new Date()), selectedHour), 'HH:mm') : '09:00',
+          startTime: selectedHour
+            ? format(addHours(startOfDay(new Date()), selectedHour), 'HH:mm')
+            : '09:00',
           endDate: format(selectedDate || new Date(), 'yyyy-MM-dd'),
-          endTime: selectedHour ? format(addHours(startOfDay(new Date()), selectedHour + 1), 'HH:mm') : '10:00',
+          endTime: selectedHour
+            ? format(addHours(startOfDay(new Date()), selectedHour + 1), 'HH:mm')
+            : '10:00',
           isAllDay: false,
           meetingLink: '',
           attendees: [],
@@ -143,13 +151,13 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
 
     try {
       const calendarService = new GoogleCalendarService();
-      
+
       // Prepare event data
       const eventData = {
         title: formData.title,
         description: formData.description,
         location: formData.location,
-        start_datetime: formData.isAllDay 
+        start_datetime: formData.isAllDay
           ? `${formData.startDate}T00:00:00`
           : `${formData.startDate}T${formData.startTime}:00`,
         end_datetime: formData.isAllDay
@@ -167,7 +175,7 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
         const updatedEvent = await calendarService.updateEvent(
           formData.calendarId,
           existingEvent.id,
-          { ...eventData, id: existingEvent.id }
+          { ...eventData, id: existingEvent.id },
         );
         onEventUpdated(updatedEvent);
       } else {
@@ -187,7 +195,7 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
 
   const handleDelete = async () => {
     if (!existingEvent) return;
-    
+
     if (!confirm('¿Estás seguro de que quieres eliminar este evento?')) return;
 
     setIsLoading(true);
@@ -220,13 +228,17 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
           onClick={onClose}
         />
 
-        <div className={`inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full ${
-          darkMode ? 'bg-gray-800' : 'bg-white'
-        }`}>
+        <div
+          className={`inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full ${
+            darkMode ? 'bg-gray-800' : 'bg-white'
+          }`}
+        >
           {/* Header */}
-          <div className={`flex items-center justify-between p-6 border-b ${
-            darkMode ? 'border-gray-700' : 'border-gray-200'
-          }`}>
+          <div
+            className={`flex items-center justify-between p-6 border-b ${
+              darkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}
+          >
             <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               {existingEvent ? 'Editar evento' : 'Crear evento'}
             </h3>
@@ -300,9 +312,11 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className={`flex items-center justify-between px-6 py-4 border-t ${
-              darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
-            }`}>
+            <div
+              className={`flex items-center justify-between px-6 py-4 border-t ${
+                darkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
+              }`}
+            >
               <div className="flex items-center gap-2">
                 {existingEvent && (
                   <button

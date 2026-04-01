@@ -56,18 +56,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = memo(
       setSending(true);
       try {
         await sendMessageToConversation(selectedChat.id, message);
-        
+
         // Send to n8n webhook for tracking
         if (n8nIntegration.isEnabled()) {
-          n8nIntegration.onMessageSent({
-            conversationId: selectedChat.id,
-            leadId: selectedChat.lead_id,
-            message,
-            senderType: 'Setter',
-            platform: 'web-app'
-          }).catch(err => console.error('[ChatInterface] N8N webhook error:', err));
+          n8nIntegration
+            .onMessageSent({
+              conversationId: selectedChat.id,
+              leadId: selectedChat.leadId,
+              message,
+              senderType: 'Setter',
+              platform: 'web-app',
+            })
+            .catch(err => console.error('[ChatInterface] N8N webhook error:', err));
         }
-        
+
         onMessageChange('');
         if (showAISuggestion) {
           onToggleAISuggestion();

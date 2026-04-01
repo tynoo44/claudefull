@@ -48,7 +48,7 @@ export function analyzeSentiments(messages: ConversationMessage[]): SentimentRes
 
   return {
     overall,
-    timeline: byMessage.map((msg) => ({
+    timeline: byMessage.map(msg => ({
       timestamp: new Date(),
       score: msg.score,
       emotion: msg.emotion,

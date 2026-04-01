@@ -79,14 +79,16 @@ export const useCalendar = () => {
 
   // Event CRUD mutations
   const createEventMutation = useMutation({
-    mutationFn: (eventData: CreateEventRequest) => googleCalendarService.createEvent('primary', eventData),
+    mutationFn: (eventData: CreateEventRequest) =>
+      googleCalendarService.createEvent('primary', eventData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: ({ eventId, ...eventData }: UpdateEventRequest & { eventId: string }) => googleCalendarService.updateEvent('primary', eventId, eventData),
+    mutationFn: ({ eventId, ...eventData }: UpdateEventRequest & { eventId: string }) =>
+      googleCalendarService.updateEvent('primary', eventId, eventData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
     },

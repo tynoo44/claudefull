@@ -37,7 +37,7 @@ interface AnalyzeConversationResponse {
   isNewAnalysis?: boolean;
 }
 
-serve(async (req) => {
+serve(async req => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -47,13 +47,10 @@ serve(async (req) => {
     // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Initialize Supabase client
@@ -72,28 +69,25 @@ serve(async (req) => {
     });
 
     // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Parse request body
     const request: AnalyzeConversationRequest = await req.json();
 
     if (!request.conversationId || !request.leadId || !request.messages) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check if we need to analyze
@@ -125,10 +119,10 @@ serve(async (req) => {
               },
               isNewAnalysis: false,
             }),
-            { 
+            {
               status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            },
           );
         }
       }
@@ -137,13 +131,10 @@ serve(async (req) => {
     // Analyze conversation
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
-        { 
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Build conversation context
@@ -167,32 +158,42 @@ serve(async (req) => {
         .select('*')
         .eq('id', request.leadId)
         .single();
-      
+
       if (lead) {
         leadContext = `\n\n👤 DATOS DEL LEAD:\n- Instagram: @${lead.instagram_username}\n- Procedencia: ${lead.procedence || 'No especificada'}\n- Estado: ${lead.status}`;
       }
     }
 
     // Count messages by sender
-    const messagesBySender = request.messages.reduce((acc, msg) => {
-      acc[msg.role] = (acc[msg.role] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const messagesBySender = request.messages.reduce(
+      (acc, msg) => {
+        acc[msg.role] = (acc[msg.role] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const engagementRate = messagesBySender.user / (request.messages.length || 1);
 
-    const analysisInstructions = analysisPrompt?.content || `Analiza esta conversación de ventas para extraer insights accionables.`;
+    const analysisInstructions =
+      analysisPrompt?.content ||
+      `Analiza esta conversación de ventas para extraer insights accionables.`;
 
     // Call Gemini API for analysis
-    const geminiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=' + apiKey, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `${analysisInstructions}
+    const geminiResponse = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=' +
+        apiKey,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${analysisInstructions}
 
 🎯 CONTEXTO:${leadContext}
 - Total mensajes: ${request.messages.length}
@@ -237,15 +238,18 @@ ${conversationText}
   "opportunities": ["oportunidades no exploradas"],
   "keyInsights": ["3 insights clave sobre el lead"],
   "recommendedApproach": "estrategia recomendada para próxima interacción"
-}`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1500,
-        }
-      }),
-    });
+}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 1500,
+          },
+        }),
+      },
+    );
 
     let analysis;
     if (geminiResponse.ok) {
@@ -266,8 +270,10 @@ ${conversationText}
     if (!analysis) {
       const messageCount = request.messages.length;
       const hasQuestions = conversationText.includes('?');
-      const hasBusinessMention = conversationText.toLowerCase().match(/negocio|empresa|ventas|clientes/);
-      
+      const hasBusinessMention = conversationText
+        .toLowerCase()
+        .match(/negocio|empresa|ventas|clientes/);
+
       analysis = {
         currentPhase: messageCount > 10 ? 2 : 1,
         qualificationScore: hasBusinessMention ? 0.4 : 0.2,
@@ -279,18 +285,18 @@ ${conversationText}
           mainObjections: [],
           buyingSignals: hasQuestions ? ['Hace preguntas'] : [],
           painPoints: [],
-          communicationStyle: 'casual'
+          communicationStyle: 'casual',
         },
         summary: `Conversación con ${messageCount} mensajes. ${hasBusinessMention ? 'Menciona temas de negocio.' : 'Aún explorando interés.'}`,
         nextSteps: [
           'Identificar el tipo de negocio del lead',
-          'Explorar necesidades específicas', 
-          'Generar curiosidad sobre la solución'
+          'Explorar necesidades específicas',
+          'Generar curiosidad sobre la solución',
         ],
         redFlags: messageCount < 3 ? ['Conversación muy corta para evaluar'] : [],
         opportunities: ['Profundizar en el negocio del lead'],
         keyInsights: ['Análisis preliminar - se necesita más interacción'],
-        recommendedApproach: 'Hacer preguntas abiertas sobre su negocio y desafíos actuales'
+        recommendedApproach: 'Hacer preguntas abiertas sobre su negocio y desafíos actuales',
       };
     }
 
@@ -299,39 +305,37 @@ ${conversationText}
     const userMessages = request.messages.filter(m => m.role === 'user').length;
     const totalMessages = request.messages.length;
     const engagementRate = totalMessages > 0 ? userMessages / totalMessages : 0;
-    
-    const { error: saveError } = await supabase
-      .from('conversation_analysis')
-      .insert({
-        conversation_id: request.conversationId,
-        lead_id: request.leadId,
-        analysis_data: {
-          current_phase: analysis.currentPhase,
-          qualification_score: analysis.qualificationScore,
-          lead_profile: analysis.leadProfile,
-          summary: analysis.summary,
-          opportunities: analysis.opportunities,
-          key_insights: analysis.keyInsights,
-          recommended_approach: analysis.recommendedApproach
-        },
-        sentiment_scores: {
-          positive: analysis.qualificationScore,
-          neutral: 1 - analysis.qualificationScore,
-          negative: 0
-        },
-        phase_progress: {
-          [analysis.currentPhase]: 100,
-          overall: (analysis.currentPhase / 5) * 100
-        },
-        key_insights: analysis.keyInsights || [],
-        warnings: analysis.redFlags || [],
-        action_threads: analysis.nextSteps || [],
-        urgency_score: Math.round(analysis.qualificationScore * 10),
-        capacity_score: 5,
-        engagement_score: Math.round(engagementRate * 10),
-        is_current: true,
-        last_message_analyzed_at: new Date().toISOString()
-      });
+
+    const { error: saveError } = await supabase.from('conversation_analysis').insert({
+      conversation_id: request.conversationId,
+      lead_id: request.leadId,
+      analysis_data: {
+        current_phase: analysis.currentPhase,
+        qualification_score: analysis.qualificationScore,
+        lead_profile: analysis.leadProfile,
+        summary: analysis.summary,
+        opportunities: analysis.opportunities,
+        key_insights: analysis.keyInsights,
+        recommended_approach: analysis.recommendedApproach,
+      },
+      sentiment_scores: {
+        positive: analysis.qualificationScore,
+        neutral: 1 - analysis.qualificationScore,
+        negative: 0,
+      },
+      phase_progress: {
+        [analysis.currentPhase]: 100,
+        overall: (analysis.currentPhase / 5) * 100,
+      },
+      key_insights: analysis.keyInsights || [],
+      warnings: analysis.redFlags || [],
+      action_threads: analysis.nextSteps || [],
+      urgency_score: Math.round(analysis.qualificationScore * 10),
+      capacity_score: 5,
+      engagement_score: Math.round(engagementRate * 10),
+      is_current: true,
+      last_message_analyzed_at: new Date().toISOString(),
+    });
 
     if (saveError) {
       console.error('Error saving analysis:', saveError);
@@ -358,9 +362,9 @@ ${conversationText}
           userId: user.id,
           conversationId: request.conversationId,
           leadId: request.leadId,
-        }
-      )
-    )
+        },
+      ),
+    );
 
     return new Response(
       JSON.stringify({
@@ -374,27 +378,26 @@ ${conversationText}
           redFlags: analysis.redFlags || [],
           opportunities: analysis.opportunities || [],
           keyInsights: analysis.keyInsights || [],
-          recommendedApproach: analysis.recommendedApproach || ''
+          recommendedApproach: analysis.recommendedApproach || '',
         },
         isNewAnalysis: true,
       }),
-      { 
+      {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
-
   } catch (error) {
     console.error('Error in ai-analyze-simple function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { 
+      {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });

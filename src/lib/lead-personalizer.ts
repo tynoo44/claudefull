@@ -1,6 +1,8 @@
 // Sistema de personalización de mensajes según el tipo de lead
 // Adapta el tono y estilo según el perfil detectado
 
+import { n8nIntegration } from './n8n-integration';
+
 export interface LeadProfile {
   type:
     | 'young_entrepreneur'
@@ -31,7 +33,10 @@ export interface PersonalizationRules {
 }
 
 // Analizar el perfil del lead basado en sus mensajes
-export function analyzeLeadProfile(messages: string[]): LeadProfile {
+export function analyzeLeadProfile(
+  messages: string[],
+  metadata?: { leadId?: string },
+): LeadProfile {
   const combinedText = messages.join(' ').toLowerCase();
 
   // Detectar grupo de edad por el lenguaje
@@ -59,16 +64,19 @@ export function analyzeLeadProfile(messages: string[]): LeadProfile {
 
   // Send to n8n webhook if enabled
   if (n8nIntegration.isEnabled() && metadata?.leadId) {
-    n8nIntegration.onLeadProfileAnalyzed({
-      leadId: metadata.leadId,
-      profile,
-      insights: {
-        messageCount: messages.length,
-        averageMessageLength: messages.reduce((sum, msg) => sum + msg.length, 0) / messages.length,
-        vocabulary: communicationStyle,
-        engagement: 'medium' // Could be calculated based on response rate
-      }
-    }).catch(err => console.error('[Lead Personalizer] N8N webhook error:', err));
+    n8nIntegration
+      .onLeadProfileAnalyzed({
+        leadId: metadata.leadId,
+        profile,
+        insights: {
+          messageCount: messages.length,
+          averageMessageLength:
+            messages.reduce((sum, msg) => sum + msg.length, 0) / messages.length,
+          vocabulary: communicationStyle,
+          engagement: 'medium', // Could be calculated based on response rate
+        },
+      })
+      .catch((err: unknown) => console.error('[Lead Personalizer] N8N webhook error:', err));
   }
 
   return profile;

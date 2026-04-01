@@ -2,8 +2,18 @@
 // Creates a new event in Google Calendar using provider token
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createSuccessResponse, createErrorResponse, validateRequiredFields, sanitizeInput, logSecurely, handleCors } from '../shared/utils.ts';
-import { createValidatedGoogleClient, GoogleCalendarEvent } from '../shared/google-calendar-client.ts';
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  validateRequiredFields,
+  sanitizeInput,
+  logSecurely,
+  handleCors,
+} from '../shared/utils.ts';
+import {
+  createValidatedGoogleClient,
+  GoogleCalendarEvent,
+} from '../shared/google-calendar-client.ts';
 
 interface CreateCalendarEventRequest {
   providerToken: string;
@@ -11,7 +21,7 @@ interface CreateCalendarEventRequest {
   event: GoogleCalendarEvent;
 }
 
-serve(async (req) => {
+serve(async req => {
   try {
     // Handle CORS preflight
     const corsResponse = await handleCors(req);
@@ -24,7 +34,7 @@ serve(async (req) => {
 
     // Parse and validate request
     const requestData: CreateCalendarEventRequest = await req.json();
-    
+
     const validationError = validateRequiredFields(requestData, ['providerToken', 'event']);
     if (validationError) {
       return createErrorResponse(validationError);
@@ -45,10 +55,14 @@ serve(async (req) => {
     // Sanitize event data
     const sanitizedEvent: GoogleCalendarEvent = {
       summary: sanitizeInput(requestData.event.summary, 500),
-      description: requestData.event.description ? sanitizeInput(requestData.event.description, 2000) : undefined,
+      description: requestData.event.description
+        ? sanitizeInput(requestData.event.description, 2000)
+        : undefined,
       start: requestData.event.start,
       end: requestData.event.end,
-      location: requestData.event.location ? sanitizeInput(requestData.event.location, 500) : undefined,
+      location: requestData.event.location
+        ? sanitizeInput(requestData.event.location, 500)
+        : undefined,
       attendees: requestData.event.attendees?.map(attendee => ({
         email: sanitizeInput(attendee.email, 100),
         displayName: attendee.displayName ? sanitizeInput(attendee.displayName, 100) : undefined,
@@ -64,7 +78,7 @@ serve(async (req) => {
     logSecurely('Google Calendar event creation requested', {
       action: 'create_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-      hasAttendees: !!(sanitizedEvent.attendees && sanitizedEvent.attendees.length > 0)
+      hasAttendees: !!(sanitizedEvent.attendees && sanitizedEvent.attendees.length > 0),
     });
 
     // Create validated Google Calendar client
@@ -76,26 +90,31 @@ serve(async (req) => {
     logSecurely('Google Calendar event created', {
       action: 'create_calendar_event',
       calendarId: calendarId === 'primary' ? 'primary' : 'custom',
-      eventId: createdEvent.id?.substring(0, 8) + '...'
+      eventId: createdEvent.id?.substring(0, 8) + '...',
     });
 
     return createSuccessResponse(createdEvent);
-
   } catch (error) {
     console.error('Error in create-google-calendar-event-v2:', error);
-    
+
     logSecurely('Calendar event creation failed', {
       error: error.message,
-      action: 'create_calendar_event'
+      action: 'create_calendar_event',
     });
 
     // Handle specific Google API errors
     if (error.message.includes('Invalid or expired')) {
-      return createErrorResponse('Google Calendar access token is invalid or expired. Please re-authenticate.', 401);
+      return createErrorResponse(
+        'Google Calendar access token is invalid or expired. Please re-authenticate.',
+        401,
+      );
     }
 
     if (error.message.includes('insufficient')) {
-      return createErrorResponse('Insufficient permissions to create calendar events. Please grant calendar permissions.', 403);
+      return createErrorResponse(
+        'Insufficient permissions to create calendar events. Please grant calendar permissions.',
+        403,
+      );
     }
 
     if (error.message.includes('notFound')) {

@@ -30,9 +30,7 @@ export const CalendarStatusBar: React.FC<CalendarStatusBarProps> = ({
         )}
       </div>
       <div className="flex items-center space-x-2">
-        <span
-          className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}
-        />
+        <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`} />
         <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
           {isLoading ? 'Sincronizando...' : 'Sincronizado'}
         </span>

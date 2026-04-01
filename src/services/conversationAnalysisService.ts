@@ -148,10 +148,12 @@ class ConversationAnalysisService {
       // Fetch conversation and lead data
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
-        .select(`
+        .select(
+          `
           *,
           leads (*)
-        `)
+        `,
+        )
         .eq('id', conversationId)
         .single();
 
@@ -179,15 +181,20 @@ class ConversationAnalysisService {
       // Analyze intent of last lead message
       const leadMessages = messages.filter(m => m.sender_type === 'lead');
       const lastLeadMessage = leadMessages[leadMessages.length - 1];
-      const intent = lastLeadMessage ? detectIntent(lastLeadMessage.text, {
-        conversationId,
-        leadId: conversation.lead_id
-      }) : null;
+      const intent = lastLeadMessage
+        ? detectIntent(lastLeadMessage.text, {
+            conversationId,
+            leadId: conversation.lead_id,
+          })
+        : null;
 
       // Analyze lead profile
-      const leadProfile = analyzeLeadProfile(leadMessages.map(m => m.text), {
-        leadId: conversation.lead_id
-      });
+      const leadProfile = analyzeLeadProfile(
+        leadMessages.map(m => m.text),
+        {
+          leadId: conversation.lead_id,
+        },
+      );
 
       // Full conversation analysis
       console.log(`Calling analyzeConversation for ${conversationId}`);
@@ -196,7 +203,7 @@ class ConversationAnalysisService {
         leadId: conversation.lead_id,
         messages: messages.map(m => ({
           role: m.sender_type === 'lead' ? 'user' : 'assistant',
-          content: m.text
+          content: m.text,
         })),
         forceReanalyze: true,
       });
@@ -247,11 +254,7 @@ class ConversationAnalysisService {
       console.log(`✅ Analysis saved for conversation ${conversationId}`);
 
       // Update lead with analysis info
-      await updateLeadFromAnalysis(
-        conversation.lead_id,
-        enrichedAnalysis,
-        conversationAnalysis,
-      );
+      await updateLeadFromAnalysis(conversation.lead_id, enrichedAnalysis, conversationAnalysis);
 
       // Update last analyzed timestamp if priority
       if (isPriority) {
@@ -294,7 +297,7 @@ class ConversationAnalysisService {
 
   private async processQueue() {
     const status = this.queueManager.getStatus();
-    
+
     while (status.isProcessing) {
       try {
         // Check for conversations needing analysis
@@ -317,8 +320,7 @@ class ConversationAnalysisService {
         await this.processAnalysisQueue();
 
         // Wait before next check
-        const waitTime = 
-          status.queueSize === 0 && status.priorityQueueSize === 0 ? 10000 : 2000;
+        const waitTime = status.queueSize === 0 && status.priorityQueueSize === 0 ? 10000 : 2000;
         await new Promise(resolve => setTimeout(resolve, waitTime));
       } catch (error) {
         console.error('Error in background analysis process:', error);
@@ -361,7 +363,7 @@ class ConversationAnalysisService {
 
   getAnalysisStatus() {
     const status = this.queueManager.getStatus();
-    
+
     console.log(`📈 Analysis Service Status:
       - Processing: ${status.isProcessing ? '✅' : '❌'}
       - Priority Queue: ${status.priorityQueueSize} conversations

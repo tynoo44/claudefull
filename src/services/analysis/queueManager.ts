@@ -24,7 +24,7 @@ export class QueueManager {
 
     console.log('Starting analysis service...');
     this.isRunning = true;
-    
+
     // Execute every check interval
     this.analysisInterval = setInterval(() => {
       console.log('Running scheduled analysis queue processing...');
@@ -61,14 +61,15 @@ export class QueueManager {
   }
 
   isInQueue(conversationId: string): boolean {
-    return this.priorityQueue.has(conversationId) || 
-           this.analysisQueue.has(conversationId) ||
-           this.currentlyProcessing.has(conversationId);
+    return (
+      this.priorityQueue.has(conversationId) ||
+      this.analysisQueue.has(conversationId) ||
+      this.currentlyProcessing.has(conversationId)
+    );
   }
 
   canProcess(): boolean {
-    return this.isRunning && 
-           this.currentlyProcessing.size < this.config.maxConcurrentAnalyses;
+    return this.isRunning && this.currentlyProcessing.size < this.config.maxConcurrentAnalyses;
   }
 
   markAsProcessing(conversationId: string) {

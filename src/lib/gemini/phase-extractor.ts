@@ -5,9 +5,7 @@ import type { AIMessage, PhaseInfo } from './types';
 // Extract phase-specific information from conversation
 export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): PhaseInfo => {
   const phaseInfo: PhaseInfo = {};
-  const conversationText = messages
-    .map(m => m.content.toLowerCase())
-    .join(' ');
+  const conversationText = messages.map(m => m.content.toLowerCase()).join(' ');
 
   // Phase 1: Current Situation
   if (currentPhase >= 1) {
@@ -22,12 +20,12 @@ export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): P
 
     // Business age detection
     const agePatterns = {
-      'nuevo': 'new',
-      'empezando': 'new',
-      'arranque': 'new',
-      'año': 'established',
-      'años': 'established',
-      'tiempo': 'established',
+      nuevo: 'new',
+      empezando: 'new',
+      arranque: 'new',
+      año: 'established',
+      años: 'established',
+      tiempo: 'established',
     };
 
     for (const [pattern, age] of Object.entries(agePatterns)) {
@@ -51,9 +49,9 @@ export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): P
       'cuesta',
       'difícil',
     ];
-    
-    phaseInfo.pain_identified = painIndicators.some(indicator => 
-      conversationText.includes(indicator)
+
+    phaseInfo.pain_identified = painIndicators.some(indicator =>
+      conversationText.includes(indicator),
     );
   }
 
@@ -68,9 +66,9 @@ export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): P
       'conseguir',
       'alcanzar',
     ];
-    
-    phaseInfo.goals_defined = goalIndicators.some(indicator => 
-      conversationText.includes(indicator)
+
+    phaseInfo.goals_defined = goalIndicators.some(indicator =>
+      conversationText.includes(indicator),
     );
   }
 
@@ -85,9 +83,9 @@ export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): P
       'no tengo',
       'me falta',
     ];
-    
-    phaseInfo.obstacles_identified = obstacleIndicators.some(indicator => 
-      conversationText.includes(indicator)
+
+    phaseInfo.obstacles_identified = obstacleIndicators.some(indicator =>
+      conversationText.includes(indicator),
     );
   }
 
@@ -102,9 +100,9 @@ export const extractPhaseInfo = (messages: AIMessage[], currentPhase: number): P
       'mostrar',
       'presentar',
     ];
-    
-    phaseInfo.offer_discussed = offerIndicators.some(indicator => 
-      conversationText.includes(indicator)
+
+    phaseInfo.offer_discussed = offerIndicators.some(indicator =>
+      conversationText.includes(indicator),
     );
   }
 

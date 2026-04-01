@@ -186,7 +186,10 @@ const EMOTIONAL_TONES = {
 };
 
 // Función principal de detección
-export function detectIntent(message: string, metadata?: { conversationId?: string; leadId?: string }): DetectedIntent {
+export function detectIntent(
+  message: string,
+  metadata?: { conversationId?: string; leadId?: string },
+): DetectedIntent {
   const lowerMessage = message.toLowerCase();
   const detectedIntents: { intent: string; matches: number }[] = [];
 
@@ -261,12 +264,14 @@ export function detectIntent(message: string, metadata?: { conversationId?: stri
 
   // Send to n8n webhook if enabled
   if (n8nIntegration.isEnabled() && metadata) {
-    n8nIntegration.onIntentDetected({
-      conversationId: metadata.conversationId,
-      leadId: metadata.leadId,
-      message,
-      intent: result
-    }).catch(err => console.error('[Intent Detector] N8N webhook error:', err));
+    n8nIntegration
+      .onIntentDetected({
+        conversationId: metadata.conversationId,
+        leadId: metadata.leadId,
+        message,
+        intent: result,
+      })
+      .catch(err => console.error('[Intent Detector] N8N webhook error:', err));
   }
 
   return result;

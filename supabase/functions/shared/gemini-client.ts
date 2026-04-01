@@ -15,18 +15,15 @@ export function initGeminiClient(): GoogleGenerativeAI {
   return genAI;
 }
 
-export async function generateContent(
-  config: GeminiConfig,
-  prompt: string
-): Promise<string> {
+export async function generateContent(config: GeminiConfig, prompt: string): Promise<string> {
   try {
     const client = initGeminiClient();
-    const model = client.getGenerativeModel({ 
+    const model = client.getGenerativeModel({
       model: config.model,
       generationConfig: {
         temperature: config.temperature || 0.7,
         maxOutputTokens: config.maxTokens || 2048,
-      }
+      },
     });
 
     const result = await model.generateContent(prompt);
@@ -44,8 +41,8 @@ export function validateGeminiModel(model: string): boolean {
     'gemini-2.5-pro-preview',
     'gemini-2.5-flash',
     'gemini-1.5-pro',
-    'gemini-1.5-flash'
+    'gemini-1.5-flash',
   ];
-  
+
   return validModels.some(validModel => model.startsWith(validModel));
 }

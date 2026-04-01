@@ -131,7 +131,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       applyFilters('', null, null, '', 'time', false);
     }, 100);
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only run once on mount
   }, []); // Solo ejecutar una vez al montar
 
   // Handle pending chat selection
