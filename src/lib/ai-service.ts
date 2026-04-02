@@ -1,11 +1,9 @@
 // AI Service Client - Secure API communication with Edge Functions
-// Replaces direct Gemini API calls with secure backend requests
-// Integrated with n8n webhooks for workflow automation
+// Uses OpenAI GPT models via Supabase Edge Functions
 
 import { supabase } from './supabase';
 import { n8nIntegration } from './n8n-integration';
 
-// Types for API requests and responses
 export interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -71,21 +69,24 @@ export interface QuickActionResponse {
   error?: string;
 }
 
-// Default Gemini models
-export const GEMINI_MODELS = {
-  'gemini-2.5-pro': 'gemini-2.5-pro',
-  'gemini-2.5-flash': 'gemini-2.5-flash',
-  'gemini-1.5-pro': 'gemini-1.5-pro',
+// OpenAI GPT Models
+export const AI_MODELS = {
+  'gpt-5.4': 'GPT 5.4',
+  'gpt-4o-mini': 'GPT-4o Mini',
 } as const;
 
-export type GeminiModel = keyof typeof GEMINI_MODELS;
+export type AIModel = keyof typeof AI_MODELS;
+
+// Backward compatibility aliases
+export const GEMINI_MODELS = AI_MODELS;
+export type GeminiModel = AIModel;
 
 /**
  * Generate AI response using secure backend
  */
 export async function generateAIResponse(params: {
   messages: AIMessage[];
-  model: GeminiModel;
+  model: AIModel;
   conversationContext?: any;
   currentPhase?: number;
   leadType?: string;
@@ -96,7 +97,7 @@ export async function generateAIResponse(params: {
   try {
     const request: GenerateResponseRequest = {
       messages: params.messages,
-      model: GEMINI_MODELS[params.model],
+      model: AI_MODELS[params.model],
       conversationContext: params.conversationContext,
       currentPhase: params.currentPhase,
       leadType: params.leadType,
@@ -229,69 +230,43 @@ export async function analyzeConversation(params: {
  * Generate quick actions using secure backend
  */
 export const generateQuickActions = {
-  /**
-   * Summarize conversation
-   */
-  summarizeConversation: async (messages: AIMessage[], model: GeminiModel): Promise<string> => {
+  summarizeConversation: async (messages: AIMessage[], model: AIModel): Promise<string> => {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: GEMINI_MODELS[model],
+        model: AI_MODELS[model],
         action: 'summarize',
       };
-
-      console.log('[AI Service] Generating conversation summary via Edge Function');
 
       const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 
-      if (error) {
-        console.error('[AI Service] Quick action error:', error);
-        throw new Error(`Conversation summarization failed: ${error.message}`);
-      }
-
+      if (error) throw new Error(`Conversation summarization failed: ${error.message}`);
       const response: QuickActionResponse = data;
-
-      if (!response.success) {
-        throw new Error(response.error || 'Conversation summarization failed');
-      }
-
-      return response.result || 'No se pudo generar un resumen de la conversación.';
+      if (!response.success) throw new Error(response.error || 'Summarization failed');
+      return response.result || 'No se pudo generar un resumen de la conversacion.';
     } catch (error) {
       console.error('[AI Service] Error summarizing conversation:', error);
       throw error;
     }
   },
 
-  /**
-   * Analyze sales phase
-   */
-  analyzeSalesPhase: async (messages: AIMessage[], model: GeminiModel): Promise<string> => {
+  analyzeSalesPhase: async (messages: AIMessage[], model: AIModel): Promise<string> => {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: GEMINI_MODELS[model],
+        model: AI_MODELS[model],
         action: 'analyze_phase',
       };
-
-      console.log('[AI Service] Analyzing sales phase via Edge Function');
 
       const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 
-      if (error) {
-        console.error('[AI Service] Quick action error:', error);
-        throw new Error(`Sales phase analysis failed: ${error.message}`);
-      }
-
+      if (error) throw new Error(`Sales phase analysis failed: ${error.message}`);
       const response: QuickActionResponse = data;
-
-      if (!response.success) {
-        throw new Error(response.error || 'Sales phase analysis failed');
-      }
-
+      if (!response.success) throw new Error(response.error || 'Phase analysis failed');
       return response.result || 'No se pudo analizar la fase de ventas.';
     } catch (error) {
       console.error('[AI Service] Error analyzing sales phase:', error);
@@ -299,42 +274,29 @@ export const generateQuickActions = {
     }
   },
 
-  /**
-   * Suggest messages
-   */
   suggestMessages: async (
     messages: AIMessage[],
-    model: GeminiModel,
+    model: AIModel,
     currentPhase?: number,
     leadType?: string,
   ): Promise<string> => {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: GEMINI_MODELS[model],
+        model: AI_MODELS[model],
         action: 'suggest_messages',
         currentPhase,
         leadType,
       };
 
-      console.log('[AI Service] Generating message suggestions via Edge Function');
-
       const { data, error } = await supabase.functions.invoke('ai-quick-actions-simple', {
         body: request,
       });
 
-      if (error) {
-        console.error('[AI Service] Quick action error:', error);
-        throw new Error(`Message suggestion failed: ${error.message}`);
-      }
-
+      if (error) throw new Error(`Message suggestion failed: ${error.message}`);
       const response: QuickActionResponse = data;
+      if (!response.success) throw new Error(response.error || 'Suggestion failed');
 
-      if (!response.success) {
-        throw new Error(response.error || 'Message suggestion failed');
-      }
-
-      // Send suggestions to n8n webhook
       if (n8nIntegration.isEnabled() && response.suggestions) {
         n8nIntegration
           .onSuggestionsGenerated({
@@ -371,14 +333,8 @@ export function convertToAIMessages(messages: any[]): AIMessage[] {
  */
 export async function checkAIServiceHealth(): Promise<boolean> {
   try {
-    // Simple health check with a minimal request
     const healthMessages: AIMessage[] = [{ role: 'user', content: 'health check' }];
-
-    const result = await generateQuickActions.summarizeConversation(
-      healthMessages,
-      'gemini-2.5-flash',
-    );
-
+    const result = await generateQuickActions.summarizeConversation(healthMessages, 'gpt-5.4');
     return typeof result === 'string' && result.length > 0;
   } catch (error) {
     console.error('[AI Service] Health check failed:', error);

@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Chat, Template } from '@/types';
-import { incrementTemplateUsage, updateMessageTemplate } from '../lib/supabase';
+import {
+  incrementTemplateUsage,
+  updateMessageTemplate,
+  createMessageTemplate,
+  MessageTemplate,
+} from '../lib/supabase';
 import { useConversationsQuery } from '../hooks/useConversationsQuery';
 import { useMessagesPagination } from '../hooks/useMessagesPagination';
 import { useTemplatesQuery } from '../hooks/useTemplatesQuery';
@@ -67,6 +72,26 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
 
   const handleTemplateDelete = (template: Template) => {
     console.log('Delete template:', template);
+  };
+
+  const handleCreateTemplate = async (template: Template) => {
+    try {
+      const newTemplate: Omit<MessageTemplate, 'id' | 'created_at' | 'updated_at'> = {
+        name: template.name,
+        content: template.content,
+        category: template.category || null,
+        tone: template.tone || null,
+        purpose: null,
+        variables: template.variables || [],
+        usage_count: 0,
+        conversion_rate: 0,
+        is_favorite: false,
+      };
+      await createMessageTemplate(newTemplate);
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+    } catch (error) {
+      console.error('Error creating template:', error);
+    }
   };
 
   const handleToggleFavorite = async (template: Template) => {
@@ -232,6 +257,7 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             onTemplateInsert={insertTemplate}
             onTemplateDelete={handleTemplateDelete}
             onToggleFavorite={handleToggleFavorite}
+            onCreateNew={handleCreateTemplate}
           />
 
           <EnhancedAIChatSidebar

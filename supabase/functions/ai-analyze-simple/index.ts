@@ -1,11 +1,9 @@
-// AI Conversation Analysis Edge Function - Simple version
-// Analyzes conversations using same pattern as send-message
+// AI Conversation Analysis Edge Function - OpenAI GPT version
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendToN8N, N8N_EVENTS, createN8NPayload } from '../shared/n8n-webhook.ts';
 
-// CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -15,36 +13,16 @@ const corsHeaders = {
 interface AnalyzeConversationRequest {
   conversationId: string;
   leadId: string;
-  messages: Array<{
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp?: string;
-  }>;
+  messages: Array<{ role: 'user' | 'assistant'; content: string; timestamp?: string }>;
   forceReanalyze?: boolean;
 }
 
-interface AnalyzeConversationResponse {
-  success: boolean;
-  analysis?: {
-    currentPhase: number;
-    qualificationScore: number;
-    leadProfile: any;
-    summary: string;
-    nextSteps: string[];
-    redFlags: string[];
-  };
-  error?: string;
-  isNewAnalysis?: boolean;
-}
-
 serve(async req => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -53,22 +31,13 @@ serve(async req => {
       });
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify user authentication
     const {
       data: { user },
       error: authError,
@@ -80,9 +49,7 @@ serve(async req => {
       });
     }
 
-    // Parse request body
     const request: AnalyzeConversationRequest = await req.json();
-
     if (!request.conversationId || !request.leadId || !request.messages) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
@@ -90,9 +57,8 @@ serve(async req => {
       });
     }
 
-    // Check if we need to analyze
+    // Check for recent cached analysis
     if (!request.forceReanalyze) {
-      // Check if we already have a recent analysis
       const { data: existingAnalysis } = await supabase
         .from('conversation_analysis')
         .select('*')
@@ -101,11 +67,9 @@ serve(async req => {
         .limit(1)
         .single();
 
-      if (existingAnalysis && existingAnalysis.created_at) {
+      if (existingAnalysis?.created_at) {
         const analysisAge = Date.now() - new Date(existingAnalysis.created_at).getTime();
-        const maxAge = 30 * 60 * 1000; // 30 minutes
-
-        if (analysisAge < maxAge) {
+        if (analysisAge < 30 * 60 * 1000) {
           return new Response(
             JSON.stringify({
               success: true,
@@ -119,30 +83,24 @@ serve(async req => {
               },
               isNewAnalysis: false,
             }),
-            {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            },
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
           );
         }
       }
     }
 
-    // Analyze conversation
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Build conversation context
     const conversationText = request.messages
       .map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content}`)
       .join('\n');
 
-    // Get analysis prompts from database
     const { data: analysisPrompt } = await supabase
       .from('prompts')
       .select('*')
@@ -150,7 +108,6 @@ serve(async req => {
       .eq('active', true)
       .single();
 
-    // Get lead data if available
     let leadContext = '';
     if (request.leadId) {
       const { data: lead } = await supabase
@@ -158,13 +115,11 @@ serve(async req => {
         .select('*')
         .eq('id', request.leadId)
         .single();
-
       if (lead) {
-        leadContext = `\n\n👤 DATOS DEL LEAD:\n- Instagram: @${lead.instagram_username}\n- Procedencia: ${lead.procedence || 'No especificada'}\n- Estado: ${lead.status}`;
+        leadContext = `\nDATOS DEL LEAD:\n- Instagram: @${lead.instagram_username}\n- Procedencia: ${lead.procedence || 'No especificada'}\n- Estado: ${lead.status}`;
       }
     }
 
-    // Count messages by sender
     const messagesBySender = request.messages.reduce(
       (acc, msg) => {
         acc[msg.role] = (acc[msg.role] || 0) + 1;
@@ -172,101 +127,97 @@ serve(async req => {
       },
       {} as Record<string, number>,
     );
-
     const engagementRate = messagesBySender.user / (request.messages.length || 1);
 
     const analysisInstructions =
       analysisPrompt?.content ||
-      `Analiza esta conversación de ventas para extraer insights accionables.`;
+      'Analiza esta conversacion de ventas para extraer insights accionables.';
 
-    // Call Gemini API for analysis
-    const geminiResponse = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=' +
-        apiKey,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `${analysisInstructions}
+    const systemPrompt = `${analysisInstructions}
 
-🎯 CONTEXTO:${leadContext}
+FASES DEL PROCESO:
+1. Contacto inicial (0-20%): Generar curiosidad, primer contacto
+2. Calificacion (21-40%): Identificar necesidad, validar fit
+3. Presentacion (41-60%): Mostrar valor, casos de exito
+4. Objeciones (61-80%): Resolver dudas, crear urgencia
+5. Cierre (81-100%): Agendar llamada, siguiente paso
+
+SCORING REALISTA:
+- 0.0-0.2: Sin interes, respuestas cortas o negativas
+- 0.3-0.4: Interes inicial, hace preguntas basicas
+- 0.5-0.6: Interes moderado, comparte informacion del negocio
+- 0.7-0.8: Alto interes, pregunta por precios/detalles
+- 0.9-1.0: Listo para cerrar, solicita siguiente paso
+
+Responde SOLO con JSON valido, sin markdown ni texto adicional.`;
+
+    const userPrompt = `CONTEXTO:${leadContext}
 - Total mensajes: ${request.messages.length}
 - Mensajes del lead: ${messagesBySender.user || 0}
 - Mensajes del setter: ${messagesBySender.assistant || 0}
 - Tasa de respuesta: ${(engagementRate * 100).toFixed(0)}%
 
-📊 FASES DEL PROCESO:
-1. Contacto inicial (0-20%): Generar curiosidad, primer contacto
-2. Calificación (21-40%): Identificar necesidad, validar fit
-3. Presentación (41-60%): Mostrar valor, casos de éxito
-4. Objeciones (61-80%): Resolver dudas, crear urgencia
-5. Cierre (81-100%): Agendar llamada, siguiente paso
-
-🧬 SCORING REALISTA:
-- 0.0-0.2: Sin interés, respuestas cortas o negativas
-- 0.3-0.4: Interés inicial, hace preguntas básicas
-- 0.5-0.6: Interés moderado, comparte información del negocio
-- 0.7-0.8: Alto interés, pregunta por precios/detalles
-- 0.9-1.0: Listo para cerrar, solicita siguiente paso
-
-🗣️ CONVERSACIÓN:
+CONVERSACION:
 ${conversationText}
 
-📤 GENERA ANÁLISIS DETALLADO en JSON:
+GENERA ANALISIS en JSON:
 {
-  "currentPhase": number (1-5 basado en el progreso real),
-  "qualificationScore": number (0-1, conservador y realista),
+  "currentPhase": number (1-5),
+  "qualificationScore": number (0-1, conservador),
   "leadProfile": {
     "type": "emprendedor/negocio_local/empresa/agencia/desconocido",
-    "characteristics": ["5 rasgos observados en la conversación"],
-    "businessType": "tipo de negocio mencionado o inferido",
+    "characteristics": ["rasgos observados"],
+    "businessType": "tipo de negocio",
     "sophisticationLevel": "bajo/medio/alto",
-    "mainObjections": ["objeciones explícitas o implícitas"],
-    "buyingSignals": ["indicadores positivos detectados"],
-    "painPoints": ["problemas o frustraciones mencionadas"],
-    "communicationStyle": "formal/casual/técnico/emocional"
+    "mainObjections": ["objeciones"],
+    "buyingSignals": ["indicadores positivos"],
+    "painPoints": ["problemas mencionados"],
+    "communicationStyle": "formal/casual/tecnico/emocional"
   },
-  "summary": "Resumen ejecutivo del estado y calidad del lead",
-  "nextSteps": ["3-5 acciones específicas y prácticas"],
-  "redFlags": ["señales de alerta o riesgos"],
-  "opportunities": ["oportunidades no exploradas"],
-  "keyInsights": ["3 insights clave sobre el lead"],
-  "recommendedApproach": "estrategia recomendada para próxima interacción"
-}`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1500,
-          },
-        }),
+  "summary": "Resumen ejecutivo",
+  "nextSteps": ["acciones especificas"],
+  "redFlags": ["alertas"],
+  "opportunities": ["oportunidades"],
+  "keyInsights": ["insights clave"],
+  "recommendedApproach": "estrategia recomendada"
+}`;
+
+    // Call OpenAI API
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
       },
-    );
+      body: JSON.stringify({
+        model: 'gpt-5.4',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.4,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     let analysis;
-    if (geminiResponse.ok) {
-      const geminiData = await geminiResponse.json();
+    if (openaiResponse.ok) {
+      const openaiData = await openaiResponse.json();
       try {
-        const responseText = geminiData.candidates[0].content.parts[0].text;
-        // Extract JSON from response
+        const responseText = openaiData.choices[0].message.content;
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           analysis = JSON.parse(jsonMatch[0]);
         }
       } catch (e) {
-        console.error('Error parsing Gemini response:', e);
+        console.error('Error parsing OpenAI response:', e);
       }
+    } else {
+      console.error('OpenAI API error:', await openaiResponse.text());
     }
 
-    // Fallback analysis if Gemini fails
+    // Fallback analysis
     if (!analysis) {
       const messageCount = request.messages.length;
       const hasQuestions = conversationText.includes('?');
@@ -279,32 +230,31 @@ ${conversationText}
         qualificationScore: hasBusinessMention ? 0.4 : 0.2,
         leadProfile: {
           type: 'desconocido',
-          characteristics: ['Conversación en desarrollo', 'Perfil por determinar'],
-          businessType: 'No identificado aún',
+          characteristics: ['Conversacion en desarrollo', 'Perfil por determinar'],
+          businessType: 'No identificado aun',
           sophisticationLevel: 'medio',
           mainObjections: [],
           buyingSignals: hasQuestions ? ['Hace preguntas'] : [],
           painPoints: [],
           communicationStyle: 'casual',
         },
-        summary: `Conversación con ${messageCount} mensajes. ${hasBusinessMention ? 'Menciona temas de negocio.' : 'Aún explorando interés.'}`,
+        summary: `Conversacion con ${messageCount} mensajes. ${hasBusinessMention ? 'Menciona temas de negocio.' : 'Aun explorando interes.'}`,
         nextSteps: [
           'Identificar el tipo de negocio del lead',
-          'Explorar necesidades específicas',
-          'Generar curiosidad sobre la solución',
+          'Explorar necesidades especificas',
+          'Generar curiosidad sobre la solucion',
         ],
-        redFlags: messageCount < 3 ? ['Conversación muy corta para evaluar'] : [],
+        redFlags: messageCount < 3 ? ['Conversacion muy corta para evaluar'] : [],
         opportunities: ['Profundizar en el negocio del lead'],
-        keyInsights: ['Análisis preliminar - se necesita más interacción'],
-        recommendedApproach: 'Hacer preguntas abiertas sobre su negocio y desafíos actuales',
+        keyInsights: ['Analisis preliminar - se necesita mas interaccion'],
+        recommendedApproach: 'Hacer preguntas abiertas sobre su negocio y desafios actuales',
       };
     }
 
-    // Save analysis to database with correct structure
-    // Calculate engagement metrics
+    // Save analysis
     const userMessages = request.messages.filter(m => m.role === 'user').length;
     const totalMessages = request.messages.length;
-    const engagementRate = totalMessages > 0 ? userMessages / totalMessages : 0;
+    const savedEngRate = totalMessages > 0 ? userMessages / totalMessages : 0;
 
     const { error: saveError } = await supabase.from('conversation_analysis').insert({
       conversation_id: request.conversationId,
@@ -332,7 +282,7 @@ ${conversationText}
       action_threads: analysis.nextSteps || [],
       urgency_score: Math.round(analysis.qualificationScore * 10),
       capacity_score: 5,
-      engagement_score: Math.round(engagementRate * 10),
+      engagement_score: Math.round(savedEngRate * 10),
       is_current: true,
       last_message_analyzed_at: new Date().toISOString(),
     });
@@ -341,7 +291,6 @@ ${conversationText}
       console.error('Error saving analysis:', saveError);
     }
 
-    // Send to n8n webhook
     await sendToN8N(
       createN8NPayload(
         N8N_EVENTS.CONVERSATION_ANALYZED,
@@ -354,15 +303,11 @@ ${conversationText}
           scores: {
             qualification: analysis.qualificationScore,
             urgency: Math.round(analysis.qualificationScore * 10),
-            engagement: Math.round(engagementRate * 10),
+            engagement: Math.round(savedEngRate * 10),
           },
         },
         'ai-analyze-simple',
-        {
-          userId: user.id,
-          conversationId: request.conversationId,
-          leadId: request.leadId,
-        },
+        { userId: user.id, conversationId: request.conversationId, leadId: request.leadId },
       ),
     );
 
@@ -382,10 +327,7 @@ ${conversationText}
         },
         isNewAnalysis: true,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (error) {
     console.error('Error in ai-analyze-simple function:', error);
@@ -394,10 +336,7 @@ ${conversationText}
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
 });

@@ -1,11 +1,10 @@
-// AI Response Generation Edge Function - Simple version
+// AI Response Generation Edge Function - OpenAI GPT version
 // Generates AI responses for chat conversations
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendToN8N, N8N_EVENTS, createN8NPayload } from '../shared/n8n-webhook.ts';
 
-// CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -13,10 +12,7 @@ const corsHeaders = {
 };
 
 interface GenerateResponseRequest {
-  messages: Array<{
-    role: 'user' | 'assistant';
-    content: string;
-  }>;
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   model: string;
   conversationContext?: any;
   currentPhase?: number;
@@ -26,26 +22,12 @@ interface GenerateResponseRequest {
   enableTracking?: boolean;
 }
 
-interface GenerateResponseResponse {
-  success: boolean;
-  response?: string;
-  error?: string;
-  metadata?: {
-    phase?: number;
-    score?: number;
-    intent?: string;
-    personalization?: any;
-  };
-}
-
 serve(async req => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Get auth token from headers
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -54,22 +36,13 @@ serve(async req => {
       });
     }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify user authentication
     const {
       data: { user },
       error: authError,
@@ -81,9 +54,7 @@ serve(async req => {
       });
     }
 
-    // Parse request body
     const request: GenerateResponseRequest = await req.json();
-
     if (!request.messages || !request.model) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
@@ -91,28 +62,25 @@ serve(async req => {
       });
     }
 
-    // Check API key
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+      return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Build conversation context
     const conversationText = request.messages
       .map(msg => `${msg.role === 'user' ? 'Lead' : 'Setter'}: ${msg.content}`)
       .join('\n');
 
-    // Get phase information
     const phase = request.currentPhase || 1;
-    const phaseDescriptions = {
+    const phaseDescriptions: Record<number, string> = {
       1: 'Contacto inicial - Genera curiosidad',
-      2: 'Calificación - Identifica necesidades',
-      3: 'Presentación - Muestra valor',
+      2: 'Calificacion - Identifica necesidades',
+      3: 'Presentacion - Muestra valor',
       4: 'Manejo de objeciones - Resuelve dudas',
-      5: 'Cierre - Solicita acción',
+      5: 'Cierre - Solicita accion',
     };
 
     // Get prompts and templates from database
@@ -137,23 +105,19 @@ serve(async req => {
       .eq('phase', phase)
       .limit(3);
 
-    // Build enhanced prompt with database content
-    let systemPrompt = activePrompt?.content || `Eres un setter profesional de Quantum Creators.`;
+    let systemPrompt = activePrompt?.content || 'Eres un setter profesional de Quantum Creators.';
 
     if (scriptTemplate) {
-      systemPrompt += `\n\n📋 TEMPLATE PARA FASE ${phase}:\n${scriptTemplate.content}`;
+      systemPrompt += `\n\nTEMPLATE PARA FASE ${phase}:\n${scriptTemplate.content}`;
     }
 
-    // Add few-shot examples if available
-    let examplesSection = '';
     if (fewShotExamples && fewShotExamples.length > 0) {
-      examplesSection = '\n\n💡 EJEMPLOS DE RESPUESTAS EXITOSAS:\n';
-      fewShotExamples.forEach((example, idx) => {
-        examplesSection += `\nEjemplo ${idx + 1}:\nLead: ${example.lead_message}\nSetter: ${example.setter_response}\n`;
+      systemPrompt += '\n\nEJEMPLOS DE RESPUESTAS EXITOSAS:\n';
+      fewShotExamples.forEach((example: any, idx: number) => {
+        systemPrompt += `\nEjemplo ${idx + 1}:\nLead: ${example.lead_message}\nSetter: ${example.setter_response}\n`;
       });
     }
 
-    // Analyze lead profile from conversation
     let leadAnalysis = '';
     if (request.conversationId && request.leadId) {
       const { data: conversationData } = await supabase
@@ -163,75 +127,58 @@ serve(async req => {
         .single();
 
       if (conversationData?.lead_profile) {
-        leadAnalysis = `\n\n👤 PERFIL DEL LEAD:\n${JSON.stringify(conversationData.lead_profile, null, 2)}`;
+        leadAnalysis = `\nPERFIL DEL LEAD:\n${JSON.stringify(conversationData.lead_profile, null, 2)}`;
       }
     }
 
-    const prompt = `${systemPrompt}
-
-🎯 CONTEXTO ACTUAL:
-- Fase: ${phase} - ${phaseDescriptions[phase]}
-- Mensajes intercambiados: ${request.messages.length}
-${leadAnalysis}
-${examplesSection}
-
-📝 REGLAS CRÍTICAS:
-1. Responde en 2-3 líneas máximo
+    systemPrompt += `\n\nREGLAS CRITICAS:
+1. Responde en 2-3 lineas maximo
 2. Habla como una persona real, no un bot
 3. Adapta tu tono al estilo del lead
 4. NO uses signos ¿ o ¡ al inicio
 5. Termina con pregunta abierta o CTA suave
-6. Sé específico y relevante al contexto
+6. Se especifico y relevante al contexto`;
 
-🗣️ CONVERSACIÓN:
+    const userPrompt = `CONTEXTO ACTUAL:
+- Fase: ${phase} - ${phaseDescriptions[phase]}
+- Mensajes intercambiados: ${request.messages.length}
+${leadAnalysis}
+
+CONVERSACION:
 ${conversationText}
 
-✍️ Tu respuesta natural y humana:`;
+Tu respuesta natural y humana:`;
 
-    // Call Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${request.model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 150,
-          },
-        }),
+    // Call OpenAI API
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
       },
-    );
+      body: JSON.stringify({
+        model: request.model || 'gpt-5.4',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.8,
+        max_tokens: 150,
+      }),
+    });
 
-    if (!geminiResponse.ok) {
-      console.error('Gemini API error:', await geminiResponse.text());
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'AI service unavailable',
-        }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
+    if (!openaiResponse.ok) {
+      console.error('OpenAI API error:', await openaiResponse.text());
+      return new Response(JSON.stringify({ success: false, error: 'AI service unavailable' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const geminiData = await geminiResponse.json();
-    const responseText = geminiData.candidates[0].content.parts[0].text.trim();
+    const openaiData = await openaiResponse.json();
+    const responseText = openaiData.choices[0].message.content.trim();
 
-    // Advanced intent detection
+    // Intent detection
     const lastUserMessage = request.messages.filter(m => m.role === 'user').pop();
     let detectedIntent = 'neutral';
     let emotionalTone = 'neutral';
@@ -239,8 +186,6 @@ ${conversationText}
 
     if (lastUserMessage) {
       const content = lastUserMessage.content.toLowerCase();
-
-      // Intent detection
       if (content.match(/\b(precio|cuesta|costo|pagar|vale|cobr|tarifa|inversi)\b/)) {
         detectedIntent = 'price_inquiry';
         buyingSignals += 3;
@@ -258,7 +203,6 @@ ${conversationText}
         buyingSignals += 2;
       }
 
-      // Emotional tone detection
       if (content.match(/\b(genial|incre[ií]ble|wow|excelente|perfecto)\b/)) {
         emotionalTone = 'excited';
         buyingSignals += 3;
@@ -268,22 +212,20 @@ ${conversationText}
       } else if (content.match(/\b(no s[eé]|quiz[aá]|tal vez|puede ser)\b/)) {
         emotionalTone = 'uncertain';
       }
-
-      // Cap buying signals
       buyingSignals = Math.max(0, Math.min(10, buyingSignals));
     }
 
-    const response: GenerateResponseResponse = {
+    const response = {
       success: true,
       response: responseText,
       metadata: {
-        phase: phase,
-        score: buyingSignals / 10, // Dynamic scoring based on signals
+        phase,
+        score: buyingSignals / 10,
         intent: detectedIntent,
         personalization: {
           tone: emotionalTone,
           style: buyingSignals > 5 ? 'enthusiastic' : 'friendly',
-          buyingSignals: buyingSignals,
+          buyingSignals,
         },
       },
     };
@@ -309,7 +251,6 @@ ${conversationText}
       }
     }
 
-    // Send to n8n webhook
     await sendToN8N(
       createN8NPayload(
         N8N_EVENTS.AI_RESPONSE_GENERATED,
@@ -323,11 +264,7 @@ ${conversationText}
           messageCount: request.messages.length,
         },
         'ai-response-simple',
-        {
-          userId: user.id,
-          conversationId: request.conversationId,
-          leadId: request.leadId,
-        },
+        { userId: user.id, conversationId: request.conversationId, leadId: request.leadId },
       ),
     );
 
@@ -343,10 +280,7 @@ ${conversationText}
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }
 });

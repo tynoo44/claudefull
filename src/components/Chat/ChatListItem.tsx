@@ -39,7 +39,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
         <div className="relative flex-shrink-0">
           {chat.avatar.startsWith('data:image/svg') ? (
             <div
-              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-medium text-sm"
+              className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-medium text-sm overflow-hidden"
               dangerouslySetInnerHTML={{ __html: decodeURIComponent(chat.avatar.split(',')[1]) }}
             />
           ) : (

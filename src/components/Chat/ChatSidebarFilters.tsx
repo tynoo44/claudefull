@@ -1,5 +1,14 @@
 import React from 'react';
-import { Filter, Hash, SortAsc } from 'lucide-react';
+import {
+  Filter,
+  MapPin,
+  ArrowUpDown,
+  Clock,
+  User,
+  BarChart3,
+  AlertCircle,
+  CalendarDays,
+} from 'lucide-react';
 import { LeadStatus, LeadProcedence } from '@/types';
 import { getStatusClasses } from '../../utils/statusUtils';
 
@@ -35,12 +44,26 @@ const STATUS_OPTIONS: LeadStatus[] = [
 const PROCEDENCE_OPTIONS: LeadProcedence[] = ['Outbound', 'Inbound', 'CTA', 'Spam'];
 
 const SORT_OPTIONS = [
-  { value: 'time', label: 'Último mensaje', icon: '🕐' },
-  { value: 'name', label: 'Nombre', icon: '👤' },
-  { value: 'status', label: 'Estado', icon: '📊' },
-  { value: 'unread', label: 'Sin responder', icon: '🔴' },
-  { value: 'start-date', label: 'Fecha de inicio', icon: '📅' },
+  { value: 'time', label: 'Reciente', Icon: Clock },
+  { value: 'name', label: 'Nombre', Icon: User },
+  { value: 'status', label: 'Estado', Icon: BarChart3 },
+  { value: 'unread', label: 'Sin leer', Icon: AlertCircle },
+  { value: 'start-date', label: 'Fecha', Icon: CalendarDays },
 ];
+
+const PROCEDENCE_COLORS: Record<LeadProcedence, { light: string; dark: string }> = {
+  Outbound: { light: 'bg-blue-50 text-blue-700', dark: 'bg-blue-600/20 text-blue-400' },
+  Inbound: { light: 'bg-green-50 text-green-700', dark: 'bg-green-600/20 text-green-400' },
+  CTA: { light: 'bg-purple-50 text-purple-700', dark: 'bg-purple-600/20 text-purple-400' },
+  Spam: { light: 'bg-red-50 text-red-700', dark: 'bg-red-600/20 text-red-400' },
+};
+
+const PROCEDENCE_DOT: Record<LeadProcedence, { light: string; dark: string }> = {
+  Outbound: { light: 'bg-blue-500', dark: 'bg-blue-400' },
+  Inbound: { light: 'bg-green-500', dark: 'bg-green-400' },
+  CTA: { light: 'bg-purple-500', dark: 'bg-purple-400' },
+  Spam: { light: 'bg-red-500', dark: 'bg-red-400' },
+};
 
 export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
   darkMode,
@@ -56,43 +79,54 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
   onSortChange,
   onDropdownToggle,
 }) => {
+  const activeSort = SORT_OPTIONS.find(opt => opt.value === sortBy);
+  const SortIcon = activeSort?.Icon || Clock;
+
+  const chipInactive = (isOpen: boolean) =>
+    isOpen
+      ? darkMode
+        ? 'bg-gray-600 text-white'
+        : 'bg-gray-200 text-gray-800'
+      : darkMode
+        ? 'bg-gray-700/60 text-gray-300 hover:bg-gray-700'
+        : 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+
+  const dropdownCls = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
+
+  const itemCls = (active: boolean) =>
+    active
+      ? darkMode
+        ? 'bg-blue-600/15 text-blue-400'
+        : 'bg-blue-50 text-blue-600'
+      : darkMode
+        ? 'text-gray-300 hover:bg-gray-700/70'
+        : 'text-gray-700 hover:bg-gray-50';
+
   return (
-    <div className="flex gap-1 mb-2">
+    <div className="flex items-center gap-1.5 mt-2">
       {/* Status Filter */}
-      <div className="relative flex-1">
+      <div className="relative">
         <button
           onClick={() => onDropdownToggle('status')}
-          className={`flex items-center gap-1 px-2 py-1.5 rounded border text-xs transition-all w-full justify-center ${
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
             statusFilter
-              ? `${getStatusClasses(statusFilter, darkMode)} border-transparent`
-              : darkMode
-                ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              ? getStatusClasses(statusFilter, darkMode)
+              : chipInactive(showStatusDropdown)
           }`}
         >
-          <Filter className="w-3 h-3" />
-          <span className="truncate">{statusFilter || 'Estado'}</span>
+          <Filter className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate max-w-[70px]">{statusFilter || 'Estado'}</span>
         </button>
         {showStatusDropdown && (
           <div
-            className={`absolute top-full left-0 mt-1 min-w-[200px] rounded-lg border shadow-lg z-50 ${
-              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}
+            className={`absolute top-full left-0 mt-1.5 w-52 rounded-xl border shadow-xl z-50 py-1 max-h-60 overflow-y-auto ${dropdownCls}`}
           >
             <button
               onClick={() => {
                 onStatusFilterChange(null);
                 onDropdownToggle('status');
               }}
-              className={`w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg ${
-                !statusFilter
-                  ? darkMode
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'bg-blue-50 text-blue-600'
-                  : darkMode
-                    ? 'hover:bg-gray-700 text-gray-300'
-                    : 'hover:bg-gray-50 text-gray-700'
-              }`}
+              className={`w-full px-3 py-2 text-left text-sm transition-colors ${itemCls(!statusFilter)}`}
             >
               Todos los estados
             </button>
@@ -103,22 +137,12 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
                   onStatusFilterChange(status);
                   onDropdownToggle('status');
                 }}
-                className={`w-full px-4 py-2 text-left text-sm transition-colors last:rounded-b-lg ${
-                  statusFilter === status
-                    ? darkMode
-                      ? 'bg-blue-600/20 text-blue-400'
-                      : 'bg-blue-50 text-blue-600'
-                    : darkMode
-                      ? 'hover:bg-gray-700 text-gray-300'
-                      : 'hover:bg-gray-50 text-gray-700'
-                }`}
+                className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${itemCls(statusFilter === status)}`}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${getStatusClasses(status, darkMode).split(' ')[0]}`}
-                  />
-                  {status}
-                </div>
+                <div
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusClasses(status, darkMode).split(' ')[0]}`}
+                />
+                <span className="truncate">{status}</span>
               </button>
             ))}
           </div>
@@ -126,182 +150,85 @@ export const ChatSidebarFilters: React.FC<ChatSidebarFiltersProps> = ({
       </div>
 
       {/* Procedence Filter */}
-      <div className="relative flex-1">
+      <div className="relative">
         <button
           onClick={() => onDropdownToggle('procedence')}
-          className={`flex items-center gap-1 px-2 py-1.5 rounded border text-xs transition-all w-full justify-center ${
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
             procedenceFilter
-              ? procedenceFilter === 'Outbound'
-                ? darkMode
-                  ? 'bg-blue-600/20 text-blue-400 border-blue-500/30'
-                  : 'bg-blue-100 text-blue-700 border-blue-200'
-                : procedenceFilter === 'Inbound'
-                  ? darkMode
-                    ? 'bg-green-600/20 text-green-400 border-green-500/30'
-                    : 'bg-green-100 text-green-700 border-green-200'
-                  : procedenceFilter === 'CTA'
-                    ? darkMode
-                      ? 'bg-purple-600/20 text-purple-400 border-purple-500/30'
-                      : 'bg-purple-100 text-purple-700 border-purple-200'
-                    : darkMode
-                      ? 'bg-red-600/20 text-red-400 border-red-500/30'
-                      : 'bg-red-100 text-red-700 border-red-200'
-              : darkMode
-                ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              ? darkMode
+                ? PROCEDENCE_COLORS[procedenceFilter].dark
+                : PROCEDENCE_COLORS[procedenceFilter].light
+              : chipInactive(showProcedenceDropdown)
           }`}
         >
-          <Hash className="w-3 h-3" />
-          <span className="truncate">{procedenceFilter || 'Origen'}</span>
+          <MapPin className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate max-w-[60px]">{procedenceFilter || 'Origen'}</span>
         </button>
         {showProcedenceDropdown && (
           <div
-            className={`absolute top-full left-0 mt-1 min-w-[150px] rounded-lg border shadow-lg z-50 ${
-              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}
+            className={`absolute top-full left-0 mt-1.5 w-44 rounded-xl border shadow-xl z-50 py-1 ${dropdownCls}`}
           >
             <button
               onClick={() => {
                 onProcedenceFilterChange(null);
                 onDropdownToggle('procedence');
               }}
-              className={`w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg ${
-                !procedenceFilter
-                  ? darkMode
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'bg-blue-50 text-blue-600'
-                  : darkMode
-                    ? 'hover:bg-gray-700 text-gray-300'
-                    : 'hover:bg-gray-50 text-gray-700'
-              }`}
+              className={`w-full px-3 py-2 text-left text-sm transition-colors ${itemCls(!procedenceFilter)}`}
             >
-              Todas las procedencias
+              Todos
             </button>
-            {PROCEDENCE_OPTIONS.map(procedence => (
+            {PROCEDENCE_OPTIONS.map(proc => (
               <button
-                key={procedence}
+                key={proc}
                 onClick={() => {
-                  onProcedenceFilterChange(procedence);
+                  onProcedenceFilterChange(proc);
                   onDropdownToggle('procedence');
                 }}
-                className={`w-full px-4 py-2 text-left text-sm transition-colors last:rounded-b-lg ${
-                  procedenceFilter === procedence
-                    ? darkMode
-                      ? 'bg-blue-600/20 text-blue-400'
-                      : 'bg-blue-50 text-blue-600'
-                    : darkMode
-                      ? 'hover:bg-gray-700 text-gray-300'
-                      : 'hover:bg-gray-50 text-gray-700'
-                }`}
+                className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${itemCls(procedenceFilter === proc)}`}
               >
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      procedence === 'Outbound'
-                        ? darkMode
-                          ? 'bg-blue-400'
-                          : 'bg-blue-600'
-                        : procedence === 'Inbound'
-                          ? darkMode
-                            ? 'bg-green-400'
-                            : 'bg-green-600'
-                          : procedence === 'CTA'
-                            ? darkMode
-                              ? 'bg-purple-400'
-                              : 'bg-purple-600'
-                            : darkMode
-                              ? 'bg-red-400'
-                              : 'bg-red-600'
-                    }`}
-                  />
-                  {procedence}
-                </div>
+                <div
+                  className={`w-2 h-2 rounded-full flex-shrink-0 ${darkMode ? PROCEDENCE_DOT[proc].dark : PROCEDENCE_DOT[proc].light}`}
+                />
+                {proc}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Sort */}
-      <div className="relative flex-1">
-        <div
-          className={`flex items-center rounded border text-xs transition-all ${
-            darkMode
-              ? 'bg-gray-700 border-gray-600 text-gray-300'
-              : 'bg-white border-gray-300 text-gray-700'
-          }`}
+      {/* Sort - aligned right */}
+      <div className="relative ml-auto">
+        <button
+          onClick={() => onDropdownToggle('sort')}
+          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${chipInactive(showSortDropdown)}`}
         >
-          <button
-            onClick={() => onDropdownToggle('sort')}
-            className={`flex items-center gap-1 px-2 py-1.5 flex-1 rounded-l transition-colors justify-center ${
-              darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
-            }`}
-          >
-            <SortAsc className="w-3 h-3" />
-            <span className="truncate">{SORT_OPTIONS.find(opt => opt.value === sortBy)?.icon}</span>
-          </button>
-          <div className={`w-px h-4 ${darkMode ? 'bg-gray-600' : 'bg-gray-300'}`} />
-          <button
-            onClick={() => onSortChange(sortBy, !sortAscending)}
-            className={`px-1.5 py-1.5 rounded-r transition-colors ${
-              darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
-            }`}
-            title={sortAscending ? 'Cambiar a descendente' : 'Cambiar a ascendente'}
-          >
-            <span
-              className={`text-xs opacity-60 ${sortAscending ? 'rotate-180' : ''} transition-transform block`}
-            >
-              ▼
-            </span>
-          </button>
-        </div>
+          <SortIcon className="w-3 h-3 flex-shrink-0" />
+          <ArrowUpDown className="w-2.5 h-2.5 opacity-50" />
+        </button>
         {showSortDropdown && (
           <div
-            className={`absolute top-full left-0 mt-1 min-w-[250px] rounded-lg border shadow-lg z-50 ${
-              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}
+            className={`absolute top-full right-0 mt-1.5 w-44 rounded-xl border shadow-xl z-50 py-1 ${dropdownCls}`}
           >
-            {SORT_OPTIONS.map(option => (
-              <div
-                key={option.value}
-                className={`flex items-center justify-between w-full px-4 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  sortBy === option.value
-                    ? darkMode
-                      ? 'bg-blue-600/20 text-blue-400'
-                      : 'bg-blue-50 text-blue-600'
-                    : darkMode
-                      ? 'hover:bg-gray-700 text-gray-300'
-                      : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
+            {SORT_OPTIONS.map(option => {
+              const OptIcon = option.Icon;
+              return (
                 <button
+                  key={option.value}
                   onClick={() => {
-                    onSortChange(option.value, option.value === 'name');
+                    onSortChange(
+                      option.value,
+                      option.value === sortBy ? !sortAscending : option.value === 'name',
+                    );
                     onDropdownToggle('sort');
                   }}
-                  className="flex items-center gap-2 flex-1 text-left"
+                  className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2.5 ${itemCls(sortBy === option.value)}`}
                 >
-                  <span className="text-base">{option.icon}</span>
-                  {option.label}
+                  <OptIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="flex-1">{option.label}</span>
+                  {sortBy === option.value && <ArrowUpDown className="w-3 h-3 opacity-50" />}
                 </button>
-                {sortBy === option.value && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onSortChange(sortBy, !sortAscending);
-                    }}
-                    className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-                    title={sortAscending ? 'Cambiar a descendente' : 'Cambiar a ascendente'}
-                  >
-                    <span
-                      className={`text-xs opacity-60 ${sortAscending ? 'rotate-180' : ''} transition-transform block`}
-                    >
-                      ▼
-                    </span>
-                  </button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

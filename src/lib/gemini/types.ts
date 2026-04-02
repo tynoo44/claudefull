@@ -1,4 +1,4 @@
-// Types and interfaces for Gemini AI module
+// Types and interfaces for AI module
 
 export interface PhaseInfo {
   business_type?: string;
@@ -17,7 +17,7 @@ export interface AIMessage {
 
 export interface GenerateResponseOptions {
   messages: AIMessage[];
-  model: GeminiModel;
+  model: AIModel;
   conversationContext?: string;
   currentPhase?: number;
   leadType?: string;
@@ -26,13 +26,16 @@ export interface GenerateResponseOptions {
   enableTracking?: boolean;
 }
 
-// Available models - Pro is now default
-export const GEMINI_MODELS = {
-  'gemini-2.5-pro': 'Gemini 2.5 Pro',
-  'gemini-2.5-flash': 'Gemini 2.5 Flash',
+// Available models - GPT
+export const AI_MODELS = {
+  'gpt-5.4': 'GPT 5.4',
+  'gpt-4o-mini': 'GPT-4o Mini',
 } as const;
 
-// Default model configuration
-export const DEFAULT_MODEL: GeminiModel = 'gemini-2.5-pro';
+// Backward compatibility
+export const GEMINI_MODELS = AI_MODELS;
 
-export type GeminiModel = keyof typeof GEMINI_MODELS;
+export const DEFAULT_MODEL: AIModel = 'gpt-5.4';
+
+export type AIModel = keyof typeof AI_MODELS;
+export type GeminiModel = AIModel;

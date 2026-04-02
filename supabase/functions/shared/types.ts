@@ -64,7 +64,7 @@ export interface QuickActionResponse {
   error?: string;
 }
 
-export interface GeminiConfig {
+export interface AIConfig {
   model: string;
   temperature?: number;
   maxTokens?: number;

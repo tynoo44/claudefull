@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Star, FileText } from 'lucide-react';
+import { Search, Star, FileText, Plus } from 'lucide-react';
 import { Template } from '@/types';
 import { TemplateCard } from '../Templates/TemplateCard';
 import { TemplateModal } from '../Templates/TemplateModal';
@@ -10,6 +10,7 @@ interface ChatTemplatesViewProps {
   onTemplateInsert: (template: Template) => void;
   onTemplateDelete: (template: Template) => void;
   onToggleFavorite: (template: Template) => void;
+  onCreateNew?: (template: Template) => void;
 }
 
 type SortOption = 'mostUsed' | 'leastUsed' | 'successRate' | 'alphabetical' | 'recent';
@@ -20,6 +21,7 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
   onTemplateInsert,
   onTemplateDelete,
   onToggleFavorite,
+  onCreateNew,
 }) => {
   const [templateSearch, setTemplateSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -48,16 +50,25 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
     }
   };
 
+  const [isCreateMode, setIsCreateMode] = useState(false);
+
   const handleSave = async (template: Template) => {
     try {
-      // For now, we only update favorites through onToggleFavorite
-      // In the future, this could handle other template updates
-      console.log('Template saved:', template);
+      if (isCreateMode && onCreateNew) {
+        onCreateNew(template);
+        setIsCreateMode(false);
+      }
       return true;
     } catch (error) {
       console.error('Error saving template:', error);
       return false;
     }
+  };
+
+  const handleCreateNew = () => {
+    setSelectedTemplate(null);
+    setIsCreateMode(true);
+    setShowModal(true);
   };
 
   const handleTemplateClick = (template: Template) => {
@@ -68,6 +79,7 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
   const handleModalClose = () => {
     setShowModal(false);
     setSelectedTemplate(null);
+    setIsCreateMode(false);
   };
 
   const handleModalInsert = (template: Template) => {
@@ -115,11 +127,22 @@ export const ChatTemplatesView: React.FC<ChatTemplatesViewProps> = ({
     <div className={`h-full flex flex-col ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
       {/* Header */}
       <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center gap-2 mb-4">
-          <FileText className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-          <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Plantillas
-          </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FileText className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Plantillas
+            </h3>
+          </div>
+          {onCreateNew && (
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Crear
+            </button>
+          )}
         </div>
 
         {/* Search */}

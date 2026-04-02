@@ -2,7 +2,9 @@
 
 import { generateAIResponse } from '../../lib/ai-service';
 
-const DEFAULT_MODEL = 'gemini-2.5-flash' as const;
+import { type AIModel } from '../../lib/ai-service';
+
+const DEFAULT_MODEL: AIModel = 'gpt-5.4';
 import { generatePhaseDetails, generatePhaseProgress } from './phaseAnalyzer';
 import { ConversationMessage } from './types';
 

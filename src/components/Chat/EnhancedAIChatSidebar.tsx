@@ -11,12 +11,12 @@ import {
 import {
   generateAIResponse,
   generateQuickActions,
-  GEMINI_MODELS,
-  type GeminiModel,
-  type AIMessage as GeminiAIMessage,
+  AI_MODELS,
+  type AIModel,
+  type AIMessage as ServiceAIMessage,
 } from '../../lib/ai-service';
 
-const DEFAULT_MODEL = 'gemini-2.5-flash' as const;
+const DEFAULT_MODEL: AIModel = 'gpt-4o-mini';
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
 import { ConversationStatusCard } from './ConversationStatusCard';
@@ -51,7 +51,7 @@ interface AIMessage {
 }
 
 // Helper function to convert local AIMessage to ai-service AIMessage
-const convertToServiceMessage = (message: AIMessage): GeminiAIMessage => ({
+const convertToServiceMessage = (message: AIMessage): ServiceAIMessage => ({
   role: message.role,
   content: message.content,
   timestamp: message.timestamp.toISOString(),
@@ -81,7 +81,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<GeminiModel>(DEFAULT_MODEL);
+  const [selectedModel, setSelectedModel] = useState<AIModel>(DEFAULT_MODEL);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<'analysis' | 'chat'>('analysis');
   const [suggestions, setSuggestions] = useState<MessageSuggestion[]>([]);
@@ -144,7 +144,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     try {
       // Build conversation context and messages from actual conversation
       let fullContext = conversationContext || '';
-      let allMessages: GeminiAIMessage[] = [];
+      let allMessages: ServiceAIMessage[] = [];
 
       if (currentConversation?.messages && Array.isArray(currentConversation.messages)) {
         // Convert conversation messages to AI format
@@ -206,7 +206,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     setIsGeneratingSuggestions(true);
 
     try {
-      const conversationMessages: GeminiAIMessage[] = (
+      const conversationMessages: ServiceAIMessage[] = (
         currentConversation.messages as Record<string, unknown>[]
       ).map(msg => ({
         role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
@@ -374,7 +374,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
               `}
             >
               <Sparkles className="w-3 h-3" />
-              {selectedModel === 'gemini-2.5-pro' ? 'Pro' : 'Flash'}
+              {selectedModel === 'gpt-5.4' ? '5.4' : 'Mini'}
               <ChevronDown className="w-3 h-3" />
             </button>
 
@@ -385,11 +385,11 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
                 ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}
               `}
               >
-                {Object.entries(GEMINI_MODELS).map(([key, name]) => (
+                {Object.entries(AI_MODELS).map(([key, name]) => (
                   <button
                     key={key}
                     onClick={() => {
-                      setSelectedModel(key as GeminiModel);
+                      setSelectedModel(key as AIModel);
                       setShowModelDropdown(false);
                     }}
                     className={`

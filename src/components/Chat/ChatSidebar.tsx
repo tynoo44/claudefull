@@ -100,7 +100,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       unread: conv.hasUnansweredMessages,
       avatar:
         leadData?.profile_pic ||
-        `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23${darkMode ? '374151' : 'E5E7EB'}" width="100" height="100"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${(leadData?.full_name || leadData?.username || 'U').charAt(0).toUpperCase()}</text></svg>`,
+        `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle fill="%23${darkMode ? '374151' : 'E5E7EB'}" cx="50" cy="50" r="50"/><text fill="%23${darkMode ? '9CA3AF' : '6B7280'}" font-size="40" x="50" y="50" text-anchor="middle" dy=".35em">${(leadData?.full_name || leadData?.username || 'U').charAt(0).toUpperCase()}</text></svg>`,
       status: (leadData?.status || 'Open') as LeadStatus,
       isOnline: true,
       platform: 'instagram' as const,
