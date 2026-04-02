@@ -182,8 +182,16 @@ GENERA 3 RESPUESTAS (separa con linea en blanco):`;
     });
 
     if (!openaiResponse.ok) {
-      console.error('OpenAI API error:', await openaiResponse.text());
-      return new Response(JSON.stringify({ success: false, error: 'AI service unavailable' }), {
+      const errorBody = await openaiResponse.text();
+      console.error('OpenAI API error:', openaiResponse.status, errorBody);
+      let errorMsg = `OpenAI ${openaiResponse.status}`;
+      try {
+        const parsed = JSON.parse(errorBody);
+        errorMsg = parsed.error?.message || parsed.error?.code || errorMsg;
+      } catch {
+        /* use default */
+      }
+      return new Response(JSON.stringify({ success: false, error: errorMsg }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

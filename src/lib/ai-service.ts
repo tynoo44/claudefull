@@ -76,12 +76,24 @@ export const AI_MODELS = {
 } as const;
 
 /**
- * Extract meaningful error message from Supabase Functions errors
+ * Extract meaningful error message from Supabase Functions errors.
+ * FunctionsHttpError stores the response body in .context, not .message
  */
 function extractErrorMessage(error: unknown): string {
   if (!error) return 'Unknown error';
   if (error instanceof Error) {
-    // FunctionsHttpError stores the response body in message
+    // supabase-js FunctionsHttpError: actual error is in .context
+    const ctx = (error as Record<string, unknown>).context;
+    if (ctx) {
+      if (typeof ctx === 'object' && ctx !== null) {
+        const obj = ctx as Record<string, unknown>;
+        if (obj.error) return String(obj.error);
+        if (obj.details) return String(obj.details);
+        return JSON.stringify(ctx);
+      }
+      return String(ctx);
+    }
+    // Fallback: try parsing message as JSON
     try {
       const parsed = JSON.parse(error.message);
       return parsed.error || parsed.details || error.message;

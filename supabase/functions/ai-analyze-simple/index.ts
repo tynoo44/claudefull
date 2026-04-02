@@ -214,7 +214,8 @@ GENERA ANALISIS en JSON:
         console.error('Error parsing OpenAI response:', e);
       }
     } else {
-      console.error('OpenAI API error:', await openaiResponse.text());
+      const errorBody = await openaiResponse.text();
+      console.error('OpenAI API error:', openaiResponse.status, errorBody);
     }
 
     // Fallback analysis
