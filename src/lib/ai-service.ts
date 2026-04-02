@@ -83,7 +83,7 @@ function extractErrorMessage(error: unknown): string {
   if (!error) return 'Unknown error';
   if (error instanceof Error) {
     // supabase-js FunctionsHttpError: actual error is in .context
-    const ctx = (error as Record<string, unknown>).context;
+    const ctx = (error as unknown as Record<string, unknown>).context;
     if (ctx) {
       if (typeof ctx === 'object' && ctx !== null) {
         const obj = ctx as Record<string, unknown>;
