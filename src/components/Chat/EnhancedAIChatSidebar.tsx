@@ -157,7 +157,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     isRefreshing,
   } = useConversationAnalysis(conversationId);
 
-  const { aiConversation, saveAIConversation } = useAIConversation(conversationId);
+  const { aiConversation, saveAIConversation } = useAIConversation(conversationId, leadId);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, visible: true, type });
@@ -321,7 +321,14 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       showToast(`${parsedSuggestions.length} sugerencias generadas`);
     } catch (_error) {
       console.error('Error generating suggestions:', _error);
-      showToast('Error al generar sugerencias', 'error');
+      const errMsg = _error instanceof Error ? _error.message : String(_error);
+      if (errMsg.includes('Unauthorized') || errMsg.includes('401')) {
+        showToast('Sesión expirada - recarga la página', 'error');
+      } else if (errMsg.includes('503') || errMsg.includes('unavailable')) {
+        showToast('Servicio IA no disponible, intenta de nuevo', 'error');
+      } else {
+        showToast(`Error IA: ${errMsg.slice(0, 80)}`, 'error');
+      }
     } finally {
       setIsGeneratingSuggestions(false);
     }

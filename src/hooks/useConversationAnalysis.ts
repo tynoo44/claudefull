@@ -144,7 +144,7 @@ export function useConversationAnalysis(conversationId?: string) {
 }
 
 // Hook para obtener el historial de conversaciones con la IA
-export function useAIConversation(conversationId?: string) {
+export function useAIConversation(conversationId?: string, leadId?: string) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -156,9 +156,9 @@ export function useAIConversation(conversationId?: string) {
         .from('ai_conversations')
         .select('*')
         .eq('conversation_id', conversationId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -175,10 +175,9 @@ export function useAIConversation(conversationId?: string) {
         .from('ai_conversations')
         .select('id')
         .eq('conversation_id', conversationId)
-        .single();
+        .maybeSingle();
 
       if (existing) {
-        // Actualizar existente
         return supabase
           .from('ai_conversations')
           .update({
@@ -188,10 +187,13 @@ export function useAIConversation(conversationId?: string) {
           })
           .eq('conversation_id', conversationId);
       } else {
-        // Crear nuevo
+        if (!leadId) {
+          console.warn('[useAIConversation] No leadId provided, skipping insert');
+          return null;
+        }
         return supabase.from('ai_conversations').insert({
           conversation_id: conversationId,
-          lead_id: '', // Se debe pasar desde el componente
+          lead_id: leadId,
           messages,
           total_messages: messages.length,
           last_message_at: new Date().toISOString(),

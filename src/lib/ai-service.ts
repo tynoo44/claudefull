@@ -75,6 +75,23 @@ export const AI_MODELS = {
   'gpt-4o-mini': 'GPT-4o Mini',
 } as const;
 
+/**
+ * Extract meaningful error message from Supabase Functions errors
+ */
+function extractErrorMessage(error: unknown): string {
+  if (!error) return 'Unknown error';
+  if (error instanceof Error) {
+    // FunctionsHttpError stores the response body in message
+    try {
+      const parsed = JSON.parse(error.message);
+      return parsed.error || parsed.details || error.message;
+    } catch {
+      return error.message;
+    }
+  }
+  return String(error);
+}
+
 export type AIModel = keyof typeof AI_MODELS;
 
 // Backward compatibility aliases
@@ -118,8 +135,9 @@ export async function generateAIResponse(params: {
     });
 
     if (error) {
-      console.error('[AI Service] Edge Function error:', error);
-      throw new Error(`AI response generation failed: ${error.message}`);
+      const msg = extractErrorMessage(error);
+      console.error('[AI Service] Edge Function error:', msg, error);
+      throw new Error(msg);
     }
 
     const response: GenerateResponseResponse = data;
@@ -242,7 +260,7 @@ export const generateQuickActions = {
         body: request,
       });
 
-      if (error) throw new Error(`Conversation summarization failed: ${error.message}`);
+      if (error) throw new Error(extractErrorMessage(error));
       const response: QuickActionResponse = data;
       if (!response.success) throw new Error(response.error || 'Summarization failed');
       return response.result || 'No se pudo generar un resumen de la conversacion.';
@@ -264,7 +282,7 @@ export const generateQuickActions = {
         body: request,
       });
 
-      if (error) throw new Error(`Sales phase analysis failed: ${error.message}`);
+      if (error) throw new Error(extractErrorMessage(error));
       const response: QuickActionResponse = data;
       if (!response.success) throw new Error(response.error || 'Phase analysis failed');
       return response.result || 'No se pudo analizar la fase de ventas.';
@@ -293,7 +311,7 @@ export const generateQuickActions = {
         body: request,
       });
 
-      if (error) throw new Error(`Message suggestion failed: ${error.message}`);
+      if (error) throw new Error(extractErrorMessage(error));
       const response: QuickActionResponse = data;
       if (!response.success) throw new Error(response.error || 'Suggestion failed');
 
