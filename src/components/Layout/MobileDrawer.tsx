@@ -65,7 +65,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           }`}
         >
           <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            SetterAI
+            AIdeal
           </h2>
           <button
             onClick={onClose}

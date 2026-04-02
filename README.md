@@ -1,4 +1,4 @@
-# Setter AI - Professional Appointment Setting Platform
+# AIdeal - AI-Powered Sales & Appointment Setting Platform
 
 > **Enterprise-grade** AI-powered CRM for professional appointment setters using Quantum Creators B2B methodology
 

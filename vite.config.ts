@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon.svg'],
       manifest: {
-        name: 'SetterAI - Appointment Setting',
-        short_name: 'SetterAI',
-        description: 'Plataforma de Appointment Setting con IA',
+        name: 'AIdeal - Ventas Inteligentes',
+        short_name: 'AIdeal',
+        description: 'Plataforma de ventas y appointment setting con IA',
         theme_color: '#3b82f6',
         background_color: '#111827',
         display: 'standalone',

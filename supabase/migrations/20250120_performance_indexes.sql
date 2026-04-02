@@ -1,4 +1,4 @@
--- Performance optimization indexes for Setter AI
+-- Performance optimization indexes for AIdeal
 -- Created: 2025-01-20
 
 -- Index for ordering conversations by updated_at (most common query pattern)

@@ -1,12 +1,12 @@
 {
-  "name": "setter-ai",
+  "name": "aideal",
   "private": true,
-  "version": "1.0.0",
-  "description": "Plataforma SaaS para Appointment Setting y gestión de leads",
+  "version": "2.0.0",
+  "description": "AIdeal - Plataforma de ventas inteligentes y appointment setting con IA",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "tunnel": "lt --port 5173 --subdomain setter-ai",
+    "tunnel": "lt --port 5173 --subdomain aideal",
     "build": "tsc && vite build",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",

@@ -9,6 +9,8 @@ import { LeadsPage } from '@/pages/LeadsPage';
 import { TemplatesPage } from '@/pages/TemplatesPage';
 import { CalendarPage } from '@/pages/CalendarPage';
 import { PremiumCalendarAdvanced } from '@/pages/PremiumCalendarAdvanced';
+import { AnalyticsPage } from '@/pages/AnalyticsPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { CalendarCacheProvider } from './contexts/CalendarCacheContext';
@@ -59,9 +61,6 @@ const AppContent: React.FC = () => {
       />
       <Route path="/auth/callback" element={<AuthCallbackPage darkMode={darkMode} />} />
 
-      {/* Test route for premium calendar - remove in production */}
-      <Route path="/test-premium" element={<PremiumCalendarAdvanced darkMode={darkMode} />} />
-
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage darkMode={darkMode} />} />
@@ -77,6 +76,8 @@ const AppContent: React.FC = () => {
               </CalendarCacheProvider>
             }
           />
+          <Route path="/analytics" element={<AnalyticsPage darkMode={darkMode} />} />
+          <Route path="/settings" element={<SettingsPage darkMode={darkMode} />} />
         </Route>
       </Route>
 
