@@ -1,6 +1,5 @@
 // Sistema avanzado de detección de intenciones para conversaciones de ventas
 // Analiza el mensaje del lead para entender su verdadera intención
-// Integrado con n8n para automatización de workflows
 
 import { n8nIntegration } from './n8n-integration';
 

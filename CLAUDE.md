@@ -4,389 +4,181 @@
 
 Personal MVP platform for professional appointment setting with AI-powered conversation management using Quantum Creators B2B methodology.
 
-**CURRENT PRIORITY:** Fix critical issues and optimize for personal use (functionality over security).
-
-**AUDIT STATUS (2025-07-22):**
-
-- ✅ **COMPREHENSIVE AUDIT COMPLETED** - 60+ files examined, reality-based PRD created
-- 🏆 **CODEBASE QUALITY**: 9.0/10 - Enterprise-grade with advanced AI integration
-- ✅ **CODE QUALITY PROGRESS**: 574 → 159 ESLint errors (72% reduction), 100+ → 0 TS errors (100% fixed!)
-- ✅ **CRITICAL FIXES APPLIED**: Switch case declarations, interface mismatches, unused parameters
-- ✅ **MAJOR DISCOVERY**: Router, contexts, testing, DB optimization already complete
-- 📋 **FRESH TASKS**: 15 new tasks generated from updated PRD, replacing outdated tracking
-
-**Core Features:**
-
-- AI appointment setting (Gemini 2.5 Pro)
-- Lead CRM with 5-phase sales tracking
-- Real-time script validation
-- Multi-platform messaging (Instagram, WhatsApp, Facebook)
-- Dynamic script templates
-- **Google Calendar Integration** ✅ - Full CRUD operations with OAuth2
+**Production URL:** https://aideal.vortekai.es
+**Supabase Project:** QuantumDB (`awyslztbkykhjhhykacf`) - ACTIVE_HEALTHY
 
 ## Technical Stack
 
 - **Frontend**: React 19.1.0 + TypeScript + Vite
 - **AI**: Google Gemini 2.5 Pro API
-- **Database**: Supabase (PostgreSQL + real-time)
+- **Database**: Supabase (PostgreSQL + real-time + RLS)
 - **Auth**: Supabase Auth with Google OAuth2 + Calendar scopes
-- **Calendar**: Google Calendar API integration via Edge Functions
+- **Calendar**: Google Calendar API via Supabase Edge Functions
 - **Styling**: Tailwind CSS 3.4.17
+- **Deployment**: Docker (multi-stage) + nginx + Easypanel + Cloudflare
 - **Dev Tools**: ESLint + Prettier + Husky
-- **Testing**: Vitest + React Testing Library + MSW ✅
 
-## Key Files & Structure (UPDATED)
+## Key Files & Structure
 
 ```
 src/
 ├── lib/
-│   ├── gemini.ts              # AI response generation ✅ ENHANCED with intent + personalization
-│   ├── conversation-analyzer.ts # AI conversation analysis ✅ OVERHAULED - realistic scoring
-│   ├── prompt-manager.ts      # ✅ Database-driven prompt hierarchy
-│   ├── response-validator.ts  # ✅ OPTIMIZED - permissive for natural language
-│   ├── intent-detector.ts     # ✅ NEW - Advanced intent & emotion detection
-│   ├── lead-personalizer.ts   # ✅ NEW - Dynamic lead profiling & adaptation
-│   ├── google-calendar.ts     # ✅ NEW - Google Calendar integration service
-│   ├── auth.ts               # ✅ Authentication with Google OAuth2 + Calendar scopes
-│   └── supabase.ts           # Database client ✅
+│   ├── gemini.ts                # AI response generation (intent + personalization)
+│   ├── ai-service.ts            # AI service client (Edge Functions + n8n)
+│   ├── conversation-analyzer.ts # AI conversation analysis (realistic scoring)
+│   ├── prompt-manager.ts        # Database-driven prompt hierarchy
+│   ├── response-validator.ts    # Permissive natural language validation
+│   ├── intent-detector.ts       # Advanced intent & emotion detection
+│   ├── lead-personalizer.ts     # Dynamic lead profiling & adaptation
+│   ├── n8n-integration.ts       # N8N webhook integration service
+│   ├── google-calendar.ts       # Google Calendar integration service
+│   ├── calendar-cache.ts        # Calendar data caching
+│   ├── auth.ts                  # Authentication (Google OAuth2 + email/password)
+│   ├── supabase.ts              # Database client
+│   └── supabase-functions.ts    # Database helper functions
 ├── components/Chat/
-│   ├── AIChatSidebar.tsx      # Main AI assistant ✅
-│   ├── MessageList.tsx        # Chat UI ✅ VIRTUALIZED with TanStack Virtual
-│   └── ResizableLayout.tsx    # Layout management ✅
-├── components/Calendar/Premium/ # ✅ COMPLETE calendar system
-│   ├── MonthView.tsx          # ✅ Month grid with event expansion
-│   ├── WeekView.tsx           # ✅ 7-day timeline with time slots
-│   ├── DayView.tsx            # ✅ Detailed single-day view with 30-min intervals
-│   ├── AgendaView.tsx         # ✅ 30-day upcoming events chronological list
-│   ├── EventDetailModal.tsx   # ✅ Event details with actions
-│   └── EventCreateModal.tsx   # ✅ Complete event creation/editing with Google Calendar API
+│   ├── EnhancedAIChatSidebar.tsx # Main AI assistant (used in ChatsPage)
+│   ├── ChatInterface.tsx         # Chat interface with n8n integration
+│   ├── ChatSidebar.tsx           # Conversation list sidebar
+│   ├── MessageList.tsx           # Chat UI (VIRTUALIZED with TanStack Virtual)
+│   ├── MessageInputOptimized.tsx # Optimized message input (memoized)
+│   └── ResizableLayout.tsx       # Layout management
+├── components/Calendar/Premium/  # Complete calendar system
+│   ├── Core/                     # Provider, reducer, hooks
+│   ├── Views/                    # Month, Week, Day, Agenda view components
+│   ├── Layout/                   # Navigation, Sidebar, Toolbar, StatusBar
+│   ├── EventModal/               # BasicInfo, Attendees, Reminders tabs
+│   ├── EventCreateModal.tsx      # Event creation/editing
+│   └── EventDetailModal.tsx      # Event details with actions
 ├── contexts/
-│   ├── AuthContext.tsx        # ✅ Authentication (59 lines)
-│   └── ThemeContext.tsx       # ✅ Theme management (43 lines)
+│   ├── AuthContext.tsx            # Auth with isLoading state for session persistence
+│   ├── ThemeContext.tsx           # Dark/light theme management
+│   └── CalendarCacheContext.tsx   # Calendar cache provider
 ├── hooks/
-│   ├── useMessagesPagination.ts # ✅ TanStack Query pagination
-│   ├── useLeadsPagination.ts    # ✅ 20 items/page + prefetch
-│   └── useLeadsVirtualization.ts # ✅ Leads virtualization
-├── pages/ # ✅ React Router implemented
-│   ├── PremiumCalendarAdvanced.tsx # ✅ Enterprise calendar UI with all views
-│   └── [other pages...]
-└── test/ # ✅ Vitest + RTL + MSW configured + 41 integration tests
+│   ├── useMessagesPagination.ts  # TanStack Query pagination
+│   ├── useLeadsPagination.ts     # 20 items/page + prefetch
+│   ├── useLeadsVirtualization.ts # Leads virtualization
+│   ├── useCalendar.ts            # Calendar state management
+│   └── useConversationAnalysis.ts # Analysis hook
+├── services/
+│   ├── conversationAnalysisService.ts # Background analysis service
+│   └── analysis/                      # Modular analysis (sentiment, enrichment, queue)
+├── pages/
+│   ├── AuthPage.tsx              # Login (Google OAuth + email/password)
+│   ├── AuthCallbackPage.tsx      # OAuth callback handler
+│   ├── DashboardPage.tsx         # Main dashboard
+│   ├── ChatsPage.tsx             # Chat interface
+│   ├── LeadsPage.tsx             # Lead management
+│   ├── TemplatesPage.tsx         # Message templates
+│   ├── CalendarPage.tsx          # Basic calendar
+│   └── PremiumCalendarAdvanced.tsx # Enterprise calendar (all views)
+├── components/Layout/
+│   ├── GlobalNavbar.tsx          # Top navigation
+│   └── ProtectedRoute.tsx        # Auth guard with loading state
+└── types/index.ts                # All TypeScript interfaces
 ```
+
+**Deployment Files:**
+
+- `Dockerfile` - Multi-stage build (node + nginx)
+- `nginx.conf` - SPA routing + gzip + caching
+- `.dockerignore` - Excludes node_modules, docs, etc.
 
 **Config Files:**
 
-- `.taskmaster/config.json` - AI models configuration
-- `.taskmaster/docs/prd.txt` - Product requirements
-- `.taskmaster/tasks/tasks.json` - Fresh tasks (15 tasks based on comprehensive audit)
-- `AI_GUIDE/COMPREHENSIVE_PRD.md` - Complete improvement roadmap
-- `AI_GUIDE/4-2025-07-20-COMPLETE-AUDIT.md` - Latest comprehensive audit
+- `.taskmaster/` - TaskMaster config, tasks, docs
+- `AI_GUIDE/` - Audit docs and PRD
 
-## Database Schema (8 tables total - UPDATED 2025-07-20)
+## Database Schema (11 tables - Supabase)
 
 ```sql
+-- Core Business
+leads (id, instagram_id, username, status, procedence, user_id)
+conversations (id, lead_id, current_phase, qualification_score, conversation_state, phase_history, phase_info, lead_profile)
+messages (id, conversation_id, sender_type, text, platform_message_id)
+message_templates (id, name, content, category, tone, variables)
+users (id, email, full_name, avatar_url)
+
 -- AI System
 prompts (id, prompt_type, role_definition, content, active, metadata)
 script_templates (id, phase, lead_type, content, variables, priority)
 few_shot_examples (id, phase, scenario, lead_message, setter_response)
 
--- Business Logic
-leads (id, instagram_id, username, status, procedence, user_id) # 287 records
-conversations (id, lead_id, current_phase, qualification_score, conversation_state, phase_history) # 287 records - ENHANCED
-messages (id, conversation_id, sender_type, text, platform_message_id) # 1,670 records
-message_templates (id, name, content, category, tone, variables) # 3 records
-
--- Users
-users (id, email, full_name, avatar_url, created_at) # 0 records
+-- Analysis & AI Conversations
+conversation_analysis (id, conversation_id, lead_id, analysis_data, sentiment_scores, urgency_score)
+ai_conversations (id, conversation_id, lead_id, messages, total_messages)
+lead_insights (id, lead_id, business_info, pain_points, goals, personality_profile)
 ```
 
-**✅ MAJOR UPDATE**: `conversation_memory` merged into `conversations` (2025-07-20)
-**✅ REMOVED**: `objection_handlers`, `prompt_analytics` (unused tables)
+**NOTE:** All tables currently have 0 records. RLS enabled on all tables.
+**DO NOT** modify leads, messages, conversations, message_templates structure without authorization.
 
 ## Development Commands
 
 ```bash
-# Core
-npm run dev                    # Start dev server (MUST run on port 5173!)
-npm run build                 # Production build
-npm run lint                  # ESLint check
-npm run format               # Prettier format
-npm run test                  # Run test suite (41 integration tests)
-npm run test:coverage        # Run tests with coverage report
-
-# TaskMaster
-task-master next             # Get next task
-task-master show <id>        # Task details
-task-master set-status --id=<id> --status=done
+npm run dev          # Dev server (port 5173, HMR via wss)
+npm run build        # Production build (tsc + vite build)
+npm run lint         # ESLint check
+npm run lint:fix     # ESLint autofix
+npm run format       # Prettier format
+npm run type-check   # TypeScript check (tsc --noEmit)
 ```
 
-## MCP Tools & Integrations
+## Code Quality Status (Updated 2026-04-01)
 
-### Available MCP Servers
+- **TypeScript**: 0 errors
+- **ESLint**: 0 errors, 105 warnings (all `no-explicit-any`)
+- **Build**: Passes (851KB JS, 69KB CSS)
+- **Tests**: Framework configured (Vitest + RTL + MSW), no test files currently
 
-- **mcp**supabase\*\*\*\*: Database operations, SQL execution, schema management
-- **mcp**taskmaster-ai\*\*\*\*: Task management, PRD parsing, progress tracking
-- **mcp**puppeteer\*\*\*\*: Browser automation for testing
-- **mcp**ddg-search\*\*\*\*: Web search and content fetching
-- **mcp**memory\*\*\*\*: Knowledge graph for context retention
+## Auth Flow
 
-### Key MCP Commands
+1. User visits `https://aideal.vortekai.es` -> redirects to `/auth`
+2. Google OAuth via `supabase.auth.signInWithOAuth()` with Calendar scopes
+3. Redirect: Google -> Supabase callback -> `aideal.vortekai.es/auth/callback`
+4. `AuthCallbackPage` processes token -> navigates to `/dashboard`
+5. Session persists in localStorage; `AuthContext.isLoading` prevents flash redirect
 
-```bash
-# Supabase
-mcp__supabase__list_projects      # Get project list
-mcp__supabase__execute_sql         # Run SQL queries
-mcp__supabase__get_advisors        # Security/performance checks
+**Supabase Auth Config Required:**
 
-# TaskMaster
-mcp__taskmaster-ai__get_tasks      # List all tasks
-mcp__taskmaster-ai__expand_task    # Create subtasks
-mcp__taskmaster-ai__set_task_status # Update progress
-```
+- Site URL: `https://aideal.vortekai.es`
+- Redirect URLs: `https://aideal.vortekai.es/auth/callback`, `https://aideal.vortekai.es/**`
 
-## Development Protocol (UPDATED with Audit Findings)
+**Google Cloud Console Required:**
 
-### 1. Language Requirements
-
-- All technical work in English (logs, plans, docs, commits)
-- Spanish only for user-facing content
-
-### 2. Task Planning
-
-- **CHECK FIRST**: Review `AI_GUIDE/COMPREHENSIVE_PRD.md` for priorities
-- Create structured plan BEFORE any work
-- Break into <10 minute subtasks
-- Each subtask independently verifiable
-- **NEW**: Verify task aligns with current priorities (0-7)
-
-### 3. Task Logging
-
-- **MANDATORY**: Create `.taskmaster/logs/taskid_log.md` for each task
-- Update after EVERY action
-- Include: action, reasoning, process, tools, outcomes
-- **NEW**: Reference specific audit findings when applicable
-
-### 4. Error Handling
-
-- STOP on any error
-- Analyze: what, why, how to fix, prevention
-- Get user confirmation before fixes
-- **NEW**: Check if error relates to known issues from audits
-
-### 5. Change Management
-
-When plans change: PAUSE → ANALYZE → PLAN → RECORD → CONFIRM → EXECUTE
-**NEW**: Consult audit findings before proposing changes
-
-### 6. Context Management
-
-- Check length every 3-5 tasks
-- Alert thresholds: 50 (yellow), 80 (red), 100 (critical)
-
-### 7. Testing Protocol (NEW)
-
-- **IMMEDIATE**: Set up Vitest for any new code
-- Test critical paths first (conversation tracking, AI responses)
-- Aim for 70%+ coverage on new code
-
-## Communication Templates
-
-**Progress Report:**
-
-```
-COMPLETED: [Task] - SUCCESS/FAILED
-DURATION: [Time]
-OUTCOME: [Result]
-NEXT: [Next task]
-```
-
-**Error Report:**
-
-```
-🚨 ERROR:
-WHAT: [Description]
-WHERE: [Location]
-WHY: [Root cause]
-SOLUTION: [Steps to fix]
-```
-
-**Task Plan:**
-
-```
-MAIN TASK: [Objective]
-├── SUBTASK 1: [Action] - [Time est]
-├── SUBTASK 2: [Action] - [Time est]
-└── VERIFICATION: [Success criteria]
-```
-
-## Task Log Format
-
-`.taskmaster/logs/[taskid]_log.md`:
-
-```markdown
-# Task [ID]: [Title]
-
-## Overview
-
-- Start: [Timestamp]
-- Status: [In Progress/Completed]
-
-## Work Log
-
-### [Time] - Subtask X.Y
-
-**Action**: [What]
-**Reasoning**: [Why]
-**Process**: [How]
-**Outcome**: [Result]
-
-## Summary
-
-- Total Time: [Duration]
-- Key Outcomes: [Results]
-```
-
-## Current Status (Updated 2025-07-22)
-
-### 🎯 LATEST PROJECT STATUS (July 2025)
-
-**PROJECT STATUS:** ✅ PRODUCTION-READY (95% Complete)
-
-### ✅ MAJOR SYSTEMS COMPLETED
-
-**1. Premium Calendar System (FULLY OPERATIONAL)**
-
-- ✅ All Views Implemented: Month, Week, Day, Agenda
-- ✅ Google Calendar API Integration: Full CRUD operations
-- ✅ Event Creation/Editing: Professional 3-tab modal system
-- ✅ Multi-calendar Management: Select, overlay, manage multiple calendars
-- ✅ Real-time Synchronization: Bidirectional sync with Google
-- ✅ Advanced Search: Filter events across all fields
-- ✅ Dark Mode Support: Complete theme compatibility
-
-**2. AI System Revolution (COMPLETELY OVERHAULED)**
-
-- ✅ Natural Language Generation: Informal Spanish, human-like responses
-- ✅ Advanced Intent Detection: Emotional tone, buying signals (0-10 scale)
-- ✅ Lead Personalization: Auto-adapts to age, style, business type
-- ✅ Conservative Scoring: Realistic qualification (most leads < 0.6)
-- ✅ Few-Shot Learning: Real conversation examples per phase
-- ✅ Database-Driven Prompts: Hierarchical prompt system
-
-**3. Code Quality & Performance (ENTERPRISE-GRADE)**
-
-- ✅ ESLint/TypeScript Cleanup: 574→159 errors (72% reduction), 100+→0 TS errors (100% fixed!)  
-- ✅ Critical Fixes: Switch cases, interfaces, unused parameters, response validator
-- ✅ Chat Virtualization: MessageList.tsx with TanStack Virtual
-- ✅ Database Optimization: Custom RPCs, indexes, foreign keys
-- ✅ Testing Framework: Vitest + RTL + MSW (41 integration tests)
-- ✅ Performance Architecture: TanStack Query, pagination, caching
-
-### 🚀 NEXT PHASE: ADVANCED FEATURES (2025 Q3-Q4)
-
-**UPCOMING DEVELOPMENT:**
-
-- **Calendar Drag & Drop** - Advanced event management (Task 81: in-progress)
-- **Multi-calendar Overlays** - Enhanced calendar selection system
-- **AI-Powered Scheduling** - Smart appointment suggestions
-- **Advanced Analytics** - Calendar usage insights and reporting
-- **Calendar Sharing** - Team collaboration features
-
-### 📊 CURRENT METRICS (July 2025)
-
-| System               | Status         | Completion |
-| -------------------- | -------------- | ---------- |
-| **Calendar System**  | ✅ Operational | 100%       |
-| **AI Engine**        | ✅ Enhanced    | 100%       |
-| **Code Quality**     | ✅ Clean       | 88%        |
-| **Performance**      | ✅ Optimized   | 90%        |
-| **Testing Coverage** | ✅ Robust      | 85%        |
-| **Production Ready** | ✅ Ready       | 95%        |
-
-### ✅ VERIFIED IMPLEMENTATIONS
-
-- **Router & Navigation**: ✅ React Router fully implemented in App.tsx
-- **Context Architecture**: ✅ Already split (AuthContext + ThemeContext)
-- **Testing Framework**: ✅ Vitest + RTL + MSW with 41 integration tests for React hooks
-- **Database Pagination**: ✅ TanStack Query with 20 items/page
-- **Conversation Tracking**: ✅ Props flow correctly implemented
-- **Database Schema**: ✅ Optimized with foreign keys and indexes
-- **Hook Testing**: ✅ Complete integration test coverage for useMessagesPagination, useLeadsPagination, useLeadsVirtualization
-- **Google Calendar Integration**: ✅ Full CRUD operations with OAuth2 authentication
-
-### 📋 NEW TASK SYSTEM
-
-**Fresh TaskMaster Setup (15 tasks):**
-
-- **Priority High**: Code quality fixes, chat virtualization, testing expansion
-- **Priority Medium**: Performance optimization, AI enhancements
-- **Priority Low**: Advanced features, analytics, multi-provider support
-- **Accurate Tracking**: Based on comprehensive source code audit
-
-**Key References:**
-
-- Updated Tasks: 33 active tasks with 36% completion rate
-- Current Focus: Advanced calendar features (drag & drop, multi-calendar)
-- AI Overhaul: Completely implemented with natural language generation
-- Calendar System: Fully operational with Google Calendar integration
+- Authorized JS origins: `https://aideal.vortekai.es`
+- Authorized redirect URIs: `https://awyslztbkykhjhhykacf.supabase.co/auth/v1/callback`
 
 ## Environment Variables
 
 ```bash
-VITE_GEMINI_API_KEY=AIzaSyCKeLG_pcE2nHNgyxddFgwCvGwzC1vS17w
-VITE_SUPABASE_URL=https://awyslztbkykhjhhykacf.supabase.co
-VITE_SUPABASE_ANON_KEY=[your_key]
-# VITE_USER_ID - REMOVED: Now using real Supabase Auth session.user.id
+# All secrets stored in .env (NEVER commit to git)
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_GEMINI_TEXT_MODEL=gemini-2.5-flash
+VITE_N8N_WEBHOOK_URL=  # Optional
 ```
 
-## Essential Rules Summary (UPDATED 2025-01-20)
+## Deployment (Easypanel + Cloudflare)
 
-1. **Always use English** for technical work
-2. **Plan before acting** - no improvisation
-3. **Log everything** in task files
-4. **Stop on errors** - analyze before fixing
-5. **Get confirmation** for changes
-6. **Monitor context** length regularly
-7. **Use MCP tools** for database, tasks, and testing
-8. **Follow templates** for communication
-9. **Check audit findings** in `AI_GUIDE/` before making changes
-10. **Prioritize functionality** over security (local use)
-11. **NEW: Maintain high code quality** - ESLint <200 errors, TS = 0 errors before new features
-12. **NEW: Always plan multiple options** - Consider alternatives before implementing
-13. **NEW: Update CLAUDE.md every 2 weeks** - Keep documentation current
-14. **NEW: Request approval for error fixes** - Collaborate on solutions
-15. **NEW: Run lint + type-check before commits** - Mandatory quality gates
+- Push to GitHub -> Easypanel auto-builds via Dockerfile
+- Dockerfile: node:20-alpine build -> nginx:alpine serve
+- VITE\_\* vars passed as Docker build args in Easypanel
+- Cloudflare DNS CNAME to Easypanel domain, SSL Full (strict)
+- nginx handles SPA routing (try_files -> index.html)
 
-**FAILURE TO FOLLOW = STOP & REPLAN**
+## Supabase Advisors Summary
 
-## Audit-Based Development Guidelines (UPDATED 2025-07-20)
+**Security:** RLS policies use permissive `USING(true)` on core tables (acceptable for personal use). Postgres version has pending security patches.
+**Performance:** Duplicate index on messages table. Many unused indexes. RLS policies should use `(select auth.uid())` instead of `auth.uid()`.
 
-### From Source Code Verification (2025-07-22)
+## Development Rules
 
-- **COMPLETED**: Code quality improvement (574→159 ESLint errors - 72% reduction)
-- **COMPLETED**: TypeScript errors eliminated (100+→0 TS errors - 100% fixed!)
-- **COMPLETED**: Chat virtualization, interface fixes, unused parameter cleanup
-- **COMPLETED**: Router, contexts, testing framework, database pagination all working
-- **REMAINING**: ESLint formatting issues and some code style warnings
-
-### Updated Priority Matrix (July 2025)
-
-```
-✅ PHASE 0-3 COMPLETED: Code cleanup, Premium Calendar, Event CRUD, Chat virtualization
-🚀 PHASE 4 (CURRENT): Advanced calendar features (drag & drop in-progress)
-📅 PHASE 5 (Q3 2025): AI-powered scheduling, analytics dashboard
-🌟 PHASE 6 (Q4 2025): Team collaboration, calendar sharing, enterprise features
-```
-
-**Current Development Focus:**
-
-- Task 81: Calendar Drag & Drop (in-progress)
-- Task 82: Multi-calendar management (pending)
-- Task 85: Calendar virtualization for performance
-- Advanced features and AI enhancements
-
-## Database Operational Guidelines
-
-- **Database Table Management**:
-  - Avoid modifying the structure or data of the supabase leads, messages, conversations, and message_templates tables unless strictly necessary, and under authorization. If you need data from these tables, create links to them in new tables.
-- **Performance First**: Add indexes for frequently queried columns
-- **Schema Integrity**: Use foreign key constraints for data consistency
+1. All technical work in English; Spanish only for user-facing content
+2. Plan before acting - no improvisation
+3. Stop on errors - analyze before fixing, get user confirmation
+4. Run lint + type-check before commits
+5. Prioritize functionality over security (personal use)
+6. Do NOT modify leads/messages/conversations/message_templates table structure without authorization
+7. Check `AI_GUIDE/` docs before major changes

@@ -13,12 +13,15 @@ import { ChatTemplatesView } from '../components/Chat/ChatTemplatesView';
 import { EnhancedAIChatSidebar } from '../components/Chat/EnhancedAIChatSidebar';
 import { ResizableLayout } from '../components/Chat/ResizableLayout';
 import { ErrorState } from '../components/Chat/ErrorState';
+import { useIsMobile } from '../hooks/useMediaQuery';
+import { ArrowLeft } from 'lucide-react';
 
 interface ChatsPageProps {
   darkMode: boolean;
 }
 
 export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
+  const isMobile = useIsMobile();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(522);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -41,7 +44,6 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
     totalCount: totalMessages,
   } = useMessagesPagination(selectedChat?.id || null);
 
-  // Obtener información del lead con insights
   const { data: leadData } = useLeadWithInsights(selectedChat?.leadId);
 
   const allTemplates = templatesData?.pages.flatMap(page => page.data) || [];
@@ -98,6 +100,74 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
     );
   }
 
+  // Mobile layout: show sidebar OR chat, not both
+  if (isMobile) {
+    return (
+      <div
+        className={`h-full w-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-hidden`}
+      >
+        {!selectedChat ? (
+          // Mobile: Chat list
+          <ChatSidebar
+            darkMode={darkMode}
+            selectedChat={selectedChat}
+            onChatSelect={handleChatSelect}
+            onCollapseChange={setSidebarCollapsed}
+            width={window.innerWidth}
+            pendingChatId={pendingChatId}
+            onPendingChatLoaded={() => setPendingChatId(null)}
+          />
+        ) : (
+          // Mobile: Chat interface with back button
+          <div className="h-full flex flex-col">
+            <div
+              className={`flex items-center gap-2 px-3 py-2 border-b ${
+                darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
+              }`}
+            >
+              <button
+                onClick={() => setSelectedChat(null)}
+                className={`p-2 rounded-lg ${
+                  darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div className="min-w-0">
+                <p
+                  className={`text-sm font-medium truncate ${
+                    darkMode ? 'text-white' : 'text-gray-900'
+                  }`}
+                >
+                  {selectedChat.leadName || 'Chat'}
+                </p>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              <ChatInterface
+                darkMode={darkMode}
+                selectedChat={selectedChat}
+                message={message}
+                messages={messages}
+                messagesLoading={messagesLoading}
+                hasMoreMessages={hasMoreMessages}
+                isFetchingMoreMessages={isFetchingMoreMessages}
+                onLoadMoreMessages={loadMoreMessages}
+                totalMessages={totalMessages}
+                showAISuggestion={showAISuggestion}
+                onMessageChange={setMessage}
+                onToggleAISuggestion={() => setShowAISuggestion(!showAISuggestion)}
+                onTemplateInsert={() => {}}
+                onChatUpdate={handleChatUpdate}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop layout: ResizableLayout with all panels
   return (
     <div
       className={`h-full w-full flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-hidden`}

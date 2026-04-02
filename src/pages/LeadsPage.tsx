@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useIsMobile } from '../hooks/useMediaQuery';
 import { useLeadsVirtualization } from '../hooks/useLeadsVirtualization';
 import { useTagFilter } from '../hooks/useTags';
 import {
@@ -38,6 +39,7 @@ interface EditLeadFormData {
 }
 
 export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
+  const isMobile = useIsMobile();
   const {
     filteredLeads,
     leadsByStatus,
@@ -55,7 +57,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = ({ darkMode }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedProcedence, setSelectedProcedence] = useState<string>('all');
   const [showFilters] = useState(true); // Always show filters
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>(isMobile ? 'list' : 'kanban');
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);

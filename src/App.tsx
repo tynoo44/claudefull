@@ -40,7 +40,7 @@ const AppLayout: React.FC = () => {
         setShowProfileMenu={setShowProfileMenu}
         logout={logout}
       />
-      <main className="flex-1 overflow-hidden pt-16">
+      <main className="flex-1 overflow-hidden pt-14 sm:pt-16">
         <Outlet />
       </main>
     </div>

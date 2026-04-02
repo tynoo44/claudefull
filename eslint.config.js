@@ -57,6 +57,8 @@ export default [
         RequestInit: 'readonly',
         IntersectionObserver: 'readonly',
         MutationObserver: 'readonly',
+        MediaQueryList: 'readonly',
+        MediaQueryListEvent: 'readonly',
         DragEvent: 'readonly',
         ClipboardEvent: 'readonly',
         FormData: 'readonly',

@@ -73,7 +73,7 @@ export function analyzeLeadProfile(
           averageMessageLength:
             messages.reduce((sum, msg) => sum + msg.length, 0) / messages.length,
           vocabulary: communicationStyle,
-          engagement: 'medium', // Could be calculated based on response rate
+          engagement: 'medium',
         },
       })
       .catch((err: unknown) => console.error('[Lead Personalizer] N8N webhook error:', err));

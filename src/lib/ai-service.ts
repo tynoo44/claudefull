@@ -338,7 +338,7 @@ export const generateQuickActions = {
       if (n8nIntegration.isEnabled() && response.suggestions) {
         n8nIntegration
           .onSuggestionsGenerated({
-            conversationId: undefined, // Not available in this context
+            conversationId: undefined,
             leadId: undefined,
             suggestions: response.suggestions,
             phase: currentPhase || 1,
