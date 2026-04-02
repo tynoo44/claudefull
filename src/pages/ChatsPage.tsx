@@ -14,7 +14,7 @@ import { EnhancedAIChatSidebar } from '../components/Chat/EnhancedAIChatSidebar'
 import { ResizableLayout } from '../components/Chat/ResizableLayout';
 import { ErrorState } from '../components/Chat/ErrorState';
 import { useIsMobile } from '../hooks/useMediaQuery';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User } from 'lucide-react';
 
 interface ChatsPageProps {
   darkMode: boolean;
@@ -118,28 +118,44 @@ export const ChatsPage: React.FC<ChatsPageProps> = ({ darkMode }) => {
             onPendingChatLoaded={() => setPendingChatId(null)}
           />
         ) : (
-          // Mobile: Chat interface with back button
           <div className="h-full flex flex-col">
+            {/* Mobile chat header */}
             <div
-              className={`flex items-center gap-2 px-3 py-2 border-b ${
-                darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
+              className={`flex items-center gap-3 px-2 py-2.5 border-b safe-area-top ${
+                darkMode
+                  ? 'border-gray-700 bg-gray-800/95 backdrop-blur-md'
+                  : 'border-gray-200 bg-white/95 backdrop-blur-md'
               }`}
             >
               <button
                 onClick={() => setSelectedChat(null)}
-                className={`p-2 rounded-lg ${
-                  darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                className={`p-2.5 -ml-1 rounded-xl transition-colors ${
+                  darkMode
+                    ? 'text-gray-300 hover:bg-gray-700 active:bg-gray-600'
+                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
                 }`}
               >
                 <ArrowLeft size={20} />
               </button>
-              <div className="min-w-0">
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  darkMode
+                    ? 'bg-gradient-to-br from-blue-600/30 to-indigo-600/30'
+                    : 'bg-gradient-to-br from-blue-100 to-indigo-100'
+                }`}
+              >
+                <User size={16} className={darkMode ? 'text-blue-300' : 'text-blue-700'} />
+              </div>
+              <div className="min-w-0 flex-1">
                 <p
-                  className={`text-sm font-medium truncate ${
+                  className={`text-sm font-semibold truncate ${
                     darkMode ? 'text-white' : 'text-gray-900'
                   }`}
                 >
                   {selectedChat.leadName || 'Chat'}
+                </p>
+                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {selectedChat.status || 'Activo'}
                 </p>
               </div>
             </div>

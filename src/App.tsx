@@ -1,32 +1,56 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { GlobalNavbar } from '@/components/Layout/GlobalNavbar';
 import { AuthPage } from '@/pages/AuthPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
-import { ChatsPage } from '@/pages/ChatsPage';
-import { LeadsPage } from '@/pages/LeadsPage';
-import { TemplatesPage } from '@/pages/TemplatesPage';
-import { CalendarPage } from '@/pages/CalendarPage';
-import { PremiumCalendarAdvanced } from '@/pages/PremiumCalendarAdvanced';
-import { AnalyticsPage } from '@/pages/AnalyticsPage';
-import { SettingsPage } from '@/pages/SettingsPage';
 import { useTheme } from './contexts/ThemeContext';
 import { useAuth } from './contexts/AuthContext';
 import { CalendarCacheProvider } from './contexts/CalendarCacheContext';
 import { ProtectedRoute } from './components/Layout/ProtectedRoute';
 import { conversationAnalysisService } from './services/conversationAnalysisService';
 
+// Lazy-loaded pages for code splitting
+const ChatsPage = React.lazy(() =>
+  import('@/pages/ChatsPage').then(m => ({ default: m.ChatsPage })),
+);
+const LeadsPage = React.lazy(() =>
+  import('@/pages/LeadsPage').then(m => ({ default: m.LeadsPage })),
+);
+const TemplatesPage = React.lazy(() =>
+  import('@/pages/TemplatesPage').then(m => ({ default: m.TemplatesPage })),
+);
+const CalendarPage = React.lazy(() =>
+  import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })),
+);
+const PremiumCalendarAdvanced = React.lazy(() =>
+  import('@/pages/PremiumCalendarAdvanced').then(m => ({ default: m.PremiumCalendarAdvanced })),
+);
+const AnalyticsPage = React.lazy(() =>
+  import('@/pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })),
+);
+const SettingsPage = React.lazy(() =>
+  import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })),
+);
+
+const PageLoader: React.FC = () => {
+  const { darkMode } = useTheme();
+  return (
+    <div
+      className={`flex-1 flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}
+    >
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent" />
+    </div>
+  );
+};
+
 const AppLayout: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = React.useState(false);
 
-  // Start background analysis service when app loads
   React.useEffect(() => {
     conversationAnalysisService.startBackgroundAnalysis();
-
-    // Cleanup on unmount
     return () => {
       conversationAnalysisService.stopBackgroundAnalysis();
     };
@@ -43,7 +67,9 @@ const AppLayout: React.FC = () => {
         logout={logout}
       />
       <main className="flex-1 overflow-hidden pt-14 sm:pt-16">
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

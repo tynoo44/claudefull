@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MessageSquare } from 'lucide-react';
 import { TemplatesHeader, SortOption } from '../components/Templates/TemplatesHeader';
 import { TemplateCard } from '../components/Templates/TemplateCard';
 import { TemplateModal } from '../components/Templates/TemplateModal';
@@ -178,31 +179,46 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
         />
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {filteredTemplates.length === 0 ? (
-          <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            <p className="text-lg mb-2">
-              {searchTerm || selectedCategory !== 'all'
-                ? 'No se encontraron templates con los filtros aplicados'
-                : 'No hay templates disponibles'}
-            </p>
-            <p className="text-sm">
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center max-w-sm">
+              <div
+                className={`w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                  darkMode ? 'bg-gray-800' : 'bg-gray-100'
+                }`}
+              >
+                <MessageSquare
+                  className={`w-7 h-7 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                />
+              </div>
+              <h3
+                className={`text-base font-semibold mb-1.5 ${
+                  darkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}
+              >
+                {searchTerm || selectedCategory !== 'all'
+                  ? 'Sin resultados'
+                  : 'Sin plantillas todavia'}
+              </h3>
+              <p className={`text-sm mb-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {searchTerm || selectedCategory !== 'all'
+                  ? 'Prueba con otros filtros o terminos de busqueda'
+                  : 'Crea tu primera plantilla para agilizar tus conversaciones'}
+              </p>
               {!searchTerm && selectedCategory === 'all' && (
-                <>
-                  Crea tu primer template para comenzar{' '}
-                  <button
-                    onClick={handleCreateNew}
-                    className="text-blue-600 hover:text-blue-700 underline"
-                  >
-                    haciendo clic aquí
-                  </button>
-                </>
+                <button
+                  onClick={handleCreateNew}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Crear primera plantilla
+                </button>
               )}
-            </p>
+            </div>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredTemplates.map(template => (
                 <TemplateCard
                   key={template.id}
@@ -214,13 +230,17 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ darkMode }) => {
               ))}
             </div>
             {hasNextPage && (
-              <div className="text-center mt-6">
+              <div className="text-center mt-8">
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    darkMode
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-750 border border-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm'
+                  } disabled:opacity-50`}
                 >
-                  {isFetchingNextPage ? 'Cargando...' : 'Cargar más plantillas'}
+                  {isFetchingNextPage ? 'Cargando...' : 'Cargar mas plantillas'}
                 </button>
               </div>
             )}

@@ -136,11 +136,6 @@ export const VirtualizedLeadsKanban: React.FC<VirtualizedLeadsKanbanProps> = ({
           </div>
         </div>
 
-        {/* Scroll hint */}
-        <div className={`text-center py-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          <span className="opacity-75">💡 Tip: Hold Shift + scroll to navigate horizontally</span>
-        </div>
-
         {/* Lead modal */}
         {selectedLead && (
           <LeadInfoModal

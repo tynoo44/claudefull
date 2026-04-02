@@ -1,4 +1,5 @@
 import React, { useRef, useMemo, useEffect } from 'react';
+import { Users } from 'lucide-react';
 import { Lead } from '../../lib/supabase';
 import { LeadsListHeader } from './LeadsListHeader';
 import { LeadTableRow } from './LeadTableRow';
@@ -38,7 +39,6 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
     }
   };
 
-  // Sort leads locally for the table view
   const sortedLeads = useMemo(() => {
     return [...leads].sort((a, b) => {
       let aValue: string | number | null | undefined;
@@ -69,7 +69,6 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
           return 0;
       }
 
-      // Handle null/undefined values
       if (aValue == null && bValue == null) return 0;
       if (aValue == null) return 1;
       if (bValue == null) return -1;
@@ -80,12 +79,10 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
     });
   }, [leads, sortField, sortDirection]);
 
-  // Get only visible leads
   const visibleLeads = useMemo(() => {
     return sortedLeads.slice(0, visibleItems);
   }, [sortedLeads, visibleItems]);
 
-  // Handle scroll to load more
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollContainerRef.current) return;
@@ -105,29 +102,46 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
     }
   }, [visibleItems, sortedLeads.length]);
 
-  // Reset visible items when leads or sorting changes
   useEffect(() => {
     setVisibleItems(ITEMS_PER_PAGE);
   }, [sortField, sortDirection, leads.length]);
 
   if (leads.length === 0) {
     return (
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-8 text-center`}>
-        <p className={`text-lg mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          No hay leads disponibles
-        </p>
-        <p className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          Los leads aparecerán aquí cuando los crees o importes.
-        </p>
+      <div
+        className={`rounded-xl border h-full flex items-center justify-center ${
+          darkMode ? 'bg-gray-800/50 border-gray-800' : 'bg-white border-gray-200'
+        }`}
+      >
+        <div className="text-center px-6 py-16 max-w-sm">
+          <div
+            className={`w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+              darkMode ? 'bg-gray-700/50' : 'bg-gray-100'
+            }`}
+          >
+            <Users className={`w-7 h-7 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+          <h3
+            className={`text-base font-semibold mb-1.5 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}
+          >
+            Sin leads todavia
+          </h3>
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Los leads apareceran aqui cuando los crees o importes desde tus conversaciones.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow overflow-hidden h-full flex flex-col`}
+      className={`rounded-xl border overflow-hidden h-full flex flex-col ${
+        darkMode ? 'bg-gray-800/50 border-gray-800' : 'bg-white border-gray-200'
+      }`}
     >
-      <div className="overflow-x-auto">
+      {/* Sticky header */}
+      <div className={`sticky top-0 z-10 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <table className="min-w-full">
           <LeadsListHeader
             darkMode={darkMode}
@@ -138,15 +152,10 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
         </table>
       </div>
 
+      {/* Scrollable body */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto">
         <table className="min-w-full">
-          <tbody
-            className={
-              darkMode
-                ? 'bg-gray-700 divide-y divide-gray-600'
-                : 'bg-white divide-y divide-gray-200'
-            }
-          >
+          <tbody className={darkMode ? 'divide-y divide-gray-700/50' : 'divide-y divide-gray-100'}>
             {visibleLeads.map(lead => (
               <LeadTableRow
                 key={lead.id}
@@ -161,10 +170,19 @@ export const VirtualizedLeadsList: React.FC<VirtualizedLeadsListProps> = ({
         </table>
 
         {visibleItems < sortedLeads.length && (
-          <div className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            <div className="animate-pulse">Cargando más leads...</div>
+          <div className={`text-center py-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            <div className="animate-pulse text-sm">Cargando mas leads...</div>
           </div>
         )}
+      </div>
+
+      {/* Footer count */}
+      <div
+        className={`px-4 py-2 text-xs border-t ${
+          darkMode ? 'border-gray-700/50 text-gray-500' : 'border-gray-100 text-gray-400'
+        }`}
+      >
+        Mostrando {Math.min(visibleItems, sortedLeads.length)} de {sortedLeads.length} leads
       </div>
     </div>
   );
