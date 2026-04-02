@@ -97,7 +97,7 @@ export async function generateAIResponse(params: {
   try {
     const request: GenerateResponseRequest = {
       messages: params.messages,
-      model: AI_MODELS[params.model],
+      model: params.model,
       conversationContext: params.conversationContext,
       currentPhase: params.currentPhase,
       leadType: params.leadType,
@@ -234,7 +234,7 @@ export const generateQuickActions = {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: AI_MODELS[model],
+        model,
         action: 'summarize',
       };
 
@@ -256,7 +256,7 @@ export const generateQuickActions = {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: AI_MODELS[model],
+        model,
         action: 'analyze_phase',
       };
 
@@ -283,7 +283,7 @@ export const generateQuickActions = {
     try {
       const request: QuickActionRequest = {
         messages,
-        model: AI_MODELS[model],
+        model,
         action: 'suggest_messages',
         currentPhase,
         leadType,

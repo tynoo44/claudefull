@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Bot,
   Send,
@@ -7,6 +7,13 @@ import {
   Lightbulb,
   ChevronDown,
   BarChart3,
+  Zap,
+  Copy,
+  Check,
+  AlertCircle,
+  Trash2,
+  FileText,
+  Search,
 } from 'lucide-react';
 import {
   generateAIResponse,
@@ -16,7 +23,7 @@ import {
   type AIMessage as ServiceAIMessage,
 } from '../../lib/ai-service';
 
-const DEFAULT_MODEL: AIModel = 'gpt-4o-mini';
+const DEFAULT_MODEL: AIModel = 'gpt-5.4';
 import { MessageContent } from './MessageContent';
 import { promptManager } from '../../lib/prompt-manager';
 import { ConversationStatusCard } from './ConversationStatusCard';
@@ -48,9 +55,9 @@ interface AIMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isError?: boolean;
 }
 
-// Helper function to convert local AIMessage to ai-service AIMessage
 const convertToServiceMessage = (message: AIMessage): ServiceAIMessage => ({
   role: message.role,
   content: message.content,
@@ -66,6 +73,49 @@ interface MessageSuggestion {
   phase: number;
   reasoning: string;
 }
+
+// Quick prompt suggestions for empty state
+const QUICK_PROMPTS = [
+  {
+    icon: Search,
+    label: 'Analizar intención',
+    prompt: 'Analiza la intención real del lead en esta conversación',
+  },
+  {
+    icon: Lightbulb,
+    label: 'Mejor respuesta',
+    prompt: 'Cual sería la mejor respuesta para avanzar con este lead?',
+  },
+  {
+    icon: FileText,
+    label: 'Resumen rápido',
+    prompt: 'Dame un resumen ejecutivo de esta conversación',
+  },
+  {
+    icon: Zap,
+    label: 'Objeciones',
+    prompt: 'Identifica las objeciones del lead y cómo superarlas',
+  },
+];
+
+// Toast notification component
+const Toast: React.FC<{ message: string; visible: boolean; type?: 'success' | 'error' }> = ({
+  message,
+  visible,
+  type = 'success',
+}) => (
+  <div
+    className={`
+      fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-xl shadow-lg text-sm font-medium
+      transition-all duration-300 flex items-center gap-2
+      ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+      ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}
+    `}
+  >
+    {type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+    {message}
+  </div>
+);
 
 export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   darkMode,
@@ -87,8 +137,19 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   const [suggestions, setSuggestions] = useState<MessageSuggestion[]>([]);
   const [usedSuggestions, setUsedSuggestions] = useState<string[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    visible: boolean;
+    type: 'success' | 'error';
+  }>({
+    message: '',
+    visible: false,
+    type: 'success',
+  });
 
-  // Hooks para análisis y conversación AI
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
   const {
     analysis,
     isLoading: analysisLoading,
@@ -98,7 +159,21 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
 
   const { aiConversation, saveAIConversation } = useAIConversation(conversationId);
 
-  // Cargar conversación AI existente
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, visible: true, type });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 2500);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping, scrollToBottom]);
+
+  // Load existing AI conversation
   useEffect(() => {
     if (aiConversation?.messages && Array.isArray(aiConversation.messages)) {
       setMessages(
@@ -114,7 +189,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     }
   }, [aiConversation]);
 
-  // Guardar conversación AI cuando cambian los mensajes
+  // Save AI conversation when messages change
   useEffect(() => {
     if (messages.length > 0) {
       const messagesToSave = messages.map(msg => ({
@@ -127,13 +202,14 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     }
   }, [messages, saveAIConversation]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (customPrompt?: string) => {
+    const messageText = customPrompt || input.trim();
+    if (!messageText) return;
 
     const userMessage: AIMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: messageText,
       timestamp: new Date(),
     };
 
@@ -141,13 +217,16 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     setInput('');
     setIsTyping(true);
 
+    // Switch to chat tab if sending from quick prompts
+    if (activeTab !== 'chat') {
+      setActiveTab('chat');
+    }
+
     try {
-      // Build conversation context and messages from actual conversation
       let fullContext = conversationContext || '';
       let allMessages: ServiceAIMessage[] = [];
 
       if (currentConversation?.messages && Array.isArray(currentConversation.messages)) {
-        // Convert conversation messages to AI format
         allMessages = (currentConversation.messages as Record<string, unknown>[]).map(msg => ({
           role: (msg.sender_type === 'Setter' ? 'assistant' : 'user') as 'user' | 'assistant',
           content: String(msg.text || msg.content || ''),
@@ -162,9 +241,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         fullContext = `Conversación actual con ${leadName || 'el lead'}:\n${conversationMessages}`;
       }
 
-      // Add the user's question to the conversation
       allMessages.push(convertToServiceMessage(userMessage));
-
       const currentPhase = promptManager.detectCurrentPhase(allMessages);
 
       const response = await generateAIResponse({
@@ -185,12 +262,27 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       };
 
       setMessages(prev => [...prev, aiMessage]);
-    } catch (_error) {
+    } catch (error) {
+      const errorDetail = error instanceof Error ? error.message : 'Error desconocido';
+
+      let userFriendlyMessage = 'No pude procesar tu solicitud.';
+      if (errorDetail.includes('401') || errorDetail.includes('Unauthorized')) {
+        userFriendlyMessage = 'Sesión expirada. Recarga la página para continuar.';
+      } else if (errorDetail.includes('API key') || errorDetail.includes('OPENAI')) {
+        userFriendlyMessage = 'La API de IA no está configurada. Contacta al administrador.';
+      } else if (errorDetail.includes('503') || errorDetail.includes('unavailable')) {
+        userFriendlyMessage =
+          'El servicio de IA está temporalmente ocupado. Intenta en unos segundos.';
+      } else if (errorDetail.includes('fetch') || errorDetail.includes('network')) {
+        userFriendlyMessage = 'Sin conexión. Verifica tu internet e intenta de nuevo.';
+      }
+
       const errorMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Ups, algo salió mal. Revisa tu conexión o prueba con otro modelo.',
+        content: userFriendlyMessage,
         timestamp: new Date(),
+        isError: true,
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -200,6 +292,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
 
   const generateSuggestions = async () => {
     if (!currentConversation?.messages || !Array.isArray(currentConversation.messages)) {
+      showToast('Selecciona una conversación primero', 'error');
       return;
     }
 
@@ -214,7 +307,7 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
       }));
 
       const currentPhase = analysis?.analysis_data?.current_phase || 1;
-      const leadType = 'general'; // TODO: Implement lead_type detection
+      const leadType = 'general';
 
       const response = await generateQuickActions.suggestMessages(
         conversationMessages,
@@ -223,11 +316,12 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         leadType,
       );
 
-      // Parsear las sugerencias del response (formato mejorado)
       const parsedSuggestions = parseSuggestionsFromResponse(response, currentPhase);
       setSuggestions(parsedSuggestions);
+      showToast(`${parsedSuggestions.length} sugerencias generadas`);
     } catch (_error) {
       console.error('Error generating suggestions:', _error);
+      showToast('Error al generar sugerencias', 'error');
     } finally {
       setIsGeneratingSuggestions(false);
     }
@@ -235,14 +329,12 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
 
   const parseSuggestionsFromResponse = (response: string, phase: number): MessageSuggestion[] => {
     try {
-      // Split the response by double newlines to get individual suggestions
       const suggestionTexts = response
         .split('\n\n')
         .filter(text => text.trim())
         .slice(0, 3);
 
       if (suggestionTexts.length === 0) {
-        // If no suggestions parsed, split by single newlines
         const altSuggestions = response
           .split('\n')
           .filter(text => text.trim() && text.length > 20)
@@ -253,20 +345,18 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         }
       }
 
-      // Map suggestions to the expected format
       const suggestions: MessageSuggestion[] = suggestionTexts.map((text, index) => {
-        // Determine type based on position and content
         let type: 'direct' | 'exploratory' | 'creative' = 'direct';
         let strategy = '';
         let confidence = 0.7;
 
         if (index === 0) {
           type = 'direct';
-          strategy = 'Respuesta directa que va al punto principal';
+          strategy = 'Respuesta directa al punto de dolor';
           confidence = 0.85;
         } else if (index === 1) {
           type = 'exploratory';
-          strategy = 'Pregunta exploratoria para profundizar';
+          strategy = 'Pregunta que genera reflexión';
           confidence = 0.75;
         } else {
           type = 'creative';
@@ -274,7 +364,6 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
           confidence = 0.65;
         }
 
-        // Analyze content for better classification
         const lowerText = text.toLowerCase();
         if (lowerText.includes('?') || lowerText.includes('cómo') || lowerText.includes('qué')) {
           type = 'exploratory';
@@ -295,7 +384,6 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         };
       });
 
-      // If no suggestions were parsed, return a default set
       if (suggestions.length === 0) {
         return [
           {
@@ -330,19 +418,33 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
   const handleCopyMessage = async (message: string) => {
     try {
       await navigator.clipboard.writeText(message);
-      // Podríamos mostrar una notificación aquí
+      showToast('Mensaje copiado al portapapeles');
     } catch (_error) {
       console.error('Error copying message:', _error);
+      showToast('No se pudo copiar', 'error');
     }
   };
 
   const handleSaveAsTemplate = (message: string, strategy: string) => {
-    // Implementar guardado como template
     console.log('Saving as template:', { message, strategy });
+    showToast('Guardado como plantilla');
   };
 
   const handleMarkAsUsed = (suggestionId: string) => {
     setUsedSuggestions(prev => [...prev, suggestionId]);
+  };
+
+  const handleClearChat = () => {
+    setMessages([]);
+  };
+
+  const handleCopyAIMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      showToast('Respuesta copiada');
+    } catch (_error) {
+      showToast('No se pudo copiar', 'error');
+    }
   };
 
   const keyPress = (e: React.KeyboardEvent) => {
@@ -352,38 +454,64 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
     }
   };
 
+  const hasConversation = Boolean(
+    currentConversation?.messages &&
+      Array.isArray(currentConversation.messages) &&
+      (currentConversation.messages as unknown[]).length > 0,
+  );
+
   return (
-    <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-      {/* Header con tabs */}
-      <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+    <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <Toast message={toast.message} visible={toast.visible} type={toast.type} />
+
+      {/* Header */}
+      <div
+        className={`px-4 pt-4 pb-3 border-b ${darkMode ? 'border-gray-700/50' : 'border-gray-200'}`}
+      >
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-blue-500" />
-            <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Asistente AI
-            </h3>
+          <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+                <Bot className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-900 rounded-full" />
+            </div>
+            <div>
+              <h3 className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                AIdeal Assistant
+              </h3>
+              <p className={`text-[10px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                GPT 5.4 · En línea
+              </p>
+            </div>
           </div>
 
-          {/* Selector de modelo */}
+          {/* Model selector */}
           <div className="relative">
             <button
               onClick={() => setShowModelDropdown(!showModelDropdown)}
               className={`
-                flex items-center gap-1 px-2 py-1 rounded text-xs border
-                ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-600 hover:bg-gray-100'}
+                flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all
+                ${
+                  darkMode
+                    ? 'border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-gray-600'
+                    : 'border-gray-200 text-gray-600 hover:bg-white hover:border-gray-300 hover:shadow-sm'
+                }
               `}
             >
-              <Sparkles className="w-3 h-3" />
-              {selectedModel === 'gpt-5.4' ? '5.4' : 'Mini'}
-              <ChevronDown className="w-3 h-3" />
+              <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+              {AI_MODELS[selectedModel]}
+              <ChevronDown
+                className={`w-3 h-3 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
+              />
             </button>
 
             {showModelDropdown && (
               <div
                 className={`
-                absolute top-full right-0 mt-1 border rounded shadow-lg z-50 min-w-32
-                ${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'}
-              `}
+                  absolute top-full right-0 mt-1.5 border rounded-xl shadow-xl z-50 min-w-40 overflow-hidden
+                  ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
+                `}
               >
                 {Object.entries(AI_MODELS).map(([key, name]) => (
                   <button
@@ -393,12 +521,29 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
                       setShowModelDropdown(false);
                     }}
                     className={`
-                      w-full text-left px-3 py-2 text-xs first:rounded-t last:rounded-b
-                      ${selectedModel === key ? (darkMode ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-50 text-blue-600') : ''}
-                      ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}
+                      w-full text-left px-3.5 py-2.5 text-xs flex items-center gap-2 transition-colors
+                      ${
+                        selectedModel === key
+                          ? darkMode
+                            ? 'bg-blue-900/40 text-blue-400'
+                            : 'bg-blue-50 text-blue-700'
+                          : darkMode
+                            ? 'hover:bg-gray-700 text-gray-300'
+                            : 'hover:bg-gray-50 text-gray-700'
+                      }
                     `}
                   >
-                    {name}
+                    <Sparkles
+                      className={`w-3.5 h-3.5 ${selectedModel === key ? 'text-blue-500' : 'text-gray-400'}`}
+                    />
+                    <span className="font-medium">{name}</span>
+                    {key === 'gpt-5.4' && (
+                      <span
+                        className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-violet-900/50 text-violet-300' : 'bg-violet-100 text-violet-700'}`}
+                      >
+                        Pro
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -407,57 +552,71 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1">
+        <div className={`flex p-1 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
           <button
             onClick={() => setActiveTab('analysis')}
             className={`
-              flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-all
+              flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all
               ${
                 activeTab === 'analysis'
-                  ? 'bg-blue-500 text-white'
+                  ? darkMode
+                    ? 'bg-gray-700 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
                   : darkMode
-                    ? 'text-gray-400 hover:text-white'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
               }
             `}
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-3.5 h-3.5" />
             Análisis
           </button>
           <button
             onClick={() => setActiveTab('chat')}
             className={`
-              flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-all
+              flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all
               ${
                 activeTab === 'chat'
-                  ? 'bg-blue-500 text-white'
+                  ? darkMode
+                    ? 'bg-gray-700 text-white shadow-sm'
+                    : 'bg-white text-gray-900 shadow-sm'
                   : darkMode
-                    ? 'text-gray-400 hover:text-white'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
               }
             `}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5" />
             Chat IA
+            {messages.length > 0 && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}
+              >
+                {messages.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Contenido */}
+      {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'analysis' ? (
           <div className="h-full overflow-y-auto p-4 space-y-4">
-            {/* Estado de la conversación */}
+            {/* Conversation Status */}
             <ConversationStatusCard
               status={
                 analysis
                   ? {
-                      current_phase: analysis.analysis_data?.current_phase || 1,
-                      phase_progress: analysis.phase_progress || {},
-                      sentiment_scores: analysis.sentiment_scores,
-                      key_insights: analysis.key_insights || [],
-                      warnings: analysis.warnings || [],
-                      action_threads: analysis.action_threads || [],
+                      current_phase: (analysis.analysis_data as any)?.current_phase || 1,
+                      phase_progress: (analysis.phase_progress || {}) as any,
+                      sentiment_scores: (analysis.sentiment_scores || {
+                        overall: 0,
+                        by_message: [],
+                      }) as any,
+                      key_insights: (analysis.key_insights || []) as string[],
+                      warnings: (analysis.warnings || []) as string[],
+                      action_threads: (analysis.action_threads || []) as string[],
                       urgency_score: analysis.urgency_score || 0,
                       capacity_score: analysis.capacity_score || 0,
                       engagement_score: analysis.engagement_score || 0,
@@ -483,135 +642,316 @@ export const EnhancedAIChatSidebar: React.FC<EnhancedAIChatSidebarProps> = ({
               }}
             />
 
-            {/* Sugerencias de mensajes */}
+            {/* Message Suggestions */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h4 className={`font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                <h4
+                  className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}
+                >
                   Sugerencias de Respuesta
                 </h4>
                 <button
                   onClick={generateSuggestions}
-                  disabled={isGeneratingSuggestions}
+                  disabled={isGeneratingSuggestions || !hasConversation}
                   className={`
-                    flex items-center gap-1 px-3 py-1 rounded text-xs transition-all
+                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
                     ${
-                      isGeneratingSuggestions
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                      isGeneratingSuggestions || !hasConversation
+                        ? darkMode
+                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-violet-600 text-white hover:shadow-md hover:shadow-blue-500/25 active:scale-95'
                     }
                   `}
                 >
-                  <Lightbulb className="w-3 h-3" />
-                  {isGeneratingSuggestions ? 'Generando...' : 'Generar'}
+                  {isGeneratingSuggestions ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Lightbulb className="w-3.5 h-3.5" />
+                      Generar
+                    </>
+                  )}
                 </button>
               </div>
 
-              <MessageSuggestions
-                suggestions={suggestions}
-                onCopy={handleCopyMessage}
-                onSaveAsTemplate={handleSaveAsTemplate}
-                onMarkAsUsed={handleMarkAsUsed}
-                darkMode={darkMode}
-                usedSuggestions={usedSuggestions}
-              />
-            </div>
-          </div>
-        ) : (
-          /* Chat con la IA */
-          <div className="flex flex-col h-full">
-            {/* Mensajes */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? (
-                <div className="text-center py-8">
-                  <Bot className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Pregúntame lo que necesites sobre esta conversación
+              {isGeneratingSuggestions ? (
+                <div
+                  className={`p-6 rounded-xl border-2 border-dashed text-center ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                >
+                  <div className="w-10 h-10 border-3 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
+                  <p
+                    className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                  >
+                    Analizando conversación...
+                  </p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    GPT 5.4 está generando respuestas personalizadas
                   </p>
                 </div>
               ) : (
-                messages.map(message => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`
-                        max-w-xs lg:max-w-md px-3 py-2 rounded-lg text-sm
-                        ${
-                          message.role === 'user'
-                            ? 'bg-blue-500 text-white'
-                            : darkMode
-                              ? 'bg-gray-700 text-gray-100'
-                              : 'bg-white text-gray-800 border border-gray-200'
-                        }
-                      `}
-                    >
-                      <MessageContent content={message.content} />
-                      <div className={`text-xs mt-1 opacity-70`}>
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div
-                    className={`
-                    max-w-xs px-3 py-2 rounded-lg text-sm
-                    ${darkMode ? 'bg-gray-700 text-gray-100' : 'bg-white text-gray-800 border border-gray-200'}
-                  `}
-                  >
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.1s' }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.2s' }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+                <MessageSuggestions
+                  suggestions={suggestions}
+                  onCopy={handleCopyMessage}
+                  onSaveAsTemplate={handleSaveAsTemplate}
+                  onMarkAsUsed={handleMarkAsUsed}
+                  darkMode={darkMode}
+                  usedSuggestions={usedSuggestions}
+                />
               )}
             </div>
 
-            {/* Input */}
-            <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex gap-2">
+            {/* Quick AI Actions */}
+            {hasConversation && (
+              <div
+                className={`p-3 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-white'}`}
+              >
+                <p
+                  className={`text-xs font-semibold mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                >
+                  ACCIONES RÁPIDAS
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_PROMPTS.map(({ icon: Icon, label, prompt }) => (
+                    <button
+                      key={label}
+                      onClick={() => handleSendMessage(prompt)}
+                      disabled={isTyping}
+                      className={`
+                        flex items-center gap-2 p-2.5 rounded-lg text-xs font-medium transition-all text-left
+                        ${
+                          darkMode
+                            ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }
+                        ${isTyping ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}
+                      `}
+                    >
+                      <Icon className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* AI Chat */
+          <div className="flex flex-col h-full">
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-6">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-violet-500/10 flex items-center justify-center mb-4">
+                    <Bot className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
+                  </div>
+                  <h4
+                    className={`font-semibold text-sm mb-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}
+                  >
+                    Tu copiloto de ventas
+                  </h4>
+                  <p
+                    className={`text-xs text-center mb-5 max-w-[200px] ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                  >
+                    Pregúntame sobre esta conversación o pide ayuda para cerrar el lead
+                  </p>
+
+                  {/* Quick prompt buttons */}
+                  <div className="w-full space-y-2 px-2">
+                    {QUICK_PROMPTS.map(({ icon: Icon, label, prompt }) => (
+                      <button
+                        key={label}
+                        onClick={() => handleSendMessage(prompt)}
+                        className={`
+                          w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left
+                          ${
+                            darkMode
+                              ? 'bg-gray-800 text-gray-300 hover:bg-gray-750 hover:text-white border border-gray-700/50 hover:border-gray-600'
+                              : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 border border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                          }
+                          active:scale-[0.98]
+                        `}
+                      >
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${darkMode ? 'bg-blue-900/30' : 'bg-blue-50'}`}
+                        >
+                          <Icon className="w-3.5 h-3.5 text-blue-500" />
+                        </div>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {messages.map(message => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
+                    >
+                      {/* AI avatar */}
+                      {message.role === 'assistant' && (
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
+                          <Bot className="w-3.5 h-3.5 text-white" />
+                        </div>
+                      )}
+
+                      <div className="flex flex-col max-w-[85%]">
+                        <div
+                          className={`
+                            px-3.5 py-2.5 text-sm leading-relaxed
+                            ${
+                              message.role === 'user'
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-md'
+                                : message.isError
+                                  ? (darkMode
+                                      ? 'bg-red-900/30 text-red-300 border border-red-800/50'
+                                      : 'bg-red-50 text-red-700 border border-red-200') +
+                                    ' rounded-2xl rounded-bl-md'
+                                  : (darkMode
+                                      ? 'bg-gray-800 text-gray-100 border border-gray-700/50'
+                                      : 'bg-white text-gray-800 border border-gray-200 shadow-sm') +
+                                    ' rounded-2xl rounded-bl-md'
+                            }
+                          `}
+                        >
+                          {message.isError && (
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              <span className="text-xs font-medium">Error</span>
+                            </div>
+                          )}
+                          <MessageContent content={message.content} />
+                        </div>
+
+                        {/* Message actions */}
+                        <div
+                          className={`flex items-center gap-2 mt-1 ${message.role === 'user' ? 'justify-end' : 'justify-start ml-0.5'}`}
+                        >
+                          <span
+                            className={`text-[10px] ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}
+                          >
+                            {message.timestamp.toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {message.role === 'assistant' && !message.isError && (
+                            <button
+                              onClick={() => handleCopyAIMessage(message.content)}
+                              className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                              title="Copiar respuesta"
+                            >
+                              <Copy
+                                className={`w-3 h-3 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                              />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Typing indicator */}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
+                        <Bot className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div
+                        className={`
+                          px-4 py-3 rounded-2xl rounded-bl-md
+                          ${darkMode ? 'bg-gray-800 border border-gray-700/50' : 'bg-white border border-gray-200 shadow-sm'}
+                        `}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                          <div
+                            className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.15s' }}
+                          />
+                          <div
+                            className="w-2 h-2 bg-blue-300 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.3s' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+
+            {/* Input area */}
+            <div
+              className={`p-3 border-t ${darkMode ? 'border-gray-700/50 bg-gray-900' : 'border-gray-200 bg-white'}`}
+            >
+              {/* Clear chat button */}
+              {messages.length > 0 && (
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={handleClearChat}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${darkMode ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-800' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'}`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Limpiar chat
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-2 items-end">
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={keyPress}
-                  placeholder="Pregunta sobre la conversación..."
+                  placeholder={
+                    hasConversation ? 'Pregunta sobre el lead...' : 'Selecciona una conversación...'
+                  }
+                  disabled={isTyping}
                   className={`
-                    flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
+                    flex-1 resize-none rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all
                     ${
                       darkMode
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:border-blue-600'
+                        : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-blue-400 focus:bg-white'
                     }
+                    ${isTyping ? 'opacity-60' : ''}
                   `}
-                  rows={2}
+                  rows={1}
+                  onInput={e => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = Math.min(target.scrollHeight, 80) + 'px';
+                  }}
                 />
                 <button
-                  onClick={handleSendMessage}
+                  onClick={() => handleSendMessage()}
                   disabled={!input.trim() || isTyping}
                   className={`
-                    px-3 py-2 rounded-lg transition-all
+                    p-2.5 rounded-xl transition-all flex-shrink-0
                     ${
                       !input.trim() || isTyping
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        ? darkMode
+                          ? 'bg-gray-800 text-gray-600'
+                          : 'bg-gray-100 text-gray-400'
+                        : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
                     }
                   `}
                 >
                   <Send className="w-4 h-4" />
                 </button>
               </div>
+              <p
+                className={`text-[10px] mt-1.5 text-center ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}
+              >
+                Enter para enviar · Shift+Enter para nueva línea
+              </p>
             </div>
           </div>
         )}
