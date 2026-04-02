@@ -90,6 +90,11 @@ export const GlobalNavbar: React.FC<GlobalNavbarProps> = ({
                 onClick={() => navigate('/dashboard')}
                 className="flex items-center gap-1.5 group"
               >
+                <img
+                  src="/logo.png"
+                  alt="AIdeal"
+                  className={`h-7 sm:h-8 w-auto ${darkMode ? '' : 'invert'}`}
+                />
                 <span
                   className={`text-lg sm:text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}
                 >

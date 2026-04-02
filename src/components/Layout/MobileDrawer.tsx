@@ -64,9 +64,16 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
             darkMode ? 'border-gray-700' : 'border-gray-200'
           }`}
         >
-          <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            AIdeal
-          </h2>
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo.png"
+              alt="AIdeal"
+              className={`h-7 w-auto ${darkMode ? '' : 'invert'}`}
+            />
+            <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              AIdeal
+            </h2>
+          </div>
           <button
             onClick={onClose}
             className={`p-2 rounded-lg ${
